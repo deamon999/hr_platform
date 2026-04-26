@@ -1,0 +1,284 @@
+﻿@page "/profiles/{Id:int}"
+@page "/my-profile"
+@using System.Security.Claims
+@rendermode InteractiveServer
+
+@attribute [Authorize]
+@inject IDriverProfileService ProfileSvc
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthState
+
+@if (profile is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <h2>@profile.FirstName @profile.MiddleName @profile.LastName</h2>
+            <p class="text-muted mb-1">@profile.Email · @profile.PhoneNumber</p>
+            @if (profile.City != null)
+            {
+                <p class="text-muted mb-0">@profile.StreetAddress, @profile.City, @profile.State @profile.ZipCode</p>
+            }
+        </div>
+        <div class="d-flex gap-2">
+            @if (isOwner)
+            {
+                <button class="btn btn-outline-primary btn-sm"
+                        @onclick='() => Nav.NavigateTo($"/profiles/edit/{profile.Id}")'>Edit
+                </button>
+            }
+            else
+            {
+                <button class="btn btn-outline-primary btn-sm" disabled>Edit</button>
+            }
+
+            @if (canDelete)
+            {
+                <button class="btn btn-outline-danger btn-sm" @onclick="ConfirmDelete">Delete</button>
+            }
+
+            @if (!(backUrl == "/"))
+            {
+                <button class="btn btn-outline-secondary btn-sm" @onclick="() => Nav.NavigateTo(backUrl)">Back</button>
+            }
+        </div>
+    </div>
+
+    @if (showDeleteConfirm)
+    {
+        <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirm Delete</h5>
+                    </div>
+                    <div class="modal-body">
+                        Permanently delete the profile for
+                        <strong>@profile.FirstName @profile.LastName</strong>?
+                        This will also remove all their applications.
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @onclick="() => showDeleteConfirm = false">Cancel</button>
+                        <button class="btn btn-danger" @onclick="DeleteAsync">Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(profile.ProfessionalSummary))
+    {
+        <div class="card mb-3">
+            <div class="card-body">
+                <h6 class="card-title">Summary</h6>
+                <p class="mb-0">@profile.ProfessionalSummary</p>
+            </div>
+        </div>
+    }
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h6 class="card-title">Driving Stats</h6>
+                    <p class="mb-1">@profile.YearsOfExperience yrs experience</p>
+                    <p class="mb-1">@profile.TotalMilesDriven.ToString("N0") total miles</p>
+                    <p class="mb-1">@profile.AccidentFreeMiles.ToString("N0") accident-free miles</p>
+                    <p class="mb-1">@profile.AverageWeeklyMiles.ToString("N0") avg/week</p>
+                    <p class="mb-0">@profile.StatesOperated states operated</p>
+                </div>
+            </div>
+        </div>
+        @if (profile.License is not null)
+        {
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h6 class="card-title">CDL License</h6>
+                        <p class="mb-1">Class <strong>@profile.License.Class</strong> · #@profile.License.LicenseNumber
+                        </p>
+                        <p class="mb-1">State: @profile.License.IssuingState · Exp: @profile.License.ExpiryDate</p>
+                        @if (profile.License.Endorsements.Any())
+                        {
+                            <div class="d-flex flex-wrap gap-1 mt-2">
+                                @foreach (var end in profile.License.Endorsements)
+                                {
+                                    <span class="badge bg-info text-dark">@end</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+        @if (profile.MedicalCard is not null)
+        {
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h6 class="card-title">DOT Medical Card</h6>
+                        <p class="mb-1">Issued: @profile.MedicalCard.IssuedDate</p>
+                        <p class="mb-1">Expires: @profile.MedicalCard.ExpiryDate</p>
+                        @if (!string.IsNullOrEmpty(profile.MedicalCard.MedicalExaminerName))
+                        {
+                            <p class="mb-0">Examiner: @profile.MedicalCard.MedicalExaminerName</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (trailerTypes.Any())
+    {
+        <div class="mb-3">
+            <h6>Trailer Types <small class="text-muted fw-normal">(from employment history)</small></h6>
+            <div class="d-flex flex-wrap gap-2">
+                @foreach (var t in trailerTypes)
+                {
+                    <span class="badge bg-secondary">@t</span>
+                }
+            </div>
+        </div>
+    }
+
+    @if (profile.Skills.Any())
+    {
+        <div class="mb-3">
+            <h6>Skills</h6>
+            <div class="d-flex flex-wrap gap-2">
+                @foreach (var s in profile.Skills)
+                {
+                    <span class="badge bg-info text-dark">@s</span>
+                }
+            </div>
+        </div>
+    }
+
+    @if (profile.EmploymentHistory.Any())
+    {
+        <h5 class="mt-3">Employment History</h5>
+        @foreach (var emp in profile.EmploymentHistory.OrderByDescending(e => e.StartDate))
+        {
+            <div class="card mb-2">
+                <div class="card-body">
+                    <h6 class="card-title mb-1">@emp.JobTitle — @emp.CompanyName</h6>
+                    <p class="text-muted small mb-1">
+                        @(emp.City != null ? $"{emp.City}, {emp.State} · " : "")
+                        @emp.StartDate – @(emp.EndDate?.ToString() ?? "Present")
+                        @(emp.AverageWeeklyMiles.HasValue ? $" · {emp.AverageWeeklyMiles:N0} mi/wk" : "")
+                    </p>
+                    @if (emp.TrailerTypes.Any())
+                    {
+                        <div class="d-flex flex-wrap gap-1 mb-1">
+                            @foreach (var t in emp.TrailerTypes)
+                            {
+                                <span class="badge bg-secondary">@t</span>
+                            }
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(emp.Responsibilities))
+                    {
+                        <p class="mb-0 small" style="white-space:pre-line">@emp.Responsibilities</p>
+                    }
+                </div>
+            </div>
+        }
+    }
+
+    @if (profile.EducationHistory.Any())
+    {
+        <h5 class="mt-3">Education</h5>
+        @foreach (var edu in profile.EducationHistory)
+        {
+            <div class="card mb-2">
+                <div class="card-body">
+                    <h6 class="card-title mb-1">
+                        @edu.Level@(edu.InstitutionName != null ? $" — {edu.InstitutionName}" : "")
+                    </h6>
+                    <p class="text-muted small mb-0">
+                        @edu.FieldOfStudy
+                        @(edu.GraduationDate.HasValue ? $" · Graduated {edu.GraduationDate}" : "")
+                    </p>
+                </div>
+            </div>
+        }
+    }
+
+    @if (profile.Certifications.Any())
+    {
+        <h5 class="mt-3">Certifications</h5>
+        @foreach (var cert in profile.Certifications)
+        {
+            <div class="card mb-2">
+                <div class="card-body">
+                    <h6 class="card-title mb-1">@cert.Name</h6>
+                    <p class="text-muted small mb-0">
+                        @cert.IssuingAuthority
+                        @(cert.ExpiryDate.HasValue ? $" · Expires {cert.ExpiryDate}" : "")
+                    </p>
+                </div>
+            </div>
+        }
+    }
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private DriverProfile? profile;
+    private List<TrailerType> trailerTypes = [];
+    private bool showDeleteConfirm;
+    private bool canDelete;
+    private string backUrl = "/profiles";
+    private bool isOwner;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        var currentUserId = auth.User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        var isAdminOrManager = auth.User.IsInRole(RoleConstants.Admin) || auth.User.IsInRole(RoleConstants.Manager);
+
+        if (Id == 0) // arrived via /my-profile
+        {
+            profile = await ProfileSvc.GetByUserIdAsync(currentUserId);
+            if (profile is null)
+            {
+                Nav.NavigateTo("/driver-profile");
+                return;
+            }
+
+            Id = profile.Id;
+            backUrl = "/";
+        }
+        else
+        {
+            profile = await ProfileSvc.GetByIdAsync(Id);
+            backUrl = isAdminOrManager ? "/profiles" : "/my-profile";
+        }
+
+        if (profile is not null)
+        {
+            trailerTypes = profile.AllTrailerTypes.ToList();
+            isOwner = profile.UserId == currentUserId;
+            canDelete = auth.User.IsInRole(RoleConstants.Admin) || isOwner;
+        }
+    }
+
+    private void ConfirmDelete()
+    {
+        showDeleteConfirm = true;
+    }
+
+    private async Task DeleteAsync()
+    {
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        var currentUserId = auth.User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        var isAdmin = auth.User.IsInRole(RoleConstants.Admin);
+        await ProfileSvc.DeleteAsync(Id, currentUserId, isAdmin);
+        Nav.NavigateTo(backUrl);
+    }
+
+}

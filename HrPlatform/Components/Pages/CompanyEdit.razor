@@ -1,0 +1,97 @@
+@page "/companies/new"
+@page "/companies/{Id:int}"
+@page "/companies/edit/{Id:int}"
+@rendermode InteractiveServer
+
+@attribute [Authorize(Roles = RoleConstants.Admin)]
+@inject ICompanyService CompanySvc
+@inject NavigationManager Nav
+
+<h2>@Title</h2>
+
+@if (company is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <EditForm Model="company" OnValidSubmit="SaveAsync">
+        <DataAnnotationsValidator/>
+        <ValidationSummary/>
+
+        <div class="mb-3">
+            <label class="form-label">Name *</label>
+            <InputText class="form-control" @bind-Value="company.Name"/>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Registration #</label>
+            <InputText class="form-control" @bind-Value="company.RegistrationNumber"/>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Date Registered</label>
+            <InputDate class="form-control" @bind-Value="company.DateRegistered"/>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Address</label>
+            <InputText class="form-control" @bind-Value="company.Address"/>
+        </div>
+
+        <div class="d-flex gap-2">
+            @if (isView)
+            {
+                <button type="button" class="btn btn-secondary" @onclick="Cancel">Back</button>
+            }
+            else
+            {
+                <button type="submit" class="btn btn-primary">@(isNew ? "Create" : "Save")</button>
+                <button type="button" class="btn btn-outline-secondary" @onclick="Cancel">Cancel</button>
+            }
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Company? company;
+    private bool isNew;
+    private bool isView;
+
+    private string Title => isView ? "Company Details" : (isNew ? "Create Company" : "Edit Company");
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = Nav.Uri.ToLower();
+
+        // Determine mode based on URL
+        isNew = uri.Contains("/new");
+        isView = !isNew && !uri.Contains("/edit/");
+
+        if (isNew)
+        {
+            company = new Company();
+        }
+        else
+        {
+            company = await CompanySvc.GetByIdAsync(Id);
+            if (company is null) Nav.NavigateTo("/companies");
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (isView) return; // Guard clause
+
+        if (isNew)
+            await CompanySvc.CreateAsync(company!);
+        else
+            await CompanySvc.UpdateAsync(company!);
+
+        Nav.NavigateTo("/companies");
+    }
+
+    private void Cancel()
+    {
+        Nav.NavigateTo("/companies");
+    }
+
+}

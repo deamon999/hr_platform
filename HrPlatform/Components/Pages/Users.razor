@@ -1,0 +1,144 @@
+﻿@page "/users"
+@rendermode InteractiveServer
+
+@using HrPlatform.Models
+@attribute [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.Manager}")]
+@inject AdminUserService UserService
+@inject NavigationManager Nav
+
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Registered Users Management</h2>
+    <button type="button" class="btn btn-primary" @onclick="GoToCreate">Create User</button>
+</div>
+
+@if (isLoading)
+{
+    <p><em>Loading users...</em></p>
+}
+else if (users == null || !users.Any())
+{
+    <p>No registered users found.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Roles Assigned</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var user in users)
+            {
+                <tr>
+                    <td>@user.Username</td>
+                    <td>@user.Email</td>
+                    <td>
+                        @if (!string.IsNullOrEmpty(user.Roles))
+                        {
+                            <span class="badge bg-info">@user.Roles</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">No Roles</span>
+                        }
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" @onclick="() => GoToView(user.UserId)">View
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" @onclick="() => GoToEdit(user.UserId)">Edit
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                @onclick="async () => ConfirmDelete(user)">Delete
+                        </button>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (deleteTarget is not null)
+{
+    <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                </div>
+                <div class="modal-body">
+                    Delete <strong>@deleteTarget.Username</strong>?
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="() => deleteTarget = null">Cancel</button>
+                    <button class="btn btn-danger" @onclick="DeleteConfirmedAsync">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<UserViewModel> users = new();
+    private bool isLoading = true;
+    private UserViewModel? deleteTarget;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            // Fetch the data using the custom service
+            users = await UserService.GetAllUsersWithRolesAsync();
+        }
+        catch (Exception ex)
+        {
+            // Handle potential errors during database access
+            Console.WriteLine($"Error fetching users: {ex.Message}");
+            // Optionally display an error message to the user
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void GoToCreate()
+    {
+        Nav.NavigateTo("/users/new");
+    }
+
+    private void GoToView(string id)
+    {
+        Nav.NavigateTo($"/users/{id}");
+    }
+
+    private void GoToEdit(string id)
+    {
+        Nav.NavigateTo($"/users/edit/{id}");
+    }
+
+    private void ConfirmDelete(UserViewModel? userModel)
+    {
+        deleteTarget = userModel;
+    }
+
+    private async Task DeleteConfirmedAsync()
+    {
+        if (deleteTarget is null) return;
+        await UserService.DeleteAsync(deleteTarget.UserId);
+        deleteTarget = null;
+        await LoadAsync();
+    }
+
+}

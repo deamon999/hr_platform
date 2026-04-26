@@ -1,0 +1,117 @@
+@page "/companies"
+@rendermode InteractiveServer
+
+@attribute [Authorize(Roles = RoleConstants.Admin)]
+@inject ICompanyService CompanySvc
+@inject NavigationManager Nav
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Companies</h2>
+    <button type="button" class="btn btn-primary" @onclick="GoToCreate">Create Company</button>
+</div>
+
+@if (companies is null)
+{
+    <p>Loading...</p>
+}
+else if (!companies.Any())
+{
+    <div class="alert alert-info">No companies created yet.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Reg #</th>
+                <th>Registered</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var c in companies)
+            {
+                <tr>
+                    <td>@c.Name</td>
+                    <td>@c.RegistrationNumber</td>
+                    <td>@(c.DateRegistered?.ToString("d") ?? "—")</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" @onclick="() => GoToView(c.Id)">View</button>
+                        <button class="btn btn-sm btn-outline-secondary" @onclick="() => GoToEdit(c.Id)">Edit</button>
+                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                @onclick="async () => ConfirmDelete(c)">Delete
+                        </button>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (deleteTarget is not null)
+{
+    <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                </div>
+                <div class="modal-body">
+                    Delete <strong>@deleteTarget.Name</strong>?
+                    This will also remove all @deleteTarget.Jobs.Count job(s) and @deleteTarget.Users.Count user(s).
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="() => deleteTarget = null">Cancel</button>
+                    <button class="btn btn-danger" @onclick="DeleteConfirmedAsync">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Company>? companies;
+    private Company? deleteTarget;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        companies = await CompanySvc.GetAllAsync();
+    }
+
+    private void GoToCreate()
+    {
+        Nav.NavigateTo("/companies/new");
+    }
+
+    private void GoToView(int id)
+    {
+        Nav.NavigateTo($"/companies/{id}");
+    }
+
+    private void GoToEdit(int id)
+    {
+        Nav.NavigateTo($"/companies/edit/{id}");
+    }
+
+    private void ConfirmDelete(Company? company)
+    {
+        deleteTarget = company;
+    }
+
+    private async Task DeleteConfirmedAsync()
+    {
+        if (deleteTarget is null) return;
+        await CompanySvc.DeleteAsync(deleteTarget.Id);
+        deleteTarget = null;
+        await LoadAsync();
+    }
+
+}

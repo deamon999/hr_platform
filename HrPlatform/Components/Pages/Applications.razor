@@ -1,0 +1,144 @@
+﻿@page "/applications"
+@rendermode InteractiveServer
+
+@attribute [Authorize]
+@inject IJobApplicationService AppSvc
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Applications</h2>
+    <div class="d-flex align-items-center gap-2">
+        <label class="form-label mb-0">Sort by:</label>
+        <select class="form-select form-select-sm w-auto" @bind="sortBy" @bind:after="LoadAsync">
+            <option value="date">Date Applied</option>
+            <option value="status">Status</option>
+            <option value="driver">Driver Name</option>
+            <option value="job">Job Title</option>
+        </select>
+    </div>
+</div>
+
+@if (apps is null)
+{
+    <p>Loading...</p>
+}
+else if (!apps.Any())
+{
+    <div class="alert alert-info">No applications found.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+            <tr>
+                <th>ID</th>
+                <th>Job</th>
+                <th>Driver</th>
+                <th>Applied</th>
+                <th>Status</th>
+                <th>Reviewed</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var app in apps)
+            {
+                <tr>
+                    <td class="text-muted small">#@app.Id</td>
+                    <td>
+                        <strong>@app.Job.Title</strong><br/>
+                        <small class="text-muted">@(app.Job.Company?.Name ?? "")</small>
+                    </td>
+                    <td>
+                        @app.DriverProfile.FirstName @app.DriverProfile.LastName<br/>
+                        <small class="text-muted">@app.DriverProfile.Email</small>
+                    </td>
+                    <td class="text-nowrap">@app.AppliedAt.ToLocalTime().ToString("MM/dd/yyyy")</td>
+                    <td>
+                        <span class="badge @StatusBadge(app.Status)">@app.Status</span>
+                    </td>
+                    <td class="text-nowrap">
+                        @(app.ReviewedAt.HasValue
+                            ? app.ReviewedAt.Value.ToLocalTime().ToString("MM/dd/yyyy")
+                            : "—")
+                    </td>
+                    <td>
+                        <div class="d-flex gap-1 flex-wrap">
+                            <a href="/profiles/@app.DriverProfile.Id"
+                               class="btn btn-sm btn-outline-secondary">View Profile</a>
+                            @if (reviewing != app.Id)
+                            {
+                                <button class="btn btn-sm btn-outline-info"
+                                        @onclick="() => BeginReview(app)">
+                                    Change Status
+                                </button>
+                            }
+                            else
+                            {
+                                <select class="form-select form-select-sm w-auto" @bind="reviewStatus">
+                                    @foreach (var s in Enum.GetValues<ApplicationStatus>())
+                                    {
+                                        <option value="@s">@s</option>
+                                    }
+                                </select>
+                                <input type="text" class="form-control form-control-sm"
+                                       placeholder="Notes (optional)"
+                                       @bind="reviewNotes" style="width:160px"/>
+                                <button class="btn btn-sm btn-primary" @onclick="SaveReviewAsync">Save</button>
+                                <button class="btn btn-sm btn-secondary" @onclick="() => reviewing = null">×</button>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<JobApplication>? apps;
+    private string sortBy = "date";
+    private int? reviewing;
+    private ApplicationStatus reviewStatus = ApplicationStatus.UnderReview;
+    private string? reviewNotes;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        apps = await AppSvc.GetAllAsync(sortBy);
+    }
+
+    private static string StatusBadge(ApplicationStatus s)
+    {
+        return s switch
+        {
+            ApplicationStatus.Pending => "bg-warning text-dark",
+            ApplicationStatus.UnderReview => "bg-info text-dark",
+            ApplicationStatus.Accepted => "bg-success",
+            ApplicationStatus.Rejected => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private void BeginReview(JobApplication app)
+    {
+        reviewing = app.Id;
+        reviewStatus = ApplicationStatus.UnderReview;
+        reviewNotes = app.ReviewerNotes;
+    }
+
+    private async Task SaveReviewAsync()
+    {
+        if (reviewing is null)
+            return;
+        await AppSvc.ReviewAsync(reviewing.Value, reviewStatus, reviewNotes);
+        reviewing = null;
+        await LoadAsync();
+    }
+
+}

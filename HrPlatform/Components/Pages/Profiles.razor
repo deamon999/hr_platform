@@ -1,0 +1,120 @@
+﻿@page "/profiles"
+@using System.Security.Claims
+@rendermode InteractiveServer
+
+@attribute [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.Manager}")]
+@inject IDriverProfileService ProfileSvc
+@inject AuthenticationStateProvider AuthState
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager Nav
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Driver Profiles</h2>
+    @if (isAdmin)
+    {
+        <span class="badge bg-danger">Platform Admin — all profiles</span>
+    }
+    else
+    {
+        <span class="badge bg-primary">@companyName — applicants only</span>
+    }
+</div>
+
+@if (profiles is null)
+{
+    <p>Loading...</p>
+}
+else if (!profiles.Any())
+{
+    <div class="alert alert-info">
+        @(isAdmin ? "No profiles exist yet." : "No drivers have applied to your company's jobs yet.")
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+            <tr>
+                <th>Name</th>
+                <th>Contact</th>
+                <th>CDL</th>
+                <th>Experience</th>
+                <th>Applications</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var p in profiles)
+            {
+                <tr>
+                    <td><strong>@p.LastName, @p.FirstName</strong></td>
+                    <td>
+                        @p.Email<br/>
+                        <small class="text-muted">@p.PhoneNumber</small>
+                    </td>
+                    <td>
+                        @if (p.License is not null)
+                        {
+                            <span class="badge bg-dark">CDL-@p.License.Class</span>
+                            <small class="ms-1">@p.License.LicenseNumber</small>
+                        }
+                    </td>
+                    <td>@p.YearsOfExperience yrs</td>
+                    <td>@p.Applications.Count</td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-sm btn-outline-primary" @onclick="() => GoToView(p.Id)">View</button>
+                            @if (p.UserId == currentUserId)
+                            {
+                                <button class="btn btn-sm btn-outline-secondary" @onclick="() => GoToEdit(p.Id)">Edit
+                                </button>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<DriverProfile>? profiles;
+    private bool isAdmin;
+    private string? companyName;
+    private string? currentUserId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        isAdmin = auth.User.IsInRole(RoleConstants.Admin);
+        currentUserId = auth.User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+
+        if (isAdmin)
+        {
+            profiles = await ProfileSvc.GetAllAsync();
+        }
+        else
+        {
+            var userId = auth.User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+            var user = await UserManager.FindByIdAsync(userId);
+            var companyId = user?.CompanyId;
+
+            profiles = companyId.HasValue
+                ? await ProfileSvc.GetByCompanyAsync(companyId.Value)
+                : new List<DriverProfile>();
+        }
+    }
+
+    private void GoToView(int id)
+    {
+        Nav.NavigateTo($"/profiles/{id}");
+    }
+
+    private void GoToEdit(int id)
+    {
+        Nav.NavigateTo($"/profiles/edit/{id}");
+    }
+
+}

@@ -1,0 +1,227 @@
+﻿@page "/jobs"
+@rendermode InteractiveServer
+
+@inject IJobService JobSvc
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Jobs</h2>
+    @if (!IsPostJobVisible)
+    {
+        <button type="button" class="btn btn-primary" @onclick="GoToNewJob">+ Post Job</button>
+    }
+</div>
+
+@* status messages removed; simplified UI *@
+
+<div class="d-flex flex-wrap gap-3 mb-3 align-items-center">
+    <div class="d-flex align-items-center gap-2">
+        <label class="form-label mb-0">Filter:</label>
+        <select class="form-select form-select-sm w-auto" @bind="filter" @bind:after="LoadAsync">
+            <option value="all">All</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+        </select>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <label class="form-label mb-0">Sort:</label>
+        <select class="form-select form-select-sm w-auto" @bind="sortBy" @bind:after="ApplySort">
+            <option value="date">Date Posted</option>
+            <option value="title">Title</option>
+            <option value="company">Company</option>
+        </select>
+    </div>
+</div>
+
+@if (jobs is null)
+{
+    <p>Loading...</p>
+}
+else if (!jobs.Any())
+{
+    <div class="alert alert-info">No jobs found.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+            <tr>
+                <th>Title</th>
+                <th>Company</th>
+                <th>Location</th>
+                <th>Pay</th>
+                <th>CDL</th>
+                <th>Posted</th>
+                <th>Status</th>
+                <th>Apps</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var job in jobs)
+            {
+                var rowJob = job;
+                <tr>
+                    <td><strong>@rowJob.Title</strong></td>
+                    <td>@(rowJob.Company?.Name ?? "")</td>
+                    <td>@(rowJob.City != null ? $"{rowJob.City}, {rowJob.State}" : rowJob.State)</td>
+                    <td>
+                        @if (rowJob.PayRate.HasValue)
+                        {
+                            <span
+                                class="text-nowrap">$@rowJob.PayRate.Value.ToString("N2")/@rowJob.PayPeriod?.ToString().ToLower()</span>
+                        }
+                    </td>
+                    <td>
+                        @if (rowJob.RequiredCdlClass.HasValue)
+                        {
+                            <span class="badge bg-dark">CDL-@rowJob.RequiredCdlClass</span>
+                        }
+                    </td>
+                    <td class="text-nowrap">@rowJob.PostedAt.ToLocalTime().ToString("MM/dd/yyyy")</td>
+                    <td>
+                        @if (rowJob.IsActive)
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Inactive</span>
+                        }
+                    </td>
+                    <td>@rowJob.Applications.Count</td>
+                    <td>
+                        <div class="d-flex gap-1 flex-nowrap">
+                            <button type="button" class="btn btn-sm btn-primary"
+                                    @onclick="() => GoToDetails(rowJob.Id)">View Details
+                            </button>
+                            @if (!isDriver)
+                            {
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                        @onclick="() => GoToEdit(rowJob.Id)">Edit
+                                </button>
+                                <button type="button"
+                                        class="btn btn-sm @(rowJob.IsActive ? "btn-outline-warning" : "btn-outline-success")"
+                                        @onclick="async () => await ToggleActiveAsync(rowJob.Id, rowJob.IsActive)"
+                                        disabled="@(togglingJobId == rowJob.Id)">
+                                    @(togglingJobId == rowJob.Id ? "Processing..." : rowJob.IsActive ? "Disable" : "Activate")
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                        @onclick="async () => ConfirmDelete(rowJob)">Delete
+                                </button>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (deleteTarget is not null)
+{
+    <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                </div>
+                <div class="modal-body">
+                    Delete <strong>@deleteTarget.Title</strong> at @(deleteTarget.Company?.Name ?? "")?
+                    This will also remove all @deleteTarget.Applications.Count application(s).
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="() => deleteTarget = null">Cancel</button>
+                    <button class="btn btn-danger" @onclick="DeleteConfirmedAsync">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Job>? jobs;
+    private string filter = "all";
+    private string sortBy = "date";
+    private Job? deleteTarget;
+    private bool IsPostJobVisible;
+    private int? togglingJobId;
+    private bool isDriver;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
+        isDriver = user.IsInRole("Driver");
+        IsPostJobVisible = isDriver || user.FindFirst("company") == null;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        var all = await JobSvc.GetAllAsync();
+        jobs = (filter switch
+        {
+            "active" => all.Where(j => j.IsActive),
+            "inactive" => all.Where(j => !j.IsActive),
+            _ => all.AsEnumerable()
+        }).ToList();
+        ApplySort();
+    }
+
+    private void ApplySort()
+    {
+        if (jobs is null) return;
+        jobs = sortBy switch
+        {
+            "title" => [.. jobs.OrderBy(j => j.Title)],
+            "company" => jobs.OrderBy(j => j.Company?.Name).ToList(),
+            _ => [.. jobs.OrderByDescending(j => j.PostedAt)]
+        };
+    }
+
+    private async Task ToggleActiveAsync(int jobId, bool currentActive)
+    {
+        togglingJobId = jobId;
+        try
+        {
+            await JobSvc.SetActiveAsync(jobId, !currentActive);
+            await LoadAsync();
+        }
+        finally
+        {
+            togglingJobId = null;
+        }
+    }
+
+    private void GoToNewJob()
+    {
+        Nav.NavigateTo("/jobs/new");
+    }
+
+    private void GoToDetails(int id)
+    {
+        Nav.NavigateTo($"/jobs/{id}");
+    }
+
+    private void GoToEdit(int id)
+    {
+        Nav.NavigateTo($"/jobs/edit/{id}");
+    }
+
+    private void ConfirmDelete(Job job)
+    {
+        deleteTarget = job;
+    }
+
+    private async Task DeleteConfirmedAsync()
+    {
+        if (deleteTarget is null) return;
+        await JobSvc.DeleteAsync(deleteTarget.Id);
+        deleteTarget = null;
+        await LoadAsync();
+    }
+
+}

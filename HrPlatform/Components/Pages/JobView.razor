@@ -1,0 +1,361 @@
+@page "/jobs/{Id:int}"
+@using System.Security.Claims
+@rendermode InteractiveServer
+
+@inject IJobService JobSvc
+@inject IJobApplicationService AppSvc
+@inject IDriverProfileService ProfileSvc
+@inject AuthenticationStateProvider AuthState
+@inject NavigationManager Nav
+
+<h2>Job Details</h2>
+
+@if (loading)
+{
+    <p>Loading...</p>
+}
+else if (job is null)
+{
+    <div class="alert alert-danger">Job not found.</div>
+}
+else
+{
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/jobs">Jobs</a></li>
+            <li class="breadcrumb-item active">Details</li>
+        </ol>
+    </nav>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <h4 class="card-title">@job.Title</h4>
+                    <h6 class="card-subtitle text-muted mb-2">@(job.Company?.Name ?? "")</h6>
+                </div>
+                <div class="text-end">
+                    @if (job.IsActive)
+                    {
+                        <span class="badge bg-success">Active</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">Inactive</span>
+                    }
+                </div>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <p class="mb-1">
+                        <strong>Location</strong><br/>
+                        @if (!string.IsNullOrEmpty(job.City))
+                        {
+                            <text>@job.City, </text>
+                        }
+                        <text>@job.State</text>
+                        @if (!string.IsNullOrEmpty(job.ZipCode))
+                        {
+                            <text> · @job.ZipCode</text>
+                        }
+                    </p>
+                    <p class="mb-1"><strong>Posted</strong> @job.PostedAt.ToLocalTime().ToString("MM/dd/yyyy")</p>
+                    <p class="mb-1"><strong>Updated</strong> @job.UpdatedAt.ToLocalTime().ToString("MM/dd/yyyy")</p>
+                    <p class="mb-1">
+                        <strong>Expires</strong> @(job.ExpiresAt.HasValue ? job.ExpiresAt.Value.ToLocalTime().ToString("MM/dd/yyyy") : "—")
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    @if (job.PayRate.HasValue)
+                    {
+                        <p class="mb-1">
+                            <strong>Pay</strong><br/>$@job.PayRate.Value.ToString("N2")/@job.PayPeriod?.ToString().ToLower()
+                        </p>
+                        @if (!string.IsNullOrEmpty(job.PayNotes))
+                        {
+                            <p class="mb-1"><strong>Notes</strong><br/>@job.PayNotes</p>
+                        }
+                    }
+
+                    @if (job.RequiredCdlClass.HasValue)
+                    {
+                        <p class="mb-1"><strong>Required CDL</strong><br/>CDL-@job.RequiredCdlClass</p>
+                    }
+
+                    @if (job.RequiredTrailerType.HasValue)
+                    {
+                        <p class="mb-1"><strong>Trailer Type</strong><br/>@job.RequiredTrailerType</p>
+                    }
+
+                    <p class="mb-1"><strong>Min.
+                            Experience</strong><br/>@(job.MinYearsExperience > 0 ? job.MinYearsExperience + " yrs" : "—")
+                    
+                    </p>
+                </div>
+            </div>
+
+            <hr/>
+
+            <div class="mb-2">
+                <strong>Required Endorsements</strong>
+                <div class="mt-2 d-flex flex-wrap gap-2">
+                    @if (job.RequiredEndorsements is not null && job.RequiredEndorsements.Any())
+                    {
+                        @foreach (var e in job.RequiredEndorsements)
+                        {
+                            <span class="badge bg-secondary">@e</span>
+                        }
+                    }
+                    else
+                    {
+                        <span class="text-muted">None</span>
+                    }
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(job.Description))
+            {
+                <hr/>
+                <p class="mb-0 mt-2 small" style="white-space:pre-line">@job.Description</p>
+            }
+            @* For non-driver users show Edit and Back buttons *@
+        </div>
+    </div>
+
+    @* Apply area (only for users in the Driver role) *@
+    <AuthorizeView Roles="Driver">
+        <Authorized>
+            @if (applied)
+            {
+                <div class="alert alert-success">
+                    <h5 class="alert-heading">Application Submitted!</h5>
+                    <table class="table table-sm table-borderless mb-2" style="max-width:420px">
+                        <tr>
+                            <th>Application ID</th>
+                            <td>#@appliedApp!.Id</td>
+                        </tr>
+                        <tr>
+                            <th>Job ID</th>
+                            <td>#@appliedApp.JobId</td>
+                        </tr>
+                        <tr>
+                            <th>Profile ID</th>
+                            <td>#@appliedApp.DriverProfileId</td>
+                        </tr>
+                        <tr>
+                            <th>Date Submitted</th>
+                            <td>@appliedApp.AppliedAt.ToLocalTime().ToString("MM/dd/yyyy h:mm tt")</td>
+                        </tr>
+                        <tr>
+                            <th>Status</th>
+                            <td><span class="badge bg-warning text-dark">@appliedApp.Status</span></td>
+                        </tr>
+                    </table>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm" @onclick="GoToEditProfile">Review
+                            Profile
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="GoToApplications">All
+                            Applications
+                        </button>
+                    </div>
+                </div>
+            }
+            else if (alreadyApplied)
+            {
+                <div class="alert alert-info">You have already applied for this position.</div>
+            }
+            else if (driverProfile is null)
+            {
+                <div class="alert alert-warning">
+                    <strong>Driver profile required.</strong>
+                    <a class="alert-link ms-1" role="button" style="cursor:pointer" @onclick="GoToCreateProfile">Create
+                        your profile</a> before applying.
+                </div>
+            }
+            else
+            {
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <strong>Step 1 — Review Your Profile</strong>
+                        <button type="button" class="btn btn-sm btn-outline-primary" @onclick="GoToEditProfile">Update
+                            Profile
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>@driverProfile.FirstName @driverProfile.LastName</strong></p>
+                                <p class="mb-1">@driverProfile.Email · @driverProfile.PhoneNumber</p>
+                                @if (driverProfile.City != null)
+                                {
+                                    <p class="mb-1">@driverProfile.City, @driverProfile.State</p>
+                                }
+                            </div>
+                            <div class="col-md-6">
+                                @if (driverProfile.License is not null)
+                                {
+                                    <p class="mb-1">
+                                        CDL-@driverProfile.License.Class · #@driverProfile.License.LicenseNumber
+                                        · Exp: @driverProfile.License.ExpiryDate
+                                    </p>
+                                }
+                                <p class="mb-1">
+                                    @driverProfile.YearsOfExperience yrs experience
+                                    · @driverProfile.TotalMilesDriven.ToString("N0") miles
+                                </p>
+                                @{
+                                    var trailerTypes = driverProfile.AllTrailerTypes.ToList();
+                                }
+                                @if (trailerTypes.Any())
+                                {
+                                    <div class="d-flex flex-wrap gap-1 mt-1">
+                                        @foreach (var t in trailerTypes)
+                                        {
+                                            <span class="badge bg-secondary">@t</span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header"><strong>Step 2 — Confirm Application</strong></div>
+                    <div class="card-body">
+                        <table class="table table-sm table-borderless mb-0" style="max-width:380px">
+                            <tr>
+                                <th>Job</th>
+                                <td>@job.Title (#@job.Id)</td>
+                            </tr>
+                            <tr>
+                                <th>Company</th>
+                                <td>@(job.Company?.Name ?? "")</td>
+                            </tr>
+                            <tr>
+                                <th>Profile ID</th>
+                                <td>#@driverProfile.Id</td>
+                            </tr>
+                            <tr>
+                                <th>Date</th>
+                                <td>@DateTime.Now.ToString("MM/dd/yyyy")</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <button class="btn btn-success btn-lg" @onclick="SubmitAsync" disabled="@submitting">
+                    @(submitting ? "Submitting..." : "Submit Application")
+                </button>
+
+                @if (!string.IsNullOrEmpty(error))
+                {
+                    <div class="alert alert-danger mt-3">@error</div>
+                }
+            }
+        </Authorized>
+        <NotAuthorized>
+            <div class="alert alert-info">
+                @if (!isAuthenticated)
+                {
+                    <text>Please <a href="/Identity/Account/Login">sign in</a> to apply.</text>
+                }
+                else
+                {
+                    <text>You do not have permission to apply. Only users in the <strong>Driver</strong> role can
+                        apply.</text>
+                }
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
+
+    <div class="d-flex justify-content-end gap-2 mt-3 mb-4">
+        <button type="button" class="btn btn-outline-secondary" @onclick="GoBack">Back</button>
+        @if (!isDriver)
+        {
+            <button type="button" class="btn btn-primary" @onclick="GoToEdit">Edit Job</button>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Job? job;
+    private DriverProfile? driverProfile;
+    private JobApplication? appliedApp;
+    private bool alreadyApplied;
+    private bool applied;
+    private bool loading = true;
+    private bool submitting;
+    private string? error;
+    private bool isAuthenticated;
+    private bool isDriver;
+
+    protected override async Task OnInitializedAsync()
+    {
+        job = await JobSvc.GetByIdAsync(Id);
+
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        var user = auth.User;
+        isAuthenticated = user?.Identity?.IsAuthenticated == true;
+        isDriver = isAuthenticated && user.IsInRole("Driver");
+
+        if (isDriver)
+        {
+            var userId = user.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+            driverProfile = await ProfileSvc.GetByUserIdAsync(userId);
+            if (driverProfile is not null)
+                alreadyApplied = await AppSvc.HasAppliedAsync(Id, driverProfile.Id);
+        }
+
+        loading = false;
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (driverProfile is null || job is null)
+            return;
+        submitting = true;
+        try
+        {
+            appliedApp = await AppSvc.ApplyAsync(Id, driverProfile.Id);
+            applied = true;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            submitting = false;
+        }
+    }
+
+    private void GoToEdit()
+    {
+        Nav.NavigateTo($"/jobs/edit/{Id}");
+    }
+
+    private void GoBack()
+    {
+        Nav.NavigateTo("/jobs");
+    }
+
+    private void GoToCreateProfile()
+    {
+        var returnUrl = Uri.EscapeDataString($"/jobs/{Id}");
+        Nav.NavigateTo($"/profiles/new?returnUrl={returnUrl}");
+    }
+
+    private void GoToEditProfile()
+    {
+        var returnUrl = Uri.EscapeDataString($"/jobs/{Id}");
+        Nav.NavigateTo($"/profiles/new?returnUrl={returnUrl}");
+    }
+
+    private void GoToApplications()
+    {
+        Nav.NavigateTo("/applications");
+    }
+
+}
