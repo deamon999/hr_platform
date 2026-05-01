@@ -1,3 +1,4 @@
+using HrPlatform.Data.Entities;
 using HrPlatform.Data.Enums;
 using HrPlatform.Data.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -17,6 +18,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<DriverEducation> DriverEducations => Set<DriverEducation>();
     public DbSet<DriverCertification> DriverCertifications => Set<DriverCertification>();
     public DbSet<JobApplication> JobApplications => Set<JobApplication>();
+    public DbSet<Invitation> Invitations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -26,6 +28,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         {
             e.Property(j => j.PayPeriod).HasConversion<string>();
             e.Property(j => j.RequiredCdlClass).HasConversion<string>();
+            e.Property(j => j.EmploymentType).HasConversion<string>();
             e.Property(j => j.RequiredTrailerType).HasConversion<string>();
             e.Property(j => j.RequiredEndorsements).HasConversion(
                 v => string.Join(',', v.Select(e => e.ToString())),
@@ -129,6 +132,16 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasForeignKey(a => a.DriverProfileId)
                 .OnDelete(DeleteBehavior.Restrict);
             e.Property(a => a.Status).HasConversion<string>();
+        });
+
+        b.Entity<Invitation>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Token).IsUnique();
+            entity.HasIndex(e => e.Email);
+            entity.Property(e => e.Token).IsRequired().HasMaxLength(64);
+            entity.Property(e => e.Email).IsRequired().HasMaxLength(256);
+            entity.Property(e => e.Role).IsRequired().HasMaxLength(50);
         });
     }
 }

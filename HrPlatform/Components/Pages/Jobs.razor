@@ -1,4 +1,5 @@
-﻿@page "/jobs"
+﻿@page "/"
+@page "/jobs"
 @rendermode InteractiveServer
 
 @inject IJobService JobSvc
@@ -7,7 +8,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">Jobs</h2>
-    @if (!IsPostJobVisible)
+    @if (IsPostJobVisible)
     {
         <button type="button" class="btn btn-primary" @onclick="GoToNewJob">+ Post Job</button>
     }
@@ -155,7 +156,7 @@ else
     {
         var user = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
         isDriver = user.IsInRole("Driver");
-        IsPostJobVisible = isDriver || user.FindFirst("company") == null;
+        IsPostJobVisible = (user.IsInRole("Manager") && user.FindFirst("companyId") != null) || user.IsInRole("Admin");
         await LoadAsync();
     }
 

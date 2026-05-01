@@ -1,0 +1,286 @@
+﻿@page "/users/invite"
+@page "/jobs/invite/{Id:int}"
+@rendermode InteractiveServer
+
+@using HrPlatform.Data.Entities
+@using HrPlatform.Models
+
+@attribute [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.Manager}")]
+@inject ICompanyService CompanyService
+@inject IInvitationService InvitationService
+@inject IEmailService EmailService
+@inject ISmsService SmsService
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthState
+@inject RoleManager<IdentityRole> RoleManager
+
+<PageTitle>Send Invitation</PageTitle>
+
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4" @onclick="GoToInvitations">
+        <h3 class="mb-0">Send Invitation</h3>
+        <a class="btn btn-outline-secondary btn-sm">
+            ← Back to Invitations
+        </a>
+    </div>
+
+    <div class="row g-4">
+
+        <div class="col-lg-5">
+            <div class="card shadow-sm">
+                <div class="card-body">
+
+                    @if (!string.IsNullOrEmpty(_successMessage))
+                    {
+                        <div class="alert alert-success alert-dismissible" role="alert">
+                            @_successMessage
+                            <button type="button" class="btn-close"
+                                    @onclick="() => _successMessage = string.Empty"></button>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(_errorMessage))
+                    {
+                        <div class="alert alert-danger alert-dismissible" role="alert">
+                            @_errorMessage
+                            <button type="button" class="btn-close"
+                                    @onclick="() => _errorMessage = string.Empty"></button>
+                        </div>
+                    }
+
+                    <EditForm Model="_model" OnValidSubmit="HandleSubmit">
+                        <DataAnnotationsValidator/>
+                        <ValidationSummary class="text-danger"/>
+
+                        <div class="mb-3">
+                            <label class="form-label">Contact Method</label>
+
+                            <InputRadioGroup @bind-Value="_model.ContactMethod" Name="contactMethod"
+                                             @onchange="OnContactMethodChanged">
+                                <div class="form-check form-check-inline">
+                                    <InputRadio class="form-check-input" Value="@ContactMethod.Email"
+                                                id="contactEmail"/>
+                                    <label class="form-check-label" for="contactEmail">Email</label>
+                                </div>
+
+                                <div class="form-check form-check-inline">
+                                    <InputRadio class="form-check-input" Value="@ContactMethod.Phone"
+                                                id="contactPhone"/>
+                                    <label class="form-check-label" for="contactPhone">Phone</label>
+                                </div>
+                            </InputRadioGroup>
+                        </div>
+
+
+                        @if (_model.ContactMethod == ContactMethod.Phone)
+                        {
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Phone Number</label>
+                                <InputText class="form-control" @bind-Value="_model.Phone" placeholder="+1234567890"/>
+                                <ValidationMessage For="() => _model.Phone" class="text-danger"/>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Email address</label>
+                                <InputText @bind-Value="_model.Email"
+                                           class="form-control"
+                                           placeholder="user@example.com"/>
+                                <ValidationMessage For="() => _model.Email" class="text-danger"/>
+                            </div>
+                        }
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Role</label>
+                            <InputSelect @bind-Value="_model.Role" class="form-select">
+                                <option value="">-- Select a role --</option>
+                                @foreach (var role in _roles)
+                                {
+                                    <option value="@role">@role</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="() => _model.Role" class="text-danger"/>
+                        </div>
+
+                        @if (_model.Role == "Manager")
+                        {
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Company ID</label>
+                                <InputSelect @bind-Value="_model.CompanyId"
+                                             class="form-select">
+                                    <option value="">-- Select a company --</option>
+                                    @foreach (var company in _companies)
+                                    {
+                                        <option value="@company.Id">@company.Name</option>
+                                    }
+                                </InputSelect>
+                                <div class="form-text">
+                                    This will be stored on the user's profile automatically.
+                                </div>
+                                <ValidationMessage For="() => _model.CompanyId" class="text-danger"/>
+                            </div>
+                        }
+
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-primary" disabled="@_sending">
+                                @if (_sending)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2"
+                                          role="status" aria-hidden="true"></span>
+                                }
+                                Send Invitation
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int? Id { get; set; }
+    private InviteModel _model = new();
+    private string _successMessage = string.Empty;
+    private string _errorMessage = string.Empty;
+    private bool _sending;
+    private List<Company> _companies = new();
+    private List<string> _roles = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _companies = await CompanyService.GetAllAsync();
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        var user = auth.User;
+        if (Id.HasValue)
+        {
+            _model.JobId = Id.Value;
+            _roles = RoleManager.Roles
+                .Where(r => r.Name.Equals(RoleConstants.Driver))
+                .Select(r => r.Name)
+                .ToList()!;
+            _model.Role = RoleConstants.Driver;
+            _model.CompanyId = Convert.ToInt32(user.FindFirst("companyId"));
+        }
+        else if (!Id.HasValue && user.IsInRole(RoleConstants.Manager))
+        {
+            // load roles synchronously from RoleManager (store may not support EF async here)
+            _roles = RoleManager.Roles
+                .Where(r => !r.Name!.Equals(RoleConstants.Admin) && !r.Name.Equals(RoleConstants.Driver))
+                .Select(r => r.Name)
+                .ToList()!;
+        }
+    }
+
+    private void OnContactMethodChanged(ChangeEventArgs e)
+    {
+        if (_model.ContactMethod == ContactMethod.Phone)
+        {
+            _model.Email = string.Empty;
+        }
+        else
+        {
+            _model.Phone = string.Empty;
+        }
+    }
+
+
+    private async Task HandleSubmit()
+    {
+        _sending = true;
+        _successMessage = string.Empty;
+        _errorMessage = string.Empty;
+
+        try
+        {
+            if (_model.Role == "Manager")
+            {
+                if (_model.CompanyId is null)
+                {
+                    _errorMessage = "Please select a company for the manager invitation.";
+                    return;
+                }
+
+                var companyExists = await CompanyService.GetByIdAsync(_model.CompanyId.Value);
+                if (companyExists == null)
+                {
+                    _errorMessage = "Selected company was not found.";
+                    return;
+                }
+            }
+
+            var normalisedEmail = _model.Email?.Trim().ToLowerInvariant() ?? "";
+            var normalisedPhone = _model.Phone?.Trim().ToLowerInvariant() ?? "";
+
+            // Guard: no duplicate pending invitations
+            var exists = await InvitationService.InvitationExistsAsync(normalisedEmail, normalisedPhone);
+
+            if (exists)
+            {
+                _errorMessage = $"A pending invitation already exists for {_model.Email}.";
+                return;
+            }
+
+            var invitation = new Invitation
+            {
+                ContactMethod = _model.ContactMethod,
+                Email = normalisedEmail,
+                Phone = normalisedPhone,
+                Role = _model.Role,
+                CompanyId = _model.Role == "Manager" ? _model.CompanyId : null
+            };
+
+            var link = Nav.ToAbsoluteUri($"/Account/Register?token={invitation.Token}");
+
+            if (ContactMethod.Email == invitation.ContactMethod)
+            {
+                // @formatter:off
+                await EmailService.SendEmailAsync(
+                    invitation.Email,
+                    null,
+                    "You've been invited to join",
+                    $"""
+                     <p>
+                         <a href="{link}" style="
+                             display:inline-block;padding:10px 20px;
+                             background:#0d6efd;color:#fff;
+                             text-decoration:none;border-radius:4px;">
+                             Accept Invitation
+                         </a>
+                     </p>
+                     <p>This link expires on <strong>{invitation.ExpiresAt:MMMM dd, yyyy}</strong>.</p>
+                     <p style="color:#6c757d;font-size:.85em;">
+                         If you did not expect this invitation, you can safely ignore this email.
+                     </p>
+                     """
+                );
+                // @formatter:on
+                _successMessage = $"Invitation sent to {invitation.Email}.";
+            }
+            else
+            {
+                await SmsService.SendDriverInviteAsync(invitation.Phone, null, null, link.AbsolutePath);
+                _successMessage = $"Invitation sent to {invitation.Phone}.";
+            }
+
+            await InvitationService.CreateAsync(invitation);
+            _model = new();
+            GoToInvitations();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Failed to send invitation: {ex.Message}";
+        }
+        finally
+        {
+            _sending = false;
+        }
+    }
+
+    private void GoToInvitations()
+    {
+        Nav.NavigateTo("/invitations");
+    }
+
+}

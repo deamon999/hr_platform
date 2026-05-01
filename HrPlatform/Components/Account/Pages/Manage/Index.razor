@@ -4,6 +4,7 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject SignInManager<ApplicationUser> SignInManager
 @inject IdentityRedirectManager RedirectManager
+@inject ICompanyService CompanyService
 
 <PageTitle>Profile</PageTitle>
 
@@ -20,11 +21,31 @@
                        placeholder="Choose your username." disabled/>
                 <label for="username" class="form-label">Username</label>
             </div>
+            @if (!string.IsNullOrEmpty(companyName))
+            {
+                <div class="form-floating mb-3">
+                    <input type="text" value="@companyName" id="companyname" class="form-control"
+                           placeholder="Your assigned company." disabled/>
+                    <label for="companyname" class="form-label">Company name</label>
+                </div>
+            }
             <div class="form-floating mb-3">
                 <InputText @bind-Value="Input.PhoneNumber" id="Input.PhoneNumber" class="form-control"
                            placeholder="Enter your phone number"/>
                 <label for="Input.PhoneNumber" class="form-label">Phone number</label>
                 <ValidationMessage For="() => Input.PhoneNumber" class="text-danger"/>
+            </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.FirstName" id="Input.FirstName" class="form-control"
+                           placeholder="Enter your first name"/>
+                <label for="Input.FirstName" class="form-label">First Name</label>
+                <ValidationMessage For="() => Input.FirstName" class="text-danger"/>
+            </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.LastName" id="Input.LastName" class="form-control"
+                           placeholder="Enter your last name"/>
+                <label for="Input.LastName" class="form-label">Last Name</label>
+                <ValidationMessage For="() => Input.LastName" class="text-danger"/>
             </div>
             <button type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
         </EditForm>
@@ -34,7 +55,10 @@
 @code {
     private ApplicationUser? user;
     private string? username;
+    private string? companyName;
     private string? phoneNumber;
+    private string? firstName;
+    private string? lastName;
 
     [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
 
@@ -50,11 +74,22 @@
             RedirectManager.RedirectToInvalidUser(UserManager, HttpContext);
             return;
         }
+        
+        username = user.UserName;
+        if (user.CompanyId != null)
+        {
+            int companyId = user.CompanyId.Value;
+            var company = await CompanyService.GetByIdAsync(companyId);
+            companyName = company.Name;
+        }
 
-        username = await UserManager.GetUserNameAsync(user);
-        phoneNumber = await UserManager.GetPhoneNumberAsync(user);
+        phoneNumber = user.PhoneNumber;
+        firstName = user.FirstName;
+        lastName = user.LastName;
 
         Input.PhoneNumber ??= phoneNumber;
+        Input.FirstName ??= firstName;
+        Input.LastName ??= lastName;
     }
 
     private async Task OnValidSubmitAsync()
@@ -65,12 +100,15 @@
             return;
         }
 
-        if (Input.PhoneNumber != phoneNumber)
+        if (Input.PhoneNumber != phoneNumber || Input.FirstName != firstName || Input.LastName != lastName)
         {
-            var setPhoneResult = await UserManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
-            if (!setPhoneResult.Succeeded)
+            user.PhoneNumber = Input.PhoneNumber;
+            user.FirstName = Input.FirstName;
+            user.LastName = Input.LastName;
+            var updateResult = await UserManager.UpdateAsync(user);
+            if (!updateResult.Succeeded)
             {
-                RedirectManager.RedirectToCurrentPageWithStatus("Error: Failed to set phone number.", HttpContext);
+                RedirectManager.RedirectToCurrentPageWithStatus("Error: Failed to update user.", HttpContext);
                 return;
             }
         }
@@ -84,6 +122,9 @@
         [Phone]
         [Display(Name = "Phone number")]
         public string? PhoneNumber { get; set; }
+
+        [Display(Name = "First name")] public string? FirstName { get; set; }
+        [Display(Name = "Last Name")] public string? LastName { get; set; }
     }
 
 }

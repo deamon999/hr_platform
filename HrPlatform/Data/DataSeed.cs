@@ -30,7 +30,10 @@ public static class DataSeed
             {
                 UserName = adminEmail,
                 Email = adminEmail,
-                EmailConfirmed = true
+                EmailConfirmed = true,
+                PhoneNumber = "3149707320",
+                FirstName = "Admin",
+                LastName = "Admin",
             };
 
             var result = await userManager.CreateAsync(admin, adminPassword);
@@ -49,8 +52,11 @@ public static class DataSeed
             driver = new ApplicationUser
             {
                 UserName = driverEmail,
-                Email = driverPassword,
-                EmailConfirmed = true
+                Email = driverEmail,
+                EmailConfirmed = true,
+                PhoneNumber = "3149707320",
+                FirstName = "Driver",
+                LastName = "Driver",
             };
 
             var result = await userManager.CreateAsync(driver, driverPassword);
@@ -89,9 +95,12 @@ public static class DataSeed
             manager = new ApplicationUser
             {
                 UserName = managerEmail,
-                Email = managerPassword,
+                Email = managerEmail,
                 EmailConfirmed = true,
-                CompanyId = defaultCompany.Id
+                CompanyId = defaultCompany.Id,
+                PhoneNumber = "3149707320",
+                FirstName = "Manager",
+                LastName = "Manager",
             };
 
             var result = await userManager.CreateAsync(manager, managerPassword);

@@ -1,10 +1,12 @@
 ﻿@page "/jobs/new"
 @page "/jobs/edit/{Id:int}"
+@using HrPlatform.Utils
 @rendermode InteractiveServer
 
 @attribute [Authorize]
 @inject IJobService JobSvc
 @inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthState
 
 <h2>@(Id == 0 ? "Post New Job" : "Edit Job")</h2>
 
@@ -27,7 +29,7 @@ else
             </div>
             <div class="col-md-6">
                 <label class="form-label">Company</label>
-                <InputSelect class="form-select" @bind-Value="job.CompanyId">
+                <InputSelect class="form-select" @bind-Value="job.CompanyId" disabled="@isCompanySelectionDisabled">
                     <option value="">— select —</option>
                     @foreach (var c in companies)
                     {
@@ -102,8 +104,14 @@ else
                 <InputNumber class="form-control" @bind-Value="job.MinYearsExperience"/>
             </div>
             <div class="col-md-3">
-                <label class="form-label">Expires On</label>
-                <InputDate TValue="DateTime?" class="form-control" @bind-Value="job.ExpiresAt"/>
+                <label class="form-label">Employment Type</label>
+                <InputSelect TValue="EmploymentType?" class="form-select" @bind-Value="job.EmploymentType">
+                    <option value="">Any</option>
+                    @foreach (var t in Enum.GetValues<EmploymentType>())
+                    {
+                        <option value="@t">@t.GetDescriptionValue()</option>
+                    }
+                </InputSelect>
             </div>
 
             <div class="col-12">
@@ -145,12 +153,20 @@ else
     [Parameter] public int Id { get; set; }
     private Job? job;
     private string? successMsg;
-    private List<Company>? companies;
+    private List<Company> companies = new();
+    private bool isCompanySelectionDisabled = false;
 
     protected override async Task OnInitializedAsync()
     {
-        companies = await JobSvc.GetCompaniesAsync();
         job = Id == 0 ? new Job() : await JobSvc.GetByIdAsync(Id) ?? new Job();
+        companies = await JobSvc.GetCompaniesAsync();
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        var user = auth.User;
+        if (user.FindFirst("companyId") != null)
+        {
+            isCompanySelectionDisabled = true;
+            job.CompanyId = Convert.ToInt32(user.FindFirst("companyId").Value);
+        }
     }
 
     private async Task SaveAsync()

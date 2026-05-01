@@ -1,4 +1,3 @@
-@page "/users/new"
 @page "/users/{Id}"
 @page "/users/edit/{Id}"
 @using HrPlatform.Models
@@ -10,7 +9,7 @@
 @inject ICompanyService CompanySvc
 @inject AuthenticationStateProvider AuthState
 @inject NavigationManager Nav
-@inject AdminUserService UserService
+@inject IAdminUserService UserService
 
 <h2>User Management</h2>
 
@@ -25,13 +24,15 @@ else if (IsViewMode)
         <div class="card-body">
             <p><strong>Username:</strong> @model?.Username</p>
             <p><strong>Email:</strong> @model?.Email</p>
+            <p><strong>Phone:</strong> @model?.Phone</p>
             <p><strong>Role:</strong> @model?.Roles</p>
             <p><strong>Company ID:</strong> @model?.CompanyId</p>
+            <p><strong>Company Name:</strong> @model?.CompanyName</p>
         </div>
     </div>
     <button class="btn btn-outline-secondary" type="button" @onclick="GoToUsers">Back</button>
 }
-else if (IsEditMode)
+else
 {
     <h3>Edit User: </h3>
     <EditForm Model="model" OnValidSubmit="UpdateAsync">
@@ -39,12 +40,16 @@ else if (IsEditMode)
         <ValidationSummary/>
 
         <div class="mb-3">
+            <label class="form-label">User Name *</label>
+            <InputText class="form-control" @bind-Value="model.Username"/>
+        </div>
+        <div class="mb-3">
             <label class="form-label">Email *</label>
             <InputText class="form-control" @bind-Value="model.Email"/>
         </div>
         <div class="mb-3">
-            <label class="form-label">Password *</label>
-            <InputText class="form-control" type="password" @bind-Value="model.Password"/>
+            <label class="form-label">Phone *</label>
+            <InputText class="form-control" @bind-Value="model.Phone"/>
         </div>
         <div class="mb-3">
             <label class="form-label">Role</label>
@@ -83,77 +88,16 @@ else if (IsEditMode)
         </div>
     </EditForm>
 }
-else
-{
-    <EditForm Model="model" OnValidSubmit="CreateAsync">
-        <DataAnnotationsValidator/>
-        <ValidationSummary/>
-
-        <div class="mb-3">
-            <label class="form-label">Email *</label>
-            <InputText class="form-control" @bind-Value="model.Email"/>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Password *</label>
-            <InputText class="form-control" type="password" @bind-Value="model.Password"/>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Role</label>
-            <InputSelect class="form-select" @bind-Value="model.Roles">
-                @foreach (var r in roles)
-                {
-                    <option value="@r">@r</option>
-                }
-            </InputSelect>
-        </div>
-
-        @if (isAdmin)
-        {
-            <div class="mb-3">
-                <label class="form-label">Company</label>
-                <InputSelect class="form-select" @bind-Value="model.CompanyId">
-                    <option value="">— none —</option>
-                    @foreach (var c in companies)
-                    {
-                        <option value="@c.Id">@c.Name</option>
-                    }
-                </InputSelect>
-            </div>
-        }
-        else
-        {
-            <div class="mb-3">
-                <label class="form-label">Company</label>
-                <div>@(myCompany?.Name ?? "(none)")</div>
-            </div>
-        }
-
-        <div class="d-flex gap-2">
-            <button class="btn btn-primary" type="submit">Create User</button>
-            <button class="btn btn-outline-secondary" type="button" @onclick="GoToUsers">Cancel</button>
-        </div>
-
-        @if (!string.IsNullOrEmpty(successMessage))
-        {
-            <div class="alert alert-success mt-3">@successMessage</div>
-        }
-        @if (!string.IsNullOrEmpty(errorMessage))
-        {
-            <div class="alert alert-danger mt-3">@errorMessage</div>
-        }
-    </EditForm>
-}
 
 @code {
     [Parameter] public string Id { get; set; }
     private bool isLoading = true;
     private bool IsViewMode = false;
-    private bool IsEditMode = false;
     private bool isAdmin = false;
 
     private Company? myCompany;
     private List<Company>? companies;
-    private List<string> roles = new();
+    private List<string?> roles = new();
 
     private UserViewModel model = new();
     private string? successMessage;
@@ -166,7 +110,10 @@ else
         isAdmin = user.IsInRole(RoleConstants.Admin);
 
         // load roles synchronously from RoleManager (store may not support EF async here)
-        roles = [RoleConstants.Manager];
+        roles =  RoleManager.Roles
+            .Where(r => !r.NormalizedName.Equals("ADMIN"))
+            .Select(r => r.Name)
+            .ToList();
 
         if (isAdmin)
         {
@@ -183,61 +130,25 @@ else
             }
         }
 
-        // Check if we are in view or edit mode based on the current route
+        // Check if we are in view or edit mode based on the current route and load data accordingly
         var uri = Nav.Uri.ToLower();
         if (uri.Contains("/edit/"))
         {
-            IsEditMode = true;
             model = await UserService.GetUserByIdAsync(Id);
-        }
-        else if (uri.Contains("/view/")) // Assuming /users/{Id:string} maps to /users/view/{Id} or similar, adjusting logic based on context
-        {
-            // Since the routes are defined as @page "/users/{Id:string}", we use UserId directly for view mode
-            IsViewMode = true;
         }
         else
         {
-            isLoading = false;
+            // If we are in view mode, load the user details
+            model = await UserService.GetUserByIdAsync(Id);
+            IsViewMode = true;
         }
+
+        isLoading = false;
     }
 
     private void GoToUsers()
     {
         Nav.NavigateTo("/users"); // Assuming /users is a list view if implemented elsewhere
-    }
-
-    private async Task CreateAsync()
-    {
-        errorMessage = null;
-        successMessage = null;
-
-        if (string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.Password))
-        {
-            errorMessage = "Email and password are required.";
-            return;
-        }
-
-        var user = new ApplicationUser
-        {
-            UserName = model.Email,
-            Email = model.Email,
-            EmailConfirmed = true,
-            CompanyId = model.CompanyId
-        };
-
-        var result = await UserManager.CreateAsync(user, model.Password);
-        if (!result.Succeeded)
-        {
-            errorMessage = string.Join("; ", result.Errors.Select(e => e.Description));
-            return;
-        }
-
-        //TODD split roles by comma and save them one by one
-        await UserManager.AddToRoleAsync(user, model.Roles ?? RoleConstants.Driver);
-
-        successMessage = "User created.";
-        model = new UserViewModel();
-        GoToUsers();
     }
 
     private async Task UpdateAsync()
@@ -252,8 +163,9 @@ else
         }
 
         // Update user details
+        user.UserName = model.Username;
         user.Email = model.Email;
-        // Password update logic might be needed here if you allow password change, but for simplicity based on original code, we focus on other fields unless explicitly handling password reset flow.
+        user.PhoneNumber = model.Phone;
 
         if (isAdmin)
         {
@@ -264,6 +176,24 @@ else
             // For non-admins, company ID is usually inherited or managed differently based on context.
             // We use the value submitted from the form.
             user.CompanyId = model.CompanyId ?? user.CompanyId;
+        }
+
+        // Swap roles: remove all current, assign new single role
+        var currentRoles = await UserManager.GetRolesAsync(user);
+        var removeResult = await UserManager.RemoveFromRolesAsync(user, currentRoles);
+        if (!removeResult.Succeeded)
+        {
+            errorMessage = "Could not remove current roles: " +
+                           string.Join(", ", removeResult.Errors.Select(e => e.Description));
+            return;
+        }
+
+        var addResult = await UserManager.AddToRoleAsync(user, model.Roles);
+        if (!addResult.Succeeded)
+        {
+            errorMessage = "Could not assign role: " +
+                           string.Join(", ", addResult.Errors.Select(e => e.Description));
+            return;
         }
 
 

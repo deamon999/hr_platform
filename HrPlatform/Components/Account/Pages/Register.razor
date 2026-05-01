@@ -16,6 +16,24 @@
 
 <h1>Register</h1>
 
+@* $1$ Show a banner when the user arrived via an invitation link #1# *@
+@* @if (_invitation is not null) *@
+@* { *@
+@*     <div class="alert alert-info mb-3"> *@
+@*         <strong>You've been invited</strong> as a <strong>@_invitation.Role</strong>. *@
+@*         Your email address has been pre-filled and cannot be changed. *@
+@*     </div> *@
+@* } *@
+@* *@
+@* $1$ Show an error when the token is present but invalid/expired #1# *@
+@* @if (_tokenInvalid) *@
+@* { *@
+@*     <div class="alert alert-danger mb-3"> *@
+@*         This invitation link is invalid or has already been used. *@
+@*         Please ask an administrator to send you a new invitation. *@
+@*     </div> *@
+@* } *@
+
 <div class="row">
     <div class="col-lg-6">
         <StatusMessage Message="@Message"/>
@@ -46,17 +64,14 @@
             <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
         </EditForm>
     </div>
-    <div class="col-lg-4 col-lg-offset-2">
-        <section>
-            <h3>Use another service to register.</h3>
-            <hr/>
-            <ExternalLoginPicker/>
-        </section>
-    </div>
 </div>
 
 @code {
     private IEnumerable<IdentityError>? identityErrors;
+    
+    // ── Query-string token injected from the invitation email link ──
+    [SupplyParameterFromQuery]
+    private string? Token { get; set; }
 
     [SupplyParameterFromForm] private InputModel Input { get; set; } = default!;
 

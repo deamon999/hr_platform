@@ -45,16 +45,18 @@ public class Program
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddSignInManager()
             .AddDefaultTokenProviders();
-        builder.Services.AddScoped<IUserClaimsPrincipalFactory<ApplicationUser>, AppUserClaimsPrincipalFactory>();
 
         builder.Services.AddSingleton<ISmsService, SmsService>();
         builder.Services.AddSingleton<IEmailService, EmailService>();
         builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+
+        builder.Services.AddScoped<IUserClaimsPrincipalFactory<ApplicationUser>, AppUserClaimsPrincipalFactory>();
         builder.Services.AddScoped<IJobService, JobService>();
         builder.Services.AddScoped<IJobApplicationService, JobApplicationService>();
         builder.Services.AddScoped<IDriverProfileService, DriverProfileService>();
         builder.Services.AddScoped<ICompanyService, CompanyService>();
-        builder.Services.AddScoped<AdminUserService>();
+        builder.Services.AddScoped<IAdminUserService, AdminUserService>();
+        builder.Services.AddScoped<IInvitationService, InvitationService>();
 
         var app = builder.Build();
 

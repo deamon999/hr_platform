@@ -1,5 +1,6 @@
 @page "/jobs/{Id:int}"
 @using System.Security.Claims
+@using HrPlatform.Utils
 @rendermode InteractiveServer
 
 @inject IJobService JobSvc
@@ -8,7 +9,12 @@
 @inject AuthenticationStateProvider AuthState
 @inject NavigationManager Nav
 
-<h2>Job Details</h2>
+<PageTitle>Job Details</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Job Details</h2>
+    <button type="button" class="btn btn-primary btn-sm" @onclick="GoToInvite">+ Invite User</button>
+</div>
 
 @if (loading)
 {
@@ -20,13 +26,6 @@ else if (job is null)
 }
 else
 {
-    <nav aria-label="breadcrumb" class="mb-3">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/jobs">Jobs</a></li>
-            <li class="breadcrumb-item active">Details</li>
-        </ol>
-    </nav>
-
     <div class="card mb-4">
         <div class="card-body">
             <div class="d-flex justify-content-between">
@@ -62,9 +61,11 @@ else
                     </p>
                     <p class="mb-1"><strong>Posted</strong> @job.PostedAt.ToLocalTime().ToString("MM/dd/yyyy")</p>
                     <p class="mb-1"><strong>Updated</strong> @job.UpdatedAt.ToLocalTime().ToString("MM/dd/yyyy")</p>
-                    <p class="mb-1">
-                        <strong>Expires</strong> @(job.ExpiresAt.HasValue ? job.ExpiresAt.Value.ToLocalTime().ToString("MM/dd/yyyy") : "—")
-                    </p>
+                    @if (job.EmploymentType.HasValue)
+                    {
+                        <p class="mb-1"><strong>Employment
+                                Type</strong><br/>@job.EmploymentType.Value.GetDescriptionValue()</p>
+                    }
                 </div>
                 <div class="col-md-6">
                     @if (job.PayRate.HasValue)
@@ -90,7 +91,7 @@ else
 
                     <p class="mb-1"><strong>Min.
                             Experience</strong><br/>@(job.MinYearsExperience > 0 ? job.MinYearsExperience + " yrs" : "—")
-                    
+
                     </p>
                 </div>
             </div>
@@ -300,7 +301,7 @@ else
 
         var auth = await AuthState.GetAuthenticationStateAsync();
         var user = auth.User;
-        isAuthenticated = user?.Identity?.IsAuthenticated == true;
+        isAuthenticated = user.Identity?.IsAuthenticated == true;
         isDriver = isAuthenticated && user.IsInRole("Driver");
 
         if (isDriver)
@@ -356,6 +357,11 @@ else
     private void GoToApplications()
     {
         Nav.NavigateTo("/applications");
+    }
+
+    private void GoToInvite()
+    {
+        Nav.NavigateTo($"/jobs/invite/{Id}");
     }
 
 }

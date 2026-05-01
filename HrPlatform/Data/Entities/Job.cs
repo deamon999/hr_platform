@@ -34,7 +34,7 @@ public class Job
     public bool IsActive { get; set; } = true;
 
     public DateTime PostedAt { get; set; } = DateTime.UtcNow;
-    public DateTime? ExpiresAt { get; set; }
+    public EmploymentType? EmploymentType { get; set; }
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<JobApplication> Applications { get; set; } = [];

@@ -10,13 +10,11 @@
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="nav flex-column">
-        <AuthorizeView>
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                    <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-                </NavLink>
-            </div>
-        </AuthorizeView>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Jobs
+            </NavLink>
+        </div>
 
         <AuthorizeView Roles="@($"{RoleConstants.Admin}")">
             <div class="nav-item px-3">
@@ -25,11 +23,19 @@
                 </NavLink>
             </div>
         </AuthorizeView>
-        
+
         <AuthorizeView Roles="@($"{RoleConstants.Admin},{RoleConstants.Manager}")">
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="users">
-                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Users
+                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> User Management
+                </NavLink>
+            </div>
+        </AuthorizeView>
+        
+        <AuthorizeView Roles="@($"{RoleConstants.Admin},{RoleConstants.Manager}")">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="invitations">
+                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Invitation Management
                 </NavLink>
             </div>
         </AuthorizeView>
@@ -49,13 +55,8 @@
                 </NavLink>
             </div>
         </AuthorizeView>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="jobs">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Jobs
-            </NavLink>
-        </div>
-        <AuthorizeView>
+        
+        <AuthorizeView Roles="@($"{RoleConstants.Driver},{RoleConstants.Manager}")">
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="applications">
                     <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Applications
