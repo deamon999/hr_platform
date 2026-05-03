@@ -11,7 +11,6 @@ public class AdminUserService : IAdminUserService
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
 
-    // Inject both the DbContext and UserManager
     public AdminUserService(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
     {
         _context = context;
@@ -20,35 +19,34 @@ public class AdminUserService : IAdminUserService
 
     public async Task<List<UserViewModel>> GetAllUsersWithRolesAsync()
     {
-        var users = await _context.Users.Include(applicationUser => applicationUser.Company).ToListAsync();
-        var userList = new List<UserViewModel>();
+        var users = await _context.Users
+            .Include(applicationUser => applicationUser.Company)
+            .ToListAsync();
 
-        foreach (var user in users)
-        {
-            // Use UserManager to retrieve the roles assigned to this specific user
-            var userRoles = await _userManager.GetRolesAsync(user);
+        return await BuildUserViewModelsAsync(users);
+    }
 
-            userList.Add(new UserViewModel
-            {
-                UserId = user.Id,
-                Username = user.UserName,
-                Email = user.Email,
-                Phone = user.PhoneNumber,
-                CompanyId = user.CompanyId,
-                CompanyName = user.Company?.Name,
-                IsConfirmed = user.EmailConfirmed,
-                Roles = string.Join(", ", userRoles) // Combine roles into a single string for display
-            });
-        }
+    public async Task<List<UserViewModel>> GetUsersByCompanyWithRolesAsync(int companyId)
+    {
+        var users = await _context.Users
+            .Include(applicationUser => applicationUser.Company)
+            .Where(u => u.CompanyId == companyId)
+            .ToListAsync();
 
-        return userList;
+        return await BuildUserViewModelsAsync(users);
     }
 
     public async Task<UserViewModel> GetUserByIdAsync(string id)
     {
-        var user = await _context.Users.Include(applicationUser => applicationUser.Company)
+        var user = await _context.Users
+            .Include(applicationUser => applicationUser.Company)
             .FirstOrDefaultAsync(u => u.Id == id);
-        // Use UserManager to retrieve the roles assigned to this specific user
+
+        if (user is null)
+        {
+            throw new KeyNotFoundException($"User {id} not found.");
+        }
+
         var userRoles = await _userManager.GetRolesAsync(user);
 
         return new UserViewModel
@@ -60,15 +58,44 @@ public class AdminUserService : IAdminUserService
             CompanyId = user.CompanyId,
             CompanyName = user.Company?.Name,
             IsConfirmed = user.EmailConfirmed,
-            Roles = string.Join(", ", userRoles) // Combine roles into a single string for display
+            Roles = string.Join(", ", userRoles)
         };
     }
 
     public async Task DeleteAsync(string id)
     {
-        var c = await _context.Users.FindAsync(id);
-        if (c is null) return;
-        _context.Users.Remove(c);
+        var user = await _context.Users.FindAsync(id);
+
+        if (user is null)
+        {
+            return;
+        }
+
+        _context.Users.Remove(user);
         await _context.SaveChangesAsync();
+    }
+
+    private async Task<List<UserViewModel>> BuildUserViewModelsAsync(List<ApplicationUser> users)
+    {
+        var userList = new List<UserViewModel>();
+
+        foreach (var user in users)
+        {
+            var userRoles = await _userManager.GetRolesAsync(user);
+
+            userList.Add(new UserViewModel
+            {
+                UserId = user.Id,
+                Username = user.UserName,
+                Email = user.Email,
+                Phone = user.PhoneNumber,
+                CompanyId = user.CompanyId,
+                CompanyName = user.Company?.Name,
+                IsConfirmed = user.EmailConfirmed,
+                Roles = string.Join(", ", userRoles)
+            });
+        }
+
+        return userList;
     }
 }

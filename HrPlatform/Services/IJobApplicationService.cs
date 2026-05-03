@@ -12,4 +12,5 @@ public interface IJobApplicationService
     Task<bool> HasAppliedAsync(int jobId, int driverProfileId);
     Task<JobApplication> ApplyAsync(int jobId, int driverProfileId);
     Task ReviewAsync(int id, ApplicationStatus status, string? notes);
+    Task WithdrawAsync(int id);
 }

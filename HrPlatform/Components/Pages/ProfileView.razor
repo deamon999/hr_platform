@@ -8,46 +8,514 @@
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthState
 
-@if (profile is null)
-{
-    <p>Loading...</p>
-}
-else
-{
-    <div class="d-flex justify-content-between align-items-start mb-3">
-        <div>
-            <h2>@profile.FirstName @profile.MiddleName @profile.LastName</h2>
-            <p class="text-muted mb-1">@profile.Email · @profile.PhoneNumber</p>
-            @if (profile.City != null)
-            {
-                <p class="text-muted mb-0">@profile.StreetAddress, @profile.City, @profile.State @profile.ZipCode</p>
-            }
-        </div>
+<PageTitle>Driver Profile</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h1 class="mb-0">Driver Profile</h1>
+
+    @if (profile is not null)
+    {
         <div class="d-flex gap-2">
             @if (isOwner)
             {
                 <button class="btn btn-outline-primary btn-sm"
-                        @onclick='() => Nav.NavigateTo($"/profiles/edit/{profile.Id}")'>Edit
+                        @onclick="GoToEditProfile">
+                    Edit
                 </button>
-            }
-            else
-            {
-                <button class="btn btn-outline-primary btn-sm" disabled>Edit</button>
             }
 
             @if (canDelete)
             {
-                <button class="btn btn-outline-danger btn-sm" @onclick="ConfirmDelete">Delete</button>
+                <button class="btn btn-outline-danger btn-sm" @onclick="ConfirmDelete">
+                    Delete
+                </button>
             }
 
-            @if (!(backUrl == "/"))
-            {
-                <button class="btn btn-outline-secondary btn-sm" @onclick="() => Nav.NavigateTo(backUrl)">Back</button>
-            }
+            <button class="btn btn-outline-secondary btn-sm" @onclick="GoBack">
+                Back
+            </button>
         </div>
-    </div>
+    }
+</div>
 
-    @if (showDeleteConfirm)
+<div>
+    <hr/>
+
+    @if (profile is null)
+    {
+        @if (isAdminOrManager)
+        {
+            <p>This profile is not available</p>
+        }
+        else
+        {
+            <div class="alert alert-warning">
+                <strong>Driver profile is required in order to be able to apply for any job</strong>
+                <a class="alert-link ms-1" role="button" style="cursor:pointer" @onclick="GoToCreateProfile">
+                    Create your profile
+                </a>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-lg-3 mb-4 mb-lg-0">
+                <ul class="nav nav-pills flex-column">
+                    @for (var index = 0; index < tabs.Length; index++)
+                    {
+                        var tabIndex = index;
+                        var label = tabs[tabIndex];
+
+                        <li class="nav-item">
+                            <button type="button"
+                                    class="nav-link text-start w-100 @(activeTab == tabIndex ? "active" : "")"
+                                    @onclick="() => ActivateTab(tabIndex)">
+                                @label
+                            </button>
+                        </li>
+                    }
+                </ul>
+            </div>
+
+            <div class="col-lg-9">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h4 class="mb-0">@tabs[activeTab]</h4>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="@(activeTab == 0 ? "" : "d-none")">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">First Name *</label>
+                                    <input class="form-control" value="@Display(profile.FirstName)" disabled/>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">Middle Name</label>
+                                    <input class="form-control" value="@Display(profile.MiddleName)" disabled/>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">Last Name *</label>
+                                    <input class="form-control" value="@Display(profile.LastName)" disabled/>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">Date of Birth *</label>
+                                    <input class="form-control" type="date" value="@FormatDate(profile.DateOfBirth)" disabled/>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">Phone *</label>
+                                    <input class="form-control" value="@Display(profile.PhoneNumber)" disabled/>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">Alternate Phone</label>
+                                    <input class="form-control" value="@Display(profile.AlternatePhone)" disabled/>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Email *</label>
+                                    <input class="form-control" value="@Display(profile.Email)" disabled/>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">LinkedIn URL</label>
+                                    <input class="form-control" value="@Display(profile.LinkedInUrl)" disabled/>
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label">Street Address</label>
+                                    <input class="form-control" value="@Display(profile.StreetAddress)" disabled/>
+                                </div>
+
+                                <div class="col-md-5">
+                                    <label class="form-label">City</label>
+                                    <input class="form-control" value="@Display(profile.City)" disabled/>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <label class="form-label">State</label>
+                                    <input class="form-control" value="@Display(profile.State)" disabled/>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">Zip Code</label>
+                                    <input class="form-control" value="@Display(profile.ZipCode)" disabled/>
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label">Professional Summary</label>
+                                    <textarea class="form-control" rows="4" disabled>@Display(profile.ProfessionalSummary)</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="@(activeTab == 1 ? "" : "d-none")">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Years of Experience</label>
+                                    <input class="form-control" type="number" value="@profile.YearsOfExperience" disabled/>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">Total Miles Driven</label>
+                                    <input class="form-control" type="number" value="@profile.TotalMilesDriven" disabled/>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">Accident-Free Miles</label>
+                                    <input class="form-control" type="number" value="@profile.AccidentFreeMiles" disabled/>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">States Operated In</label>
+                                    <input class="form-control" type="number" value="@profile.StatesOperated" disabled/>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">Avg Weekly Miles</label>
+                                    <input class="form-control" type="number" value="@profile.AverageWeeklyMiles" disabled/>
+                                </div>
+                            </div>
+
+                            @if (trailerTypes.Any())
+                            {
+                                <hr class="my-4"/>
+                                <h6>Trailer Types <small class="text-muted fw-normal">(collected from employment history)</small></h6>
+                                <div class="d-flex flex-wrap gap-2">
+                                    @foreach (var t in trailerTypes)
+                                    {
+                                        <span class="badge bg-secondary">@t</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+
+                        <div class="@(activeTab == 2 ? "" : "d-none")">
+                            <h5>CDL License</h5>
+
+                            @if (profile.License is null)
+                            {
+                                <div class="text-muted mb-4">No CDL license information available.</div>
+                            }
+                            else
+                            {
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-4">
+                                        <label class="form-label">License Number *</label>
+                                        <input class="form-control" value="@Display(profile.License.LicenseNumber)" disabled/>
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <label class="form-label">State *</label>
+                                        <input class="form-control" value="@Display(profile.License.IssuingState)" disabled/>
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <label class="form-label">Class *</label>
+                                        <input class="form-control" value="CDL-@profile.License.Class" disabled/>
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <label class="form-label">Issued</label>
+                                        <input class="form-control" type="date" value="@FormatDate(profile.License.IssuedDate)" disabled/>
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <label class="form-label">Expires *</label>
+                                        <input class="form-control" type="date" value="@FormatDate(profile.License.ExpiryDate)" disabled/>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label class="form-label">Endorsements</label>
+                                        <div class="d-flex flex-wrap gap-3">
+                                            @foreach (var end in Enum.GetValues<CdlEndorsement>())
+                                            {
+                                                <div class="form-check">
+                                                    <input type="checkbox"
+                                                           class="form-check-input"
+                                                           id="end_view_@end"
+                                                           checked="@(profile.License.Endorsements?.Contains(end) == true)"
+                                                           disabled/>
+                                                    <label class="form-check-label" for="end_view_@end">@end</label>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label class="form-label">Restrictions</label>
+                                        <input class="form-control" value="@Display(profile.License.Restrictions)" disabled/>
+                                    </div>
+                                </div>
+                            }
+
+                            <hr/>
+
+                            <h5>DOT Medical Card</h5>
+
+                            @if (profile.MedicalCard is null)
+                            {
+                                <div class="text-muted">No DOT medical card information available.</div>
+                            }
+                            else
+                            {
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label">Issued *</label>
+                                        <input class="form-control" type="date" value="@FormatDate(profile.MedicalCard.IssuedDate)" disabled/>
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <label class="form-label">Expires *</label>
+                                        <input class="form-control" type="date" value="@FormatDate(profile.MedicalCard.ExpiryDate)" disabled/>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Medical Examiner Name</label>
+                                        <input class="form-control" value="@Display(profile.MedicalCard.MedicalExaminerName)" disabled/>
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <label class="form-label">Cert #</label>
+                                        <input class="form-control" value="@Display(profile.MedicalCard.MedicalExaminerCertNumber)" disabled/>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <div class="form-check">
+                                            <input type="checkbox"
+                                                   class="form-check-input"
+                                                   checked="@profile.MedicalCard.SelfCertified"
+                                                   disabled/>
+                                            <label class="form-check-label">Self-Certified</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="@(activeTab == 3 ? "" : "d-none")">
+                            <h5>Skills</h5>
+
+                            <div class="d-flex flex-wrap gap-2 mb-3">
+                                @if (profile.Skills?.Any() == true)
+                                {
+                                    @foreach (var skill in profile.Skills)
+                                    {
+                                        <span class="badge bg-info text-dark">@skill</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No skills listed.</span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="@(activeTab == 4 ? "" : "d-none")">
+                            @if (profile.EmploymentHistory?.Any() == true)
+                            {
+                                @foreach (var (emp, ei) in profile.EmploymentHistory.Select((e, i) => (e, i)))
+                                {
+                                    <div class="card mb-3">
+                                        <div class="card-header">
+                                            <span>@(string.IsNullOrEmpty(emp.CompanyName) ? $"Job #{ei + 1}" : emp.CompanyName)</span>
+                                        </div>
+
+                                        <div class="card-body">
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Job Title *</label>
+                                                    <input class="form-control" value="@Display(emp.JobTitle)" disabled/>
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Company Name *</label>
+                                                    <input class="form-control" value="@Display(emp.CompanyName)" disabled/>
+                                                </div>
+
+                                                <div class="col-md-4">
+                                                    <label class="form-label">City</label>
+                                                    <input class="form-control" value="@Display(emp.City)" disabled/>
+                                                </div>
+
+                                                <div class="col-md-2">
+                                                    <label class="form-label">State</label>
+                                                    <input class="form-control" value="@Display(emp.State)" disabled/>
+                                                </div>
+
+                                                <div class="col-md-3">
+                                                    <label class="form-label">Start Date *</label>
+                                                    <input class="form-control" type="date" value="@FormatDate(emp.StartDate)" disabled/>
+                                                </div>
+
+                                                <div class="col-md-3">
+                                                    <label class="form-label">End Date</label>
+                                                    <input class="form-control" type="date" value="@FormatDate(emp.EndDate)" disabled/>
+                                                    <small class="text-muted">Blank means current</small>
+                                                </div>
+
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Avg Weekly Miles</label>
+                                                    <input class="form-control" type="number" value="@emp.AverageWeeklyMiles" disabled/>
+                                                </div>
+
+                                                <div class="col-md-8">
+                                                    <label class="form-label">Reason for Leaving</label>
+                                                    <input class="form-control" value="@Display(emp.ReasonForLeaving)" disabled/>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <label class="form-label">Trailer Types Used</label>
+                                                    <div class="d-flex flex-wrap gap-3">
+                                                        @foreach (var t in Enum.GetValues<TrailerType>())
+                                                        {
+                                                            <div class="form-check">
+                                                                <input type="checkbox"
+                                                                       class="form-check-input"
+                                                                       id="tt_view_@(ei)_@t"
+                                                                       checked="@(emp.TrailerTypes?.Contains(t) == true)"
+                                                                       disabled/>
+                                                                <label class="form-check-label" for="tt_view_@(ei)_@t">@t</label>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <label class="form-label">Responsibilities</label>
+                                                    <textarea class="form-control" rows="3" disabled>@Display(emp.Responsibilities)</textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="text-muted">No employment history available.</div>
+                            }
+                        </div>
+
+                        <div class="@(activeTab == 5 ? "" : "d-none")">
+                            @if (profile.EducationHistory?.Any() == true)
+                            {
+                                @foreach (var (edu, ei) in profile.EducationHistory.Select((e, i) => (e, i)))
+                                {
+                                    <div class="card mb-3">
+                                        <div class="card-header">
+                                            <span>Education #@(ei + 1)</span>
+                                        </div>
+
+                                        <div class="card-body">
+                                            <div class="row g-3">
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Level *</label>
+                                                    <input class="form-control" value="@edu.Level" disabled/>
+                                                </div>
+
+                                                <div class="col-md-8">
+                                                    <label class="form-label">Institution</label>
+                                                    <input class="form-control" value="@Display(edu.InstitutionName)" disabled/>
+                                                </div>
+
+                                                <div class="col-md-4">
+                                                    <label class="form-label">City</label>
+                                                    <input class="form-control" value="@Display(edu.City)" disabled/>
+                                                </div>
+
+                                                <div class="col-md-2">
+                                                    <label class="form-label">State</label>
+                                                    <input class="form-control" value="@Display(edu.State)" disabled/>
+                                                </div>
+
+                                                <div class="col-md-3">
+                                                    <label class="form-label">Field of Study</label>
+                                                    <input class="form-control" value="@Display(edu.FieldOfStudy)" disabled/>
+                                                </div>
+
+                                                <div class="col-md-3">
+                                                    <label class="form-label">Graduation Date</label>
+                                                    <input class="form-control" type="date" value="@FormatDate(edu.GraduationDate)" disabled/>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <div class="form-check">
+                                                        <input type="checkbox"
+                                                               class="form-check-input"
+                                                               checked="@edu.Graduated"
+                                                               disabled/>
+                                                        <label class="form-check-label">Graduated</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="text-muted">No education history available.</div>
+                            }
+                        </div>
+
+                        <div class="@(activeTab == 6 ? "" : "d-none")">
+                            @if (profile.Certifications?.Any() == true)
+                            {
+                                @foreach (var (cert, ci) in profile.Certifications.Select((c, i) => (c, i)))
+                                {
+                                    <div class="card mb-3">
+                                        <div class="card-header">
+                                            <span>@(string.IsNullOrEmpty(cert.Name) ? $"Certification #{ci + 1}" : cert.Name)</span>
+                                        </div>
+
+                                        <div class="card-body">
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Name *</label>
+                                                    <input class="form-control" value="@Display(cert.Name)" disabled/>
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Issuing Authority</label>
+                                                    <input class="form-control" value="@Display(cert.IssuingAuthority)" disabled/>
+                                                </div>
+
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Cert Number</label>
+                                                    <input class="form-control" value="@Display(cert.CertificationNumber)" disabled/>
+                                                </div>
+
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Issued</label>
+                                                    <input class="form-control" type="date" value="@FormatDate(cert.IssuedDate)" disabled/>
+                                                </div>
+
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Expires</label>
+                                                    <input class="form-control" type="date" value="@FormatDate(cert.ExpiryDate)" disabled/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="text-muted">No certifications available.</div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (showDeleteConfirm && profile is not null)
     {
         <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
             <div class="modal-dialog">
@@ -55,216 +523,73 @@ else
                     <div class="modal-header">
                         <h5 class="modal-title">Confirm Delete</h5>
                     </div>
+
                     <div class="modal-body">
                         Permanently delete the profile for
                         <strong>@profile.FirstName @profile.LastName</strong>?
                         This will also remove all their applications.
                     </div>
+
                     <div class="modal-footer">
-                        <button class="btn btn-secondary" @onclick="() => showDeleteConfirm = false">Cancel</button>
-                        <button class="btn btn-danger" @onclick="DeleteAsync">Delete</button>
+                        <button class="btn btn-secondary" @onclick="() => showDeleteConfirm = false">
+                            Cancel
+                        </button>
+                        <button class="btn btn-danger" @onclick="DeleteAsync">
+                            Delete
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     }
-
-    @if (!string.IsNullOrEmpty(profile.ProfessionalSummary))
-    {
-        <div class="card mb-3">
-            <div class="card-body">
-                <h6 class="card-title">Summary</h6>
-                <p class="mb-0">@profile.ProfessionalSummary</p>
-            </div>
-        </div>
-    }
-
-    <div class="row g-3 mb-3">
-        <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h6 class="card-title">Driving Stats</h6>
-                    <p class="mb-1">@profile.YearsOfExperience yrs experience</p>
-                    <p class="mb-1">@profile.TotalMilesDriven.ToString("N0") total miles</p>
-                    <p class="mb-1">@profile.AccidentFreeMiles.ToString("N0") accident-free miles</p>
-                    <p class="mb-1">@profile.AverageWeeklyMiles.ToString("N0") avg/week</p>
-                    <p class="mb-0">@profile.StatesOperated states operated</p>
-                </div>
-            </div>
-        </div>
-        @if (profile.License is not null)
-        {
-            <div class="col-md-4">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h6 class="card-title">CDL License</h6>
-                        <p class="mb-1">Class <strong>@profile.License.Class</strong> · #@profile.License.LicenseNumber
-                        </p>
-                        <p class="mb-1">State: @profile.License.IssuingState · Exp: @profile.License.ExpiryDate</p>
-                        @if (profile.License.Endorsements.Any())
-                        {
-                            <div class="d-flex flex-wrap gap-1 mt-2">
-                                @foreach (var end in profile.License.Endorsements)
-                                {
-                                    <span class="badge bg-info text-dark">@end</span>
-                                }
-                            </div>
-                        }
-                    </div>
-                </div>
-            </div>
-        }
-        @if (profile.MedicalCard is not null)
-        {
-            <div class="col-md-4">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h6 class="card-title">DOT Medical Card</h6>
-                        <p class="mb-1">Issued: @profile.MedicalCard.IssuedDate</p>
-                        <p class="mb-1">Expires: @profile.MedicalCard.ExpiryDate</p>
-                        @if (!string.IsNullOrEmpty(profile.MedicalCard.MedicalExaminerName))
-                        {
-                            <p class="mb-0">Examiner: @profile.MedicalCard.MedicalExaminerName</p>
-                        }
-                    </div>
-                </div>
-            </div>
-        }
-    </div>
-
-    @if (trailerTypes.Any())
-    {
-        <div class="mb-3">
-            <h6>Trailer Types <small class="text-muted fw-normal">(from employment history)</small></h6>
-            <div class="d-flex flex-wrap gap-2">
-                @foreach (var t in trailerTypes)
-                {
-                    <span class="badge bg-secondary">@t</span>
-                }
-            </div>
-        </div>
-    }
-
-    @if (profile.Skills.Any())
-    {
-        <div class="mb-3">
-            <h6>Skills</h6>
-            <div class="d-flex flex-wrap gap-2">
-                @foreach (var s in profile.Skills)
-                {
-                    <span class="badge bg-info text-dark">@s</span>
-                }
-            </div>
-        </div>
-    }
-
-    @if (profile.EmploymentHistory.Any())
-    {
-        <h5 class="mt-3">Employment History</h5>
-        @foreach (var emp in profile.EmploymentHistory.OrderByDescending(e => e.StartDate))
-        {
-            <div class="card mb-2">
-                <div class="card-body">
-                    <h6 class="card-title mb-1">@emp.JobTitle — @emp.CompanyName</h6>
-                    <p class="text-muted small mb-1">
-                        @(emp.City != null ? $"{emp.City}, {emp.State} · " : "")
-                        @emp.StartDate – @(emp.EndDate?.ToString() ?? "Present")
-                        @(emp.AverageWeeklyMiles.HasValue ? $" · {emp.AverageWeeklyMiles:N0} mi/wk" : "")
-                    </p>
-                    @if (emp.TrailerTypes.Any())
-                    {
-                        <div class="d-flex flex-wrap gap-1 mb-1">
-                            @foreach (var t in emp.TrailerTypes)
-                            {
-                                <span class="badge bg-secondary">@t</span>
-                            }
-                        </div>
-                    }
-                    @if (!string.IsNullOrEmpty(emp.Responsibilities))
-                    {
-                        <p class="mb-0 small" style="white-space:pre-line">@emp.Responsibilities</p>
-                    }
-                </div>
-            </div>
-        }
-    }
-
-    @if (profile.EducationHistory.Any())
-    {
-        <h5 class="mt-3">Education</h5>
-        @foreach (var edu in profile.EducationHistory)
-        {
-            <div class="card mb-2">
-                <div class="card-body">
-                    <h6 class="card-title mb-1">
-                        @edu.Level@(edu.InstitutionName != null ? $" — {edu.InstitutionName}" : "")
-                    </h6>
-                    <p class="text-muted small mb-0">
-                        @edu.FieldOfStudy
-                        @(edu.GraduationDate.HasValue ? $" · Graduated {edu.GraduationDate}" : "")
-                    </p>
-                </div>
-            </div>
-        }
-    }
-
-    @if (profile.Certifications.Any())
-    {
-        <h5 class="mt-3">Certifications</h5>
-        @foreach (var cert in profile.Certifications)
-        {
-            <div class="card mb-2">
-                <div class="card-body">
-                    <h6 class="card-title mb-1">@cert.Name</h6>
-                    <p class="text-muted small mb-0">
-                        @cert.IssuingAuthority
-                        @(cert.ExpiryDate.HasValue ? $" · Expires {cert.ExpiryDate}" : "")
-                    </p>
-                </div>
-            </div>
-        }
-    }
-}
+</div>
 
 @code {
     [Parameter] public int Id { get; set; }
+
     private DriverProfile? profile;
-    private List<TrailerType> trailerTypes = [];
+    private List<TrailerType> trailerTypes = new();
     private bool showDeleteConfirm;
     private bool canDelete;
-    private string backUrl = "/profiles";
+    private string backUrl = "/";
     private bool isOwner;
+    private bool isAdminOrManager;
+    private int activeTab;
+
+    private static readonly string[] tabs =
+        ["Personal", "Driving Stats", "License & Medical", "Skills", "Employment", "Education", "Certifications"];
 
     protected override async Task OnInitializedAsync()
     {
         var auth = await AuthState.GetAuthenticationStateAsync();
         var currentUserId = auth.User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
-        var isAdminOrManager = auth.User.IsInRole(RoleConstants.Admin) || auth.User.IsInRole(RoleConstants.Manager);
+        isAdminOrManager = auth.User.IsInRole(RoleConstants.Admin) || auth.User.IsInRole(RoleConstants.Manager);
 
-        if (Id == 0) // arrived via /my-profile
+        if (Id == 0)
         {
             profile = await ProfileSvc.GetByUserIdAsync(currentUserId);
-            if (profile is null)
-            {
-                Nav.NavigateTo("/driver-profile");
-                return;
-            }
-
-            Id = profile.Id;
             backUrl = "/";
         }
         else
         {
             profile = await ProfileSvc.GetByIdAsync(Id);
-            backUrl = isAdminOrManager ? "/profiles" : "/my-profile";
+            backUrl = isAdminOrManager ? "/profiles" : "/";
         }
 
         if (profile is not null)
         {
-            trailerTypes = profile.AllTrailerTypes.ToList();
+            trailerTypes = profile.AllTrailerTypes?.ToList() ?? new List<TrailerType>();
             isOwner = profile.UserId == currentUserId;
             canDelete = auth.User.IsInRole(RoleConstants.Admin) || isOwner;
         }
+    }
+
+    private void ActivateTab(int index)
+    {
+        if (index < 0 || index >= tabs.Length)
+            return;
+
+        activeTab = index;
     }
 
     private void ConfirmDelete()
@@ -274,11 +599,47 @@ else
 
     private async Task DeleteAsync()
     {
+        if (profile is null)
+            return;
+
         var auth = await AuthState.GetAuthenticationStateAsync();
         var currentUserId = auth.User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
         var isAdmin = auth.User.IsInRole(RoleConstants.Admin);
-        await ProfileSvc.DeleteAsync(Id, currentUserId, isAdmin);
+
+        await ProfileSvc.DeleteAsync(profile.Id, currentUserId, isAdmin);
         Nav.NavigateTo(backUrl);
     }
 
+    private void GoToCreateProfile()
+    {
+        Nav.NavigateTo("/profiles/new");
+    }
+
+    private void GoToEditProfile()
+    {
+        if (profile is not null)
+        {
+            Nav.NavigateTo($"/profiles/edit/{profile.Id}");
+        }
+    }
+
+    private void GoBack()
+    {
+        Nav.NavigateTo(backUrl);
+    }
+
+    private static string Display(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? string.Empty : value;
+    }
+
+    private static string FormatDate(DateOnly value)
+    {
+        return value == default ? string.Empty : value.ToString("yyyy-MM-dd");
+    }
+
+    private static string FormatDate(DateOnly? value)
+    {
+        return value.HasValue && value.Value != default ? value.Value.ToString("yyyy-MM-dd") : string.Empty;
+    }
 }

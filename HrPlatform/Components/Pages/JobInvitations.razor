@@ -1,0 +1,168 @@
+﻿@page "/driver/invitations"
+@attribute [Authorize(Roles = "Driver")]
+@rendermode InteractiveServer
+
+@using HrPlatform.Data.Entities
+
+@inject IJobInvitationService JobInvitationService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
+
+<PageTitle>My Job Invitations</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0">Job Invitations</h3>
+    <span class="badge bg-secondary">@_invitations.Count invitation(s)</span>
+</div>
+
+@if (_loading)
+{
+    <div class="d-flex align-items-center gap-2 text-muted">
+        <div class="spinner-border spinner-border-sm"></div>
+        Loading…
+    </div>
+}
+else if (_invitations.Count == 0)
+{
+    <div class="text-center text-muted py-5">
+        <p class="fs-5">No job invitations yet.</p>
+        <p class="small">You will receive an email when a manager invites you to a job.</p>
+    </div>
+}
+else
+{
+    @if (_statusMessage is not null)
+    {
+        <div class="alert @_statusClass alert-dismissible mb-3">
+            @_statusMessage
+            <button type="button" class="btn-close"
+                    @onclick="() => _statusMessage = null"></button>
+        </div>
+    }
+
+    <div class="row g-3">
+        @foreach (var inv in _invitations)
+        {
+            <div class="col-md-6 col-xl-4">
+                <div class="card h-100 shadow-sm @CardBorderClass(inv.Status)">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold text-truncate me-2">@inv.Job.Title</span>
+                        <span class="badge @StatusBadgeClass(inv.Status) flex-shrink-0">
+                            @inv.Status
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-1 text-muted small">
+                            <strong>Company:</strong> @inv.Job.Company?.Name
+                        </p>
+                        <p class="mb-1 text-muted small">
+                            <strong>Invited:</strong> @inv.CreatedAt.ToString("MMM dd, yyyy")
+                        </p>
+                        @if (inv.ReviewedAt.HasValue)
+                        {
+                            <p class="mb-1 text-muted small">
+                                <strong>Responded:</strong>
+                                @inv.ReviewedAt.Value.ToString("MMM dd, yyyy")
+                            </p>
+                        }
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        @if (inv.Status == JobInvitationStatus.Pending)
+                        {
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success btn-sm flex-fill"
+                                        @onclick="() => Respond(inv, JobInvitationStatus.Accepted)">
+                                    ✓ Accept
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm flex-fill"
+                                        @onclick="() => Respond(inv, JobInvitationStatus.Declined)">
+                                    ✗ Decline
+                                </button>
+                            </div>
+                        }
+                        else if (inv.Status == JobInvitationStatus.Accepted)
+                        {
+                            <button class="btn btn-primary btn-sm w-100"
+                                    @onclick="() => GoToJobApply(inv.JobId)">
+                                Apply for This Job →
+                            </button>
+                        }
+                        else
+                        {
+                            <span class="text-muted small">No further action required.</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<JobInvitation> _invitations = new();
+    private bool _loading = true;
+    private string? _statusMessage;
+    private string _statusClass = "alert-success";
+    private string? _userId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        _userId = auth.User.FindFirst(
+            System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        if (_userId is not null)
+            await LoadInvitations();
+
+        _loading = false;
+    }
+
+    private async Task LoadInvitations()
+    {
+        _invitations = await JobInvitationService.GetForDriverAsync(_userId!);
+    }
+
+    private async Task Respond(JobInvitation inv, JobInvitationStatus status)
+    {
+        var ok = await JobInvitationService.UpdateStatusAsync(inv.Id, _userId!, status);
+
+        if (ok)
+        {
+            SetStatus(status == JobInvitationStatus.Accepted
+                ? "Invitation accepted. You can now apply for the job."
+                : "Invitation declined.", success: true);
+            await LoadInvitations();
+        }
+        else
+        {
+            SetStatus("Could not update invitation status.", success: false);
+        }
+    }
+
+    private void GoToJobApply(int jobId)
+    {
+        Nav.NavigateTo($"/jobs/{jobId}");
+    }
+
+    private void SetStatus(string msg, bool success)
+    {
+        _statusMessage = msg;
+        _statusClass = success ? "alert-success" : "alert-danger";
+    }
+
+    private static string StatusBadgeClass(JobInvitationStatus s) => s switch
+    {
+        JobInvitationStatus.Pending => "bg-warning text-dark",
+        JobInvitationStatus.Accepted => "bg-success",
+        JobInvitationStatus.Declined => "bg-secondary",
+        _ => "bg-light text-dark"
+    };
+
+    private static string CardBorderClass(JobInvitationStatus s) => s switch
+    {
+        JobInvitationStatus.Accepted => "border-success",
+        JobInvitationStatus.Declined => "border-secondary opacity-75",
+        _ => ""
+    };
+
+}

@@ -28,139 +28,165 @@ else if (job is null)
 }
 else
 {
-    <div class="card mb-4">
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Job Information</h4>
+
+            @if (job.IsActive)
+            {
+                <span class="badge bg-success">Active</span>
+            }
+            else
+            {
+                <span class="badge bg-secondary">Inactive</span>
+            }
+        </div>
+
         <div class="card-body">
-            <div class="d-flex justify-content-between">
-                <div>
-                    <h4 class="card-title">@job.Title</h4>
-                    <h6 class="card-subtitle text-muted mb-2">@(job.Company?.Name ?? "")</h6>
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label">Job Title</label>
+                    <input class="form-control" value="@Display(job.Title)" disabled/>
                 </div>
-                <div class="text-end">
-                    @if (job.IsActive)
-                    {
-                        <span class="badge bg-success">Active</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-secondary">Inactive</span>
-                    }
-                </div>
-            </div>
 
-            <div class="row mt-3">
+                <div class="col-md-4">
+                    <label class="form-label">Company</label>
+                    <input class="form-control" value="@Display(job.Company?.Name)" disabled/>
+                </div>
+
+                <div class="col-md-5">
+                    <label class="form-label">City</label>
+                    <input class="form-control" value="@Display(job.City)" disabled/>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">State</label>
+                    <input class="form-control" value="@Display(job.State)" disabled/>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Zip Code</label>
+                    <input class="form-control" value="@Display(job.ZipCode)" disabled/>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Posted</label>
+                    <input class="form-control" value="@job.PostedAt.ToLocalTime().ToString("MM/dd/yyyy")" disabled/>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Updated</label>
+                    <input class="form-control" value="@job.UpdatedAt.ToLocalTime().ToString("MM/dd/yyyy")" disabled/>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Employment Type</label>
+                    <input class="form-control" value="@(job.EmploymentType.HasValue ? job.EmploymentType.Value.GetDescriptionValue() : "")" disabled/>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Pay Rate</label>
+                    <input class="form-control" value="@(job.PayRate.HasValue ? $"${job.PayRate.Value:N2}" : "")" disabled/>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Pay Period</label>
+                    <input class="form-control" value="@(job.PayPeriod?.ToString() ?? "")" disabled/>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Minimum Experience</label>
+                    <input class="form-control" value="@(job.MinYearsExperience > 0 ? $"{job.MinYearsExperience} yrs" : "")" disabled/>
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label">Pay Notes</label>
+                    <input class="form-control" value="@Display(job.PayNotes)" disabled/>
+                </div>
+
                 <div class="col-md-6">
-                    <p class="mb-1">
-                        <strong>Location</strong><br/>
-                        @if (!string.IsNullOrEmpty(job.City))
-                        {
-                            <text>@job.City, </text>
-                        }
-                        <text>@job.State</text>
-                        @if (!string.IsNullOrEmpty(job.ZipCode))
-                        {
-                            <text> · @job.ZipCode</text>
-                        }
-                    </p>
-                    <p class="mb-1"><strong>Posted</strong> @job.PostedAt.ToLocalTime().ToString("MM/dd/yyyy")</p>
-                    <p class="mb-1"><strong>Updated</strong> @job.UpdatedAt.ToLocalTime().ToString("MM/dd/yyyy")</p>
-                    @if (job.EmploymentType.HasValue)
-                    {
-                        <p class="mb-1"><strong>Employment
-                                Type</strong><br/>@job.EmploymentType.Value.GetDescriptionValue()</p>
-                    }
+                    <label class="form-label">Required CDL Class</label>
+                    <input class="form-control" value="@(job.RequiredCdlClass.HasValue ? $"CDL-{job.RequiredCdlClass}" : "")" disabled/>
                 </div>
+
                 <div class="col-md-6">
-                    @if (job.PayRate.HasValue)
-                    {
-                        <p class="mb-1">
-                            <strong>Pay</strong><br/>$@job.PayRate.Value.ToString("N2")/@job.PayPeriod?.ToString().ToLower()
-                        </p>
-                        @if (!string.IsNullOrEmpty(job.PayNotes))
-                        {
-                            <p class="mb-1"><strong>Notes</strong><br/>@job.PayNotes</p>
-                        }
-                    }
-
-                    @if (job.RequiredCdlClass.HasValue)
-                    {
-                        <p class="mb-1"><strong>Required CDL</strong><br/>CDL-@job.RequiredCdlClass</p>
-                    }
-
-                    @if (job.RequiredTrailerType.HasValue)
-                    {
-                        <p class="mb-1"><strong>Trailer Type</strong><br/>@job.RequiredTrailerType</p>
-                    }
-
-                    <p class="mb-1"><strong>Min.
-                            Experience</strong><br/>@(job.MinYearsExperience > 0 ? job.MinYearsExperience + " yrs" : "—")
-
-                    </p>
+                    <label class="form-label">Required Trailer Type</label>
+                    <input class="form-control" value="@(job.RequiredTrailerType?.ToString() ?? "")" disabled/>
                 </div>
-            </div>
 
-            <hr/>
+                <div class="col-12">
+                    <label class="form-label">Required Endorsements</label>
 
-            <div class="mb-2">
-                <strong>Required Endorsements</strong>
-                <div class="mt-2 d-flex flex-wrap gap-2">
                     @if (job.RequiredEndorsements is not null && job.RequiredEndorsements.Any())
                     {
-                        @foreach (var e in job.RequiredEndorsements)
-                        {
-                            <span class="badge bg-secondary">@e</span>
-                        }
+                        <div class="d-flex flex-wrap gap-3">
+                            @foreach (var endorsement in Enum.GetValues<CdlEndorsement>())
+                            {
+                                <div class="form-check">
+                                    <input type="checkbox"
+                                           class="form-check-input"
+                                           id="endorsement_@endorsement"
+                                           checked="@job.RequiredEndorsements.Contains(endorsement)"
+                                           disabled/>
+                                    <label class="form-check-label" for="endorsement_@endorsement">@endorsement</label>
+                                </div>
+                            }
+                        </div>
                     }
                     else
                     {
-                        <span class="text-muted">None</span>
+                        <input class="form-control" value="None" disabled/>
                     }
                 </div>
-            </div>
 
-            @if (!string.IsNullOrEmpty(job.Description))
-            {
-                <hr/>
-                <p class="mb-0 mt-2 small" style="white-space:pre-line">@job.Description</p>
-            }
-            @* For non-driver users show Edit and Back buttons *@
+                <div class="col-12">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" rows="5" disabled>@Display(job.Description)</textarea>
+                </div>
+            </div>
         </div>
     </div>
 
-    @* Apply area (only for users in the Driver role) *@
     <AuthorizeView Roles="Driver">
         <Authorized>
             @if (applied)
             {
                 <div class="alert alert-success">
                     <h5 class="alert-heading">Application Submitted!</h5>
-                    <table class="table table-sm table-borderless mb-2" style="max-width:420px">
-                        <tr>
-                            <th>Application ID</th>
-                            <td>#@appliedApp!.Id</td>
-                        </tr>
-                        <tr>
-                            <th>Job ID</th>
-                            <td>#@appliedApp.JobId</td>
-                        </tr>
-                        <tr>
-                            <th>Profile ID</th>
-                            <td>#@appliedApp.DriverProfileId</td>
-                        </tr>
-                        <tr>
-                            <th>Date Submitted</th>
-                            <td>@appliedApp.AppliedAt.ToLocalTime().ToString("MM/dd/yyyy h:mm tt")</td>
-                        </tr>
-                        <tr>
-                            <th>Status</th>
-                            <td><span class="badge bg-warning text-dark">@appliedApp.Status</span></td>
-                        </tr>
-                    </table>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Application ID</label>
+                            <input class="form-control" value="#@appliedApp!.Id" disabled/>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">Job ID</label>
+                            <input class="form-control" value="#@appliedApp.JobId" disabled/>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">Profile ID</label>
+                            <input class="form-control" value="#@appliedApp.DriverProfileId" disabled/>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">Date Submitted</label>
+                            <input class="form-control" value="@appliedApp.AppliedAt.ToLocalTime().ToString("MM/dd/yyyy h:mm tt")" disabled/>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">Status</label>
+                            <input class="form-control" value="@appliedApp.Status" disabled/>
+                        </div>
+                    </div>
+
                     <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-outline-primary btn-sm" @onclick="GoToEditProfile">Review
-                            Profile
+                        <button type="button" class="btn btn-outline-primary btn-sm" @onclick="GoToEditProfile">
+                            Review Profile
                         </button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="GoToApplications">All
-                            Applications
+                        <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="GoToApplications">
+                            All Applications
                         </button>
                     </div>
                 </div>
@@ -173,47 +199,88 @@ else
             {
                 <div class="alert alert-warning">
                     <strong>Driver profile required.</strong>
-                    <a class="alert-link ms-1" role="button" style="cursor:pointer" @onclick="GoToCreateProfile">Create
-                        your profile</a> before applying.
+                    <a class="alert-link ms-1" role="button" style="cursor:pointer" @onclick="GoToCreateProfile">
+                        Create your profile
+                    </a>
+                    before applying.
                 </div>
             }
             else
             {
-                <div class="card mb-4">
-                    <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center bg-white">
                         <strong>Step 1 — Review Your Profile</strong>
-                        <button type="button" class="btn btn-sm btn-outline-primary" @onclick="GoToEditProfile">Update
-                            Profile
+                        <button type="button" class="btn btn-sm btn-outline-primary" @onclick="GoToEditProfile">
+                            Update Profile
                         </button>
                     </div>
+
                     <div class="card-body">
-                        <div class="row g-2">
-                            <div class="col-md-6">
-                                <p class="mb-1"><strong>@driverProfile.FirstName @driverProfile.LastName</strong></p>
-                                <p class="mb-1">@driverProfile.Email · @driverProfile.PhoneNumber</p>
-                                @if (driverProfile.City != null)
-                                {
-                                    <p class="mb-1">@driverProfile.City, @driverProfile.State</p>
-                                }
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">First Name</label>
+                                <input class="form-control" value="@Display(driverProfile.FirstName)" disabled/>
                             </div>
-                            <div class="col-md-6">
-                                @if (driverProfile.License is not null)
-                                {
-                                    <p class="mb-1">
-                                        CDL-@driverProfile.License.Class · #@driverProfile.License.LicenseNumber
-                                        · Exp: @driverProfile.License.ExpiryDate
-                                    </p>
-                                }
-                                <p class="mb-1">
-                                    @driverProfile.YearsOfExperience yrs experience
-                                    · @driverProfile.TotalMilesDriven.ToString("N0") miles
-                                </p>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Last Name</label>
+                                <input class="form-control" value="@Display(driverProfile.LastName)" disabled/>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Email</label>
+                                <input class="form-control" value="@Display(driverProfile.Email)" disabled/>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Phone</label>
+                                <input class="form-control" value="@Display(driverProfile.PhoneNumber)" disabled/>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">City</label>
+                                <input class="form-control" value="@Display(driverProfile.City)" disabled/>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">State</label>
+                                <input class="form-control" value="@Display(driverProfile.State)" disabled/>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">CDL Class</label>
+                                <input class="form-control" value="@(driverProfile.License is not null ? $"CDL-{driverProfile.License.Class}" : "")" disabled/>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">License Number</label>
+                                <input class="form-control" value="@(driverProfile.License?.LicenseNumber ?? "")" disabled/>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">License Expiration</label>
+                                <input class="form-control" type="date" value="@FormatDate(driverProfile.License?.ExpiryDate)" disabled/>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Years of Experience</label>
+                                <input class="form-control" type="number" value="@driverProfile.YearsOfExperience" disabled/>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Total Miles Driven</label>
+                                <input class="form-control" type="number" value="@driverProfile.TotalMilesDriven" disabled/>
+                            </div>
+
+                            <div class="col-12">
                                 @{
                                     var trailerTypes = driverProfile.AllTrailerTypes.ToList();
                                 }
+
                                 @if (trailerTypes.Any())
                                 {
-                                    <div class="d-flex flex-wrap gap-1 mt-1">
+                                    <label class="form-label">Trailer Types</label>
+                                    <div class="d-flex flex-wrap gap-2">
                                         @foreach (var t in trailerTypes)
                                         {
                                             <span class="badge bg-secondary">@t</span>
@@ -225,27 +292,33 @@ else
                     </div>
                 </div>
 
-                <div class="card mb-4">
-                    <div class="card-header"><strong>Step 2 — Confirm Application</strong></div>
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header bg-white">
+                        <strong>Step 2 — Confirm Application</strong>
+                    </div>
+
                     <div class="card-body">
-                        <table class="table table-sm table-borderless mb-0" style="max-width:380px">
-                            <tr>
-                                <th>Job</th>
-                                <td>@job.Title (#@job.Id)</td>
-                            </tr>
-                            <tr>
-                                <th>Company</th>
-                                <td>@(job.Company?.Name ?? "")</td>
-                            </tr>
-                            <tr>
-                                <th>Profile ID</th>
-                                <td>#@driverProfile.Id</td>
-                            </tr>
-                            <tr>
-                                <th>Date</th>
-                                <td>@DateTime.Now.ToString("MM/dd/yyyy")</td>
-                            </tr>
-                        </table>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Job</label>
+                                <input class="form-control" value="@job.Title (#@job.Id)" disabled/>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Company</label>
+                                <input class="form-control" value="@Display(job.Company?.Name)" disabled/>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Profile ID</label>
+                                <input class="form-control" value="#@driverProfile.Id" disabled/>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Date</label>
+                                <input class="form-control" value="@DateTime.Now.ToString("MM/dd/yyyy")" disabled/>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -259,16 +332,16 @@ else
                 }
             }
         </Authorized>
+
         <NotAuthorized>
             <div class="alert alert-info">
                 @if (!isAuthenticated)
                 {
-                    <text>Please <a href="/Identity/Account/Login">sign in</a> to apply.</text>
+                    <text>Please <a href="/Account/Login">sign in</a> to apply.</text>
                 }
                 else
                 {
-                    <text>You do not have permission to apply. Only users in the <strong>Driver</strong> role can
-                        apply.</text>
+                    <text>You do not have permission to apply. Only users in the <strong>Driver</strong> role can apply.</text>
                 }
             </div>
         </NotAuthorized>
@@ -304,12 +377,13 @@ else
         var auth = await AuthState.GetAuthenticationStateAsync();
         var user = auth.User;
         isAuthenticated = user.Identity?.IsAuthenticated == true;
-        isDriver = isAuthenticated && user.IsInRole("Driver");
+        isDriver = isAuthenticated && user.IsInRole(RoleConstants.Driver);
 
         if (isDriver)
         {
             var userId = user.FindFirst(ClaimTypes.NameIdentifier)!.Value;
             driverProfile = await ProfileSvc.GetByUserIdAsync(userId);
+
             if (driverProfile is not null)
                 alreadyApplied = await AppSvc.HasAppliedAsync(Id, driverProfile.Id);
         }
@@ -321,7 +395,10 @@ else
     {
         if (driverProfile is null || job is null)
             return;
+
         submitting = true;
+        error = null;
+
         try
         {
             appliedApp = await AppSvc.ApplyAsync(Id, driverProfile.Id);
@@ -366,4 +443,15 @@ else
         Nav.NavigateTo($"/jobs/invite/{Id}");
     }
 
+    private static string Display(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? string.Empty : value;
+    }
+
+    private static string FormatDate(DateOnly? value)
+    {
+        return value.HasValue && value.Value != default
+            ? value.Value.ToString("yyyy-MM-dd")
+            : string.Empty;
+    }
 }

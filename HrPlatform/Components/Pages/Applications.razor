@@ -3,6 +3,7 @@
 
 @attribute [Authorize(Roles = $"{RoleConstants.Driver},{RoleConstants.Manager}")]
 @inject IJobApplicationService AppSvc
+@inject AuthenticationStateProvider AuthState
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">Applications</h2>
@@ -31,7 +32,6 @@ else
         <table class="table table-hover align-middle">
             <thead class="table-light">
             <tr>
-                <th>ID</th>
                 <th>Job</th>
                 <th>Driver</th>
                 <th>Applied</th>
@@ -44,7 +44,6 @@ else
             @foreach (var app in apps)
             {
                 <tr>
-                    <td class="text-muted small">#@app.Id</td>
                     <td>
                         <strong>@app.Job.Title</strong><br/>
                         <small class="text-muted">@(app.Job.Company?.Name ?? "")</small>
@@ -64,28 +63,41 @@ else
                     </td>
                     <td>
                         <div class="d-flex gap-1 flex-wrap">
-                            <a href="/profiles/@app.DriverProfile.Id"
-                               class="btn btn-sm btn-outline-secondary">View Profile</a>
-                            @if (reviewing != app.Id)
+                            @if (isManager)
                             {
-                                <button class="btn btn-sm btn-outline-info"
-                                        @onclick="() => BeginReview(app)">
-                                    Change Status
-                                </button>
+                                <a href="/profiles/@app.DriverProfile.Id"
+                                   class="btn btn-sm btn-outline-secondary">View Profile</a>
+
+                                @if (reviewing != app.Id)
+                                {
+                                    <button class="btn btn-sm btn-outline-info"
+                                            @onclick="() => BeginReview(app)">
+                                        Change Status
+                                    </button>
+                                }
+                                else
+                                {
+                                    <select class="form-select form-select-sm w-auto" @bind="reviewStatus">
+                                        @foreach (var s in Enum.GetValues<ApplicationStatus>())
+                                        {
+                                            <option value="@s">@s</option>
+                                        }
+                                    </select>
+                                    <input type="text" class="form-control form-control-sm"
+                                           placeholder="Notes (optional)"
+                                           @bind="reviewNotes" style="width:160px"/>
+                                    <button class="btn btn-sm btn-primary" @onclick="SaveReviewAsync">Save</button>
+                                    <button class="btn btn-sm btn-secondary" @onclick="() => reviewing = null">×</button>
+                                }
                             }
-                            else
+
+                            @if (isDriver)
                             {
-                                <select class="form-select form-select-sm w-auto" @bind="reviewStatus">
-                                    @foreach (var s in Enum.GetValues<ApplicationStatus>())
-                                    {
-                                        <option value="@s">@s</option>
-                                    }
-                                </select>
-                                <input type="text" class="form-control form-control-sm"
-                                       placeholder="Notes (optional)"
-                                       @bind="reviewNotes" style="width:160px"/>
-                                <button class="btn btn-sm btn-primary" @onclick="SaveReviewAsync">Save</button>
-                                <button class="btn btn-sm btn-secondary" @onclick="() => reviewing = null">×</button>
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-danger"
+                                        @onclick="() => ConfirmWithdraw(app)">
+                                    Withdraw Application
+                                </button>
                             }
                         </div>
                     </td>
@@ -96,15 +108,54 @@ else
     </div>
 }
 
+@if (withdrawTarget is not null)
+{
+    <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Withdraw Application</h5>
+                </div>
+
+                <div class="modal-body">
+                    <p>
+                        Are you sure you want to withdraw your application for
+                        <strong>@withdrawTarget.Job.Title</strong>?
+                    </p>
+                    <p class="text-muted small mb-0">
+                        This will permanently remove this application.
+                    </p>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="() => withdrawTarget = null">
+                        Cancel
+                    </button>
+                    <button class="btn btn-danger" @onclick="WithdrawConfirmedAsync">
+                        Withdraw Application
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<JobApplication>? apps;
     private string sortBy = "date";
     private int? reviewing;
     private ApplicationStatus reviewStatus = ApplicationStatus.UnderReview;
     private string? reviewNotes;
+    private bool isManager;
+    private bool isDriver;
+    private JobApplication? withdrawTarget;
 
     protected override async Task OnInitializedAsync()
     {
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        isManager = auth.User.IsInRole(RoleConstants.Manager);
+        isDriver = auth.User.IsInRole(RoleConstants.Driver);
+
         await LoadAsync();
     }
 
@@ -128,7 +179,7 @@ else
     private void BeginReview(JobApplication app)
     {
         reviewing = app.Id;
-        reviewStatus = ApplicationStatus.UnderReview;
+        reviewStatus = app.Status;
         reviewNotes = app.ReviewerNotes;
     }
 
@@ -136,9 +187,24 @@ else
     {
         if (reviewing is null)
             return;
+
         await AppSvc.ReviewAsync(reviewing.Value, reviewStatus, reviewNotes);
         reviewing = null;
         await LoadAsync();
     }
 
+    private void ConfirmWithdraw(JobApplication app)
+    {
+        withdrawTarget = app;
+    }
+
+    private async Task WithdrawConfirmedAsync()
+    {
+        if (withdrawTarget is null)
+            return;
+
+        await AppSvc.WithdrawAsync(withdrawTarget.Id);
+        withdrawTarget = null;
+        await LoadAsync();
+    }
 }

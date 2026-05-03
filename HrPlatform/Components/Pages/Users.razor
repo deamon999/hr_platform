@@ -1,10 +1,12 @@
 ﻿@page "/users"
 @rendermode InteractiveServer
 
+@using System.Security.Claims
 @using HrPlatform.Models
 @attribute [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.Manager}")]
 @inject NavigationManager Nav
 @inject IAdminUserService UserService
+@inject AuthenticationStateProvider AuthState
 
 <PageTitle>User Management</PageTitle>
 
@@ -42,8 +44,8 @@ else
     }
 
     <div class="table-responsive">
-        <table class="table">
-            <thead>
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
             <tr>
                 <th>Username</th>
                 <th>Email</th>
@@ -58,7 +60,9 @@ else
             @foreach (var user in users)
             {
                 <tr>
-                    <td>@user.Username</td>
+                    <td>
+                        <strong>@user.Username</strong>
+                    </td>
                     <td>@user.Email</td>
                     <td>@user.Phone</td>
                     <td>
@@ -72,7 +76,8 @@ else
                         }
                     </td>
                     <td>@user.CompanyName</td>
-                    <td> @if (@user.IsConfirmed)
+                    <td>
+                        @if (user.IsConfirmed)
                         {
                             <span class="text-success fw-bold">✓</span>
                         }
@@ -82,13 +87,18 @@ else
                         }
                     </td>
                     <td>
-                        <button class="btn btn-sm btn-outline-primary" @onclick="() => GoToView(user.UserId)">View
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary" @onclick="() => GoToEdit(user.UserId)">Edit
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-danger"
-                                @onclick="async () => ConfirmDelete(user)">Delete
-                        </button>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-sm btn-outline-primary" @onclick="() => GoToView(user.UserId)">
+                                View
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" @onclick="() => GoToEdit(user.UserId)">
+                                Edit
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                    @onclick="() => ConfirmDelete(user)">
+                                Delete
+                            </button>
+                        </div>
                     </td>
                 </tr>
             }
@@ -128,9 +138,26 @@ else
     private string _statusClass = "alert-success";
     private bool isLoading = true;
     private UserViewModel? deleteTarget;
+    private bool isAdmin;
+    private int? companyId;
 
     protected override async Task OnInitializedAsync()
     {
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        var user = auth.User;
+
+        isAdmin = user.IsInRole(RoleConstants.Admin);
+
+        if (!isAdmin)
+        {
+            var companyIdClaim = user.FindFirst("companyId")?.Value;
+
+            if (int.TryParse(companyIdClaim, out var parsedCompanyId))
+            {
+                companyId = parsedCompanyId;
+            }
+        }
+
         await LoadAsync(null);
     }
 
@@ -138,8 +165,14 @@ else
     {
         try
         {
-            // Fetch the data using the custom service
-            users = await UserService.GetAllUsersWithRolesAsync();
+            isLoading = true;
+
+            users = isAdmin
+                ? await UserService.GetAllUsersWithRolesAsync()
+                : companyId.HasValue
+                    ? await UserService.GetUsersByCompanyWithRolesAsync(companyId.Value)
+                    : new List<UserViewModel>();
+
             if (!string.IsNullOrEmpty(searchTerm))
             {
                 users = users.Where(u =>
@@ -152,9 +185,9 @@ else
         }
         catch (Exception ex)
         {
-            // Handle potential errors during database access
             Console.WriteLine($"Error fetching users: {ex.Message}");
-            // Optionally display an error message to the user
+            _statusMessage = "Error loading users.";
+            _statusClass = "alert-danger";
         }
         finally
         {
@@ -165,7 +198,7 @@ else
     private async Task HandleSearchInput(ChangeEventArgs e)
     {
         _searchTerm = e.Value?.ToString() ?? string.Empty;
-        await LoadAsync(_searchTerm); // Reload data whenever the search term changes
+        await LoadAsync(_searchTerm);
     }
 
     private void GoToView(string id)
@@ -185,10 +218,13 @@ else
 
     private async Task DeleteConfirmedAsync()
     {
-        if (deleteTarget is null) return;
+        if (deleteTarget is null)
+        {
+            return;
+        }
+
         await UserService.DeleteAsync(deleteTarget.UserId);
         deleteTarget = null;
         await LoadAsync(null);
     }
-
 }

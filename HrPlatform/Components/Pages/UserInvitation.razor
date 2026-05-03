@@ -232,27 +232,25 @@
 
             if (ContactMethod.Email == invitation.ContactMethod)
             {
-                // @formatter:off
                 await EmailService.SendEmailAsync(
                     invitation.Email,
                     null,
                     "You've been invited to join",
-                    $"""
-                     <p>
-                         <a href="{link}" style="
-                             display:inline-block;padding:10px 20px;
-                             background:#0d6efd;color:#fff;
-                             text-decoration:none;border-radius:4px;">
-                             Accept Invitation
-                         </a>
-                     </p>
-                     <p>This link expires on <strong>{invitation.ExpiresAt:MMMM dd, yyyy}</strong>.</p>
-                     <p style="color:#6c757d;font-size:.85em;">
-                         If you did not expect this invitation, you can safely ignore this email.
-                     </p>
-                     """
+                    $@"
+<p>
+    <a href=""{link}"" style=""
+        display:inline-block;padding:10px 20px;
+        background:#0d6efd;color:#fff;
+        text-decoration:none;border-radius:4px;"">
+        Accept Invitation
+    </a>
+</p>
+<p>This link expires on <strong>{invitation.ExpiresAt:MMMM dd, yyyy}</strong>.</p>
+<p style=""color:#6c757d;font-size:.85em;"">
+    If you did not expect this invitation, you can safely ignore this email.
+</p>"
                 );
-                // @formatter:on
+
                 _successMessage = $"Invitation sent to {invitation.Email}.";
             }
             else

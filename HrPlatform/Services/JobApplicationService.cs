@@ -73,4 +73,13 @@ public class JobApplicationService(ApplicationDbContext db) : IJobApplicationSer
         app.ReviewerNotes = notes;
         await db.SaveChangesAsync();
     }
+    
+    public async Task WithdrawAsync(int id)
+    {
+        var app = await db.JobApplications.FindAsync(id)
+                  ?? throw new KeyNotFoundException($"Application {id} not found");
+
+        db.JobApplications.Remove(app);
+        await db.SaveChangesAsync();
+    }
 }

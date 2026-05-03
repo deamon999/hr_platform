@@ -1,509 +1,589 @@
-﻿@page "/driver-profile"
-@page "/driver-profile/{Id:int}"
+﻿@page "/profiles/new"
 @page "/profiles/edit/{Id:int}"
 @using System.Security.Claims
 @rendermode InteractiveServer
 
-@* Using ObjectGraphDataAnnotationsValidator requires an extra package; use DataAnnotationsValidator instead *@
 @attribute [Authorize]
 @inject IDriverProfileService ProfileService
 @inject AuthenticationStateProvider AuthState
 @inject NavigationManager Nav
 
-<h2>@(isNew ? "Create Driver Profile" : "Edit Driver Profile")</h2>
+<PageTitle>@(isNew ? "Create Driver Profile" : "Edit Driver Profile")</PageTitle>
 
-@if (profile is null)
-{
-    <p>Loading...</p>
-}
-else
-{
-    @if (isNew)
+<h1>@(isNew ? "Create Driver Profile" : "Edit Driver Profile")</h1>
+
+<div>
+    <hr/>
+
+    @if (profile is null)
     {
-        var pct = (maxReachedTab + 1) * 100 / tabs.Length;
-        <div class="mb-4">
-            <div class="d-flex justify-content-between mb-1">
-                <small class="text-muted">Step @(activeTab + 1) of @tabs.Length — @tabs[activeTab]</small>
-                <small class="text-muted">@pct% complete</small>
-            </div>
-            <div class="progress" style="height:8px">
-                <div class="progress-bar bg-primary" role="progressbar"
-                     style="width:@pct%; transition:width .3s ease"
-                     aria-valuenow="@(maxReachedTab + 1)"
-                     aria-valuemin="0"
-                     aria-valuemax="@tabs.Length"/>
-            </div>
-        </div>
+        <p>Loading...</p>
     }
-
-    <ul class="nav nav-tabs mb-4">
-        @foreach (var (label, index) in tabs.Select((l, i) => (l, i)))
-        {
-            var locked = isNew && index > maxReachedTab;
-            <li class="nav-item">
-                <button class="nav-link @(activeTab == index ? "active" : "") @(locked ? "disabled" : "")"
-                        @onclick="() => ActivateTab(index)"
-                        disabled="@locked"
-                        title="@(locked ? "Complete previous sections first" : label)">
-                    @if (isNew && index < maxReachedTab)
+    else
+    {
+        <div class="row">
+            <div class="col-lg-3 mb-4 mb-lg-0">
+                <ul class="nav nav-pills flex-column">
+                    @foreach (var (label, index) in tabs.Select((l, i) => (l, i)))
                     {
-                        <span class="me-1 text-success" style="font-size:.75rem">&#10003;</span>
+                        var locked = isNew && index > maxReachedTab;
+                        var completed = isNew && index < maxReachedTab;
+
+                        <li class="nav-item">
+                            <button type="button"
+                                    class="nav-link text-start w-100 @(activeTab == index ? "active" : "") @(locked ? "disabled" : "")"
+                                    @onclick="() => ActivateTab(index)"
+                                    disabled="@locked"
+                                    title="@(locked ? "Complete previous sections first" : label)">
+                                @if (completed)
+                                {
+                                    <span class="me-1 text-success">&#10003;</span>
+                                }
+
+                                @label
+                            </button>
+                        </li>
                     }
-                    @label
-                </button>
-            </li>
-        }
-    </ul>
+                </ul>
 
-    <EditForm Model="profile" OnValidSubmit="SaveAsync">
-        <DataAnnotationsValidator/>
-        <ValidationSummary class="text-danger"/>
-
-        <div class="@(activeTab == 0 ? "" : "d-none")">
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label">First Name *</label>
-                    <InputText class="form-control" @bind-Value="profile.FirstName"/>
-                    <ValidationMessage For="() => profile.FirstName"/>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Middle Name</label>
-                    <InputText class="form-control" @bind-Value="profile.MiddleName"/>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Last Name *</label>
-                    <InputText class="form-control" @bind-Value="profile.LastName"/>
-                    <ValidationMessage For="() => profile.LastName"/>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Date of Birth *</label>
-                    <InputDate class="form-control" @bind-Value="profile.DateOfBirth"/>
-                    <ValidationMessage For="() => profile.DateOfBirth"/>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Phone *</label>
-                    <InputText class="form-control" @bind-Value="profile.PhoneNumber"/>
-                    <ValidationMessage For="() => profile.PhoneNumber"/>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Alternate Phone</label>
-                    <InputText class="form-control" @bind-Value="profile.AlternatePhone"/>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Email *</label>
-                    <InputText class="form-control" @bind-Value="profile.Email"/>
-                    <ValidationMessage For="() => profile.Email"/>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">LinkedIn URL</label>
-                    <InputText class="form-control" @bind-Value="profile.LinkedInUrl"/>
-                </div>
-                <div class="col-12">
-                    <label class="form-label">Street Address</label>
-                    <InputText class="form-control" @bind-Value="profile.StreetAddress"/>
-                </div>
-                <div class="col-md-5">
-                    <label class="form-label">City</label>
-                    <InputText class="form-control" @bind-Value="profile.City"/>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">State</label>
-                    <InputText class="form-control" @bind-Value="profile.State"/>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Zip Code</label>
-                    <InputText class="form-control" @bind-Value="profile.ZipCode"/>
-                </div>
-                <div class="col-12">
-                    <label class="form-label">Professional Summary</label>
-                    <InputTextArea class="form-control" rows="4" @bind-Value="profile.ProfessionalSummary"/>
-                </div>
-            </div>
-        </div>
-
-        <div class="@(activeTab == 1 ? "" : "d-none")">
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label">Years of Experience</label>
-                    <InputNumber class="form-control" @bind-Value="profile.YearsOfExperience"/>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Total Miles Driven</label>
-                    <InputNumber class="form-control" @bind-Value="profile.TotalMilesDriven"/>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Accident-Free Miles</label>
-                    <InputNumber class="form-control" @bind-Value="profile.AccidentFreeMiles"/>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">States Operated In</label>
-                    <InputNumber class="form-control" @bind-Value="profile.StatesOperated"/>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Avg Weekly Miles</label>
-                    <InputNumber class="form-control" @bind-Value="profile.AverageWeeklyMiles"/>
-                </div>
-            </div>
-            @{
-                var trailerTypes = profile.AllTrailerTypes.ToList();
-            }
-            @if (trailerTypes.Any())
-            {
-                <hr class="my-4"/>
-                <h6>Trailer Types <small class="text-muted fw-normal">(collected from employment history)</small></h6>
-                <div class="d-flex flex-wrap gap-2">
-                    @foreach (var t in trailerTypes)
-                    {
-                        <span class="badge bg-secondary">@t</span>
-                    }
-                </div>
-            }
-        </div>
-
-        <div class="@(activeTab == 2 ? "" : "d-none")">
-            <h5>CDL License</h5>
-            @if (profile.License is null)
-            {
-                <button type="button" class="btn btn-outline-secondary mb-3"
-                        @onclick="() => profile.License = new DriverLicense { DriverProfileId = profile.Id }">+ Add
-                    License
-                </button>
-            }
-            else
-            {
-                <div class="row g-3 mb-4">
-                    <div class="col-md-4">
-                        <label class="form-label">License Number *</label>
-                        <InputText class="form-control" @bind-Value="profile.License.LicenseNumber"/>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">State *</label>
-                        <InputText class="form-control" maxlength="2" @bind-Value="profile.License.IssuingState"/>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Class *</label>
-                        <InputSelect class="form-select" @bind-Value="profile.License.Class">
-                            @foreach (var c in Enum.GetValues<CdlClass>())
-                            {
-                                <option value="@c">CDL-@c</option>
-                            }
-                        </InputSelect>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Issued</label>
-                        <InputDate class="form-control" @bind-Value="profile.License.IssuedDate"/>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Expires *</label>
-                        <InputDate class="form-control" @bind-Value="profile.License.ExpiryDate"/>
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label">Endorsements</label>
-                        <div class="d-flex flex-wrap gap-3">
-                            @foreach (var end in Enum.GetValues<CdlEndorsement>())
-                            {
-                                <div class="form-check">
-                                    <input type="checkbox" class="form-check-input" id="end_@end"
-                                           checked="@profile.License.Endorsements.Contains(end)"
-                                           @onchange="e => ToggleEndorsement(profile.License.Endorsements, end, (bool)e.Value!)"/>
-                                    <label class="form-check-label" for="end_@end">@end</label>
-                                </div>
-                            }
-                        </div>
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label">Restrictions</label>
-                        <InputText class="form-control" @bind-Value="profile.License.Restrictions"/>
-                    </div>
-                </div>
-            }
-
-            <hr/>
-            <h5>DOT Medical Card</h5>
-            @if (profile.MedicalCard is null)
-            {
-                <button type="button" class="btn btn-outline-secondary mb-3"
-                        @onclick="() => profile.MedicalCard = new DriverMedicalCard { DriverProfileId = profile.Id }">+
-                    Add Medical Card
-                </button>
-            }
-            else
-            {
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label">Issued *</label>
-                        <InputDate class="form-control" @bind-Value="profile.MedicalCard.IssuedDate"/>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Expires *</label>
-                        <InputDate class="form-control" @bind-Value="profile.MedicalCard.ExpiryDate"/>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Medical Examiner Name</label>
-                        <InputText class="form-control" @bind-Value="profile.MedicalCard.MedicalExaminerName"/>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Cert #</label>
-                        <InputText class="form-control" @bind-Value="profile.MedicalCard.MedicalExaminerCertNumber"/>
-                    </div>
-                    <div class="col-12">
-                        <div class="form-check">
-                            <InputCheckbox class="form-check-input" @bind-Value="profile.MedicalCard.SelfCertified"/>
-                            <label class="form-check-label">Self-Certified</label>
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
-
-        <div class="@(activeTab == 3 ? "" : "d-none")">
-            <h5>Skills</h5>
-            <div class="d-flex flex-wrap gap-2 mb-3">
-                @foreach (var skill in profile.Skills)
+                @if (isNew)
                 {
-                    <span class="badge bg-info text-dark d-flex align-items-center gap-1">
-                        @skill
-                        <button type="button" class="btn-close btn-sm"
-                                @onclick="() => profile.Skills.Remove(skill)"></button>
-                    </span>
+                    <div class="small text-muted mt-3">
+                        Complete each section in order. You can freely navigate between sections after saving your profile.
+                    </div>
                 }
             </div>
-            <div class="d-flex gap-2">
-                <InputText class="form-control" style="max-width:300px" @bind-Value="newSkill"
-                           placeholder="e.g. Cross-Country Driving"/>
-                <button type="button" class="btn btn-outline-primary" @onclick="AddSkill"
-                        disabled="@string.IsNullOrWhiteSpace(newSkill)">Add
-                </button>
-            </div>
-        </div>
 
-        <div class="@(activeTab == 4 ? "" : "d-none")">
-            @foreach (var (emp, ei) in profile.EmploymentHistory.Select((e, i) => (e, i)))
-            {
-                <div class="card mb-3">
-                    <div class="card-header d-flex justify-content-between">
-                        <span>@(string.IsNullOrEmpty(emp.CompanyName) ? $"Job #{ei + 1}" : emp.CompanyName)</span>
-                        <button type="button" class="btn btn-sm btn-outline-danger"
-                                @onclick="() => profile.EmploymentHistory.Remove(emp)">Remove
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Job Title *</label>
-                                <InputText class="form-control" @bind-Value="emp.JobTitle"/>
+            <div class="col-lg-9">
+                <EditForm Model="profile" OnValidSubmit="SaveAsync">
+                    <DataAnnotationsValidator/>
+                    <ValidationSummary class="text-danger"/>
+
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h4 class="mb-0">@tabs[activeTab]</h4>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="@(activeTab == 0 ? "" : "d-none")">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">First Name *</label>
+                                        <InputText class="form-control" @bind-Value="profile.FirstName"/>
+                                        <ValidationMessage For="() => profile.FirstName"/>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Middle Name</label>
+                                        <InputText class="form-control" @bind-Value="profile.MiddleName"/>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Last Name *</label>
+                                        <InputText class="form-control" @bind-Value="profile.LastName"/>
+                                        <ValidationMessage For="() => profile.LastName"/>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Date of Birth *</label>
+                                        <InputDate class="form-control" @bind-Value="profile.DateOfBirth"/>
+                                        <ValidationMessage For="() => profile.DateOfBirth"/>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Phone *</label>
+                                        <InputText class="form-control" @bind-Value="profile.PhoneNumber"/>
+                                        <ValidationMessage For="() => profile.PhoneNumber"/>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Alternate Phone</label>
+                                        <InputText class="form-control" @bind-Value="profile.AlternatePhone"/>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Email *</label>
+                                        <InputText class="form-control" @bind-Value="profile.Email"/>
+                                        <ValidationMessage For="() => profile.Email"/>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">LinkedIn URL</label>
+                                        <InputText class="form-control" @bind-Value="profile.LinkedInUrl"/>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label class="form-label">Street Address</label>
+                                        <InputText class="form-control" @bind-Value="profile.StreetAddress"/>
+                                    </div>
+
+                                    <div class="col-md-5">
+                                        <label class="form-label">City</label>
+                                        <InputText class="form-control" @bind-Value="profile.City"/>
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <label class="form-label">State</label>
+                                        <InputText class="form-control" @bind-Value="profile.State"/>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Zip Code</label>
+                                        <InputText class="form-control" @bind-Value="profile.ZipCode"/>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label class="form-label">Professional Summary</label>
+                                        <InputTextArea class="form-control" rows="4" @bind-Value="profile.ProfessionalSummary"/>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Company Name *</label>
-                                <InputText class="form-control" @bind-Value="emp.CompanyName"/>
+
+                            <div class="@(activeTab == 1 ? "" : "d-none")">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Years of Experience</label>
+                                        <InputNumber class="form-control" @bind-Value="profile.YearsOfExperience"/>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Total Miles Driven</label>
+                                        <InputNumber class="form-control" @bind-Value="profile.TotalMilesDriven"/>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Accident-Free Miles</label>
+                                        <InputNumber class="form-control" @bind-Value="profile.AccidentFreeMiles"/>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">States Operated In</label>
+                                        <InputNumber class="form-control" @bind-Value="profile.StatesOperated"/>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Avg Weekly Miles</label>
+                                        <InputNumber class="form-control" @bind-Value="profile.AverageWeeklyMiles"/>
+                                    </div>
+                                </div>
+
+                                @{
+                                    var trailerTypes = profile.AllTrailerTypes.ToList();
+                                }
+
+                                @if (trailerTypes.Any())
+                                {
+                                    <hr class="my-4"/>
+                                    <h6>Trailer Types <small class="text-muted fw-normal">(collected from employment history)</small></h6>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach (var t in trailerTypes)
+                                        {
+                                            <span class="badge bg-secondary">@t</span>
+                                        }
+                                    </div>
+                                }
                             </div>
-                            <div class="col-md-4">
-                                <label class="form-label">City</label>
-                                <InputText class="form-control" @bind-Value="emp.City"/>
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label">State</label>
-                                <InputText class="form-control" @bind-Value="emp.State"/>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Start Date *</label>
-                                <InputDate class="form-control" @bind-Value="emp.StartDate"/>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">End Date</label>
-                                <InputDate TValue="DateOnly?" class="form-control" @bind-Value="emp.EndDate"/>
-                                <small class="text-muted">Leave blank if current</small>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Avg Weekly Miles</label>
-                                <InputNumber TValue="int?" class="form-control" @bind-Value="emp.AverageWeeklyMiles"/>
-                            </div>
-                            <div class="col-md-8">
-                                <label class="form-label">Reason for Leaving</label>
-                                <InputText class="form-control" @bind-Value="emp.ReasonForLeaving"/>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Trailer Types Used</label>
-                                <div class="d-flex flex-wrap gap-3">
-                                    @foreach (var t in Enum.GetValues<TrailerType>())
-                                    {
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" id="tt_@(ei)_@t"
-                                                   checked="@emp.TrailerTypes.Contains(t)"
-                                                   @onchange="e => ToggleTrailerType(emp, t, (bool)e.Value!)"/>
-                                            <label class="form-check-label" for="tt_@(ei)_@t">@t</label>
+
+                            <div class="@(activeTab == 2 ? "" : "d-none")">
+                                <h5>CDL License</h5>
+
+                                @if (profile.License is null)
+                                {
+                                    <button type="button" class="btn btn-outline-secondary mb-3"
+                                            @onclick="AddLicense">
+                                        + Add License
+                                    </button>
+                                }
+                                else
+                                {
+                                    <div class="row g-3 mb-4">
+                                        <div class="col-md-4">
+                                            <label class="form-label">License Number *</label>
+                                            <InputText class="form-control" @bind-Value="profile.License.LicenseNumber"/>
                                         </div>
-                                    }
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Responsibilities</label>
-                                <InputTextArea class="form-control" rows="3" @bind-Value="emp.Responsibilities"
-                                               placeholder="Describe duties, routes, equipment used..."/>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
-            <button type="button" class="btn btn-outline-primary" @onclick="AddEmployment">+ Add Job</button>
-        </div>
 
-        <div class="@(activeTab == 5 ? "" : "d-none")">
-            @foreach (var (edu, ei) in profile.EducationHistory.Select((e, i) => (e, i)))
-            {
-                <div class="card mb-3">
-                    <div class="card-header d-flex justify-content-between">
-                        <span>Education #@(ei + 1)</span>
-                        <button type="button" class="btn btn-sm btn-outline-danger"
-                                @onclick="() => profile.EducationHistory.Remove(edu)">Remove
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <label class="form-label">Level *</label>
-                                <InputSelect class="form-select" @bind-Value="edu.Level">
-                                    @foreach (var l in Enum.GetValues<EducationLevel>())
+                                        <div class="col-md-2">
+                                            <label class="form-label">State *</label>
+                                            <InputText class="form-control" maxlength="2" @bind-Value="profile.License.IssuingState"/>
+                                        </div>
+
+                                        <div class="col-md-2">
+                                            <label class="form-label">Class *</label>
+                                            <InputSelect class="form-select" @bind-Value="profile.License.Class">
+                                                @foreach (var c in Enum.GetValues<CdlClass>())
+                                                {
+                                                    <option value="@c">CDL-@c</option>
+                                                }
+                                            </InputSelect>
+                                        </div>
+
+                                        <div class="col-md-2">
+                                            <label class="form-label">Issued</label>
+                                            <InputDate class="form-control" @bind-Value="profile.License.IssuedDate"/>
+                                        </div>
+
+                                        <div class="col-md-2">
+                                            <label class="form-label">Expires *</label>
+                                            <InputDate class="form-control" @bind-Value="profile.License.ExpiryDate"/>
+                                        </div>
+
+                                        <div class="col-12">
+                                            <label class="form-label">Endorsements</label>
+                                            <div class="d-flex flex-wrap gap-3">
+                                                @foreach (var end in Enum.GetValues<CdlEndorsement>())
+                                                {
+                                                    <div class="form-check">
+                                                        <input type="checkbox" class="form-check-input" id="end_@end"
+                                                               checked="@profile.License.Endorsements.Contains(end)"
+                                                               @onchange="e => ToggleEndorsement(profile.License.Endorsements, end, (bool)e.Value!)"/>
+                                                        <label class="form-check-label" for="end_@end">@end</label>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+
+                                        <div class="col-12">
+                                            <label class="form-label">Restrictions</label>
+                                            <InputText class="form-control" @bind-Value="profile.License.Restrictions"/>
+                                        </div>
+                                    </div>
+                                }
+
+                                <hr/>
+
+                                <h5>DOT Medical Card</h5>
+
+                                @if (profile.MedicalCard is null)
+                                {
+                                    <button type="button" class="btn btn-outline-secondary mb-3"
+                                            @onclick="AddMedicalCard">
+                                        + Add Medical Card
+                                    </button>
+                                }
+                                else
+                                {
+                                    <div class="row g-3">
+                                        <div class="col-md-3">
+                                            <label class="form-label">Issued *</label>
+                                            <InputDate class="form-control" @bind-Value="profile.MedicalCard.IssuedDate"/>
+                                        </div>
+
+                                        <div class="col-md-3">
+                                            <label class="form-label">Expires *</label>
+                                            <InputDate class="form-control" @bind-Value="profile.MedicalCard.ExpiryDate"/>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <label class="form-label">Medical Examiner Name</label>
+                                            <InputText class="form-control" @bind-Value="profile.MedicalCard.MedicalExaminerName"/>
+                                        </div>
+
+                                        <div class="col-md-2">
+                                            <label class="form-label">Cert #</label>
+                                            <InputText class="form-control" @bind-Value="profile.MedicalCard.MedicalExaminerCertNumber"/>
+                                        </div>
+
+                                        <div class="col-12">
+                                            <div class="form-check">
+                                                <InputCheckbox class="form-check-input" @bind-Value="profile.MedicalCard.SelfCertified"/>
+                                                <label class="form-check-label">Self-Certified</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="@(activeTab == 3 ? "" : "d-none")">
+                                <h5>Skills</h5>
+
+                                <div class="d-flex flex-wrap gap-2 mb-3">
+                                    @foreach (var skill in profile.Skills)
                                     {
-                                        <option value="@l">@l</option>
+                                        <span class="badge bg-info text-dark d-flex align-items-center gap-1">
+                                            @skill
+                                            <button type="button" class="btn-close btn-sm"
+                                                    @onclick="() => profile.Skills.Remove(skill)">
+                                            </button>
+                                        </span>
                                     }
-                                </InputSelect>
-                            </div>
-                            <div class="col-md-8">
-                                <label class="form-label">Institution</label>
-                                <InputText class="form-control" @bind-Value="edu.InstitutionName"/>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">City</label>
-                                <InputText class="form-control" @bind-Value="edu.City"/>
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label">State</label>
-                                <InputText class="form-control" @bind-Value="edu.State"/>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Field of Study</label>
-                                <InputText class="form-control" @bind-Value="edu.FieldOfStudy"/>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Graduation Date</label>
-                                <InputDate TValue="DateOnly?" class="form-control" @bind-Value="edu.GraduationDate"/>
-                            </div>
-                            <div class="col-12">
-                                <div class="form-check">
-                                    <InputCheckbox class="form-check-input" @bind-Value="edu.Graduated"/>
-                                    <label class="form-check-label">Graduated</label>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <InputText class="form-control" style="max-width:300px" @bind-Value="newSkill"
+                                               placeholder="e.g. Cross-Country Driving"/>
+                                    <button type="button" class="btn btn-outline-primary" @onclick="AddSkill"
+                                            disabled="@string.IsNullOrWhiteSpace(newSkill)">
+                                        Add
+                                    </button>
                                 </div>
                             </div>
+
+                            <div class="@(activeTab == 4 ? "" : "d-none")">
+                                @foreach (var (emp, ei) in profile.EmploymentHistory.Select((e, i) => (e, i)))
+                                {
+                                    <div class="card mb-3">
+                                        <div class="card-header d-flex justify-content-between">
+                                            <span>@(string.IsNullOrEmpty(emp.CompanyName) ? $"Job #{ei + 1}" : emp.CompanyName)</span>
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    @onclick="() => profile.EmploymentHistory.Remove(emp)">
+                                                Remove
+                                            </button>
+                                        </div>
+
+                                        <div class="card-body">
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Job Title *</label>
+                                                    <InputText class="form-control" @bind-Value="emp.JobTitle"/>
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Company Name *</label>
+                                                    <InputText class="form-control" @bind-Value="emp.CompanyName"/>
+                                                </div>
+
+                                                <div class="col-md-4">
+                                                    <label class="form-label">City</label>
+                                                    <InputText class="form-control" @bind-Value="emp.City"/>
+                                                </div>
+
+                                                <div class="col-md-2">
+                                                    <label class="form-label">State</label>
+                                                    <InputText class="form-control" @bind-Value="emp.State"/>
+                                                </div>
+
+                                                <div class="col-md-3">
+                                                    <label class="form-label">Start Date *</label>
+                                                    <InputDate class="form-control" @bind-Value="emp.StartDate"/>
+                                                </div>
+
+                                                <div class="col-md-3">
+                                                    <label class="form-label">End Date</label>
+                                                    <InputDate TValue="DateOnly?" class="form-control" @bind-Value="emp.EndDate"/>
+                                                    <small class="text-muted">Leave blank if current</small>
+                                                </div>
+
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Avg Weekly Miles</label>
+                                                    <InputNumber TValue="int?" class="form-control" @bind-Value="emp.AverageWeeklyMiles"/>
+                                                </div>
+
+                                                <div class="col-md-8">
+                                                    <label class="form-label">Reason for Leaving</label>
+                                                    <InputText class="form-control" @bind-Value="emp.ReasonForLeaving"/>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <label class="form-label">Trailer Types Used</label>
+                                                    <div class="d-flex flex-wrap gap-3">
+                                                        @foreach (var t in Enum.GetValues<TrailerType>())
+                                                        {
+                                                            <div class="form-check">
+                                                                <input type="checkbox" class="form-check-input" id="tt_@(ei)_@t"
+                                                                       checked="@emp.TrailerTypes.Contains(t)"
+                                                                       @onchange="e => ToggleTrailerType(emp, t, (bool)e.Value!)"/>
+                                                                <label class="form-check-label" for="tt_@(ei)_@t">@t</label>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <label class="form-label">Responsibilities</label>
+                                                    <InputTextArea class="form-control" rows="3" @bind-Value="emp.Responsibilities"
+                                                                   placeholder="Describe duties, routes, equipment used..."/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+
+                                <button type="button" class="btn btn-outline-primary" @onclick="AddEmployment">
+                                    + Add Job
+                                </button>
+                            </div>
+
+                            <div class="@(activeTab == 5 ? "" : "d-none")">
+                                @foreach (var (edu, ei) in profile.EducationHistory.Select((e, i) => (e, i)))
+                                {
+                                    <div class="card mb-3">
+                                        <div class="card-header d-flex justify-content-between">
+                                            <span>Education #@(ei + 1)</span>
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    @onclick="() => profile.EducationHistory.Remove(edu)">
+                                                Remove
+                                            </button>
+                                        </div>
+
+                                        <div class="card-body">
+                                            <div class="row g-3">
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Level *</label>
+                                                    <InputSelect class="form-select" @bind-Value="edu.Level">
+                                                        @foreach (var l in Enum.GetValues<EducationLevel>())
+                                                        {
+                                                            <option value="@l">@l</option>
+                                                        }
+                                                    </InputSelect>
+                                                </div>
+
+                                                <div class="col-md-8">
+                                                    <label class="form-label">Institution</label>
+                                                    <InputText class="form-control" @bind-Value="edu.InstitutionName"/>
+                                                </div>
+
+                                                <div class="col-md-4">
+                                                    <label class="form-label">City</label>
+                                                    <InputText class="form-control" @bind-Value="edu.City"/>
+                                                </div>
+
+                                                <div class="col-md-2">
+                                                    <label class="form-label">State</label>
+                                                    <InputText class="form-control" @bind-Value="edu.State"/>
+                                                </div>
+
+                                                <div class="col-md-3">
+                                                    <label class="form-label">Field of Study</label>
+                                                    <InputText class="form-control" @bind-Value="edu.FieldOfStudy"/>
+                                                </div>
+
+                                                <div class="col-md-3">
+                                                    <label class="form-label">Graduation Date</label>
+                                                    <InputDate TValue="DateOnly?" class="form-control" @bind-Value="edu.GraduationDate"/>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <div class="form-check">
+                                                        <InputCheckbox class="form-check-input" @bind-Value="edu.Graduated"/>
+                                                        <label class="form-check-label">Graduated</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+
+                                <button type="button" class="btn btn-outline-primary"
+                                        @onclick="AddEducation">
+                                    + Add Education
+                                </button>
+                            </div>
+
+                            <div class="@(activeTab == 6 ? "" : "d-none")">
+                                @foreach (var (cert, ci) in profile.Certifications.Select((c, i) => (c, i)))
+                                {
+                                    <div class="card mb-3">
+                                        <div class="card-header d-flex justify-content-between">
+                                            <span>@(string.IsNullOrEmpty(cert.Name) ? $"Certification #{ci + 1}" : cert.Name)</span>
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    @onclick="() => profile.Certifications.Remove(cert)">
+                                                Remove
+                                            </button>
+                                        </div>
+
+                                        <div class="card-body">
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Name *</label>
+                                                    <InputText class="form-control" @bind-Value="cert.Name"
+                                                               placeholder="e.g. TWIC Card, HazMat Certification"/>
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Issuing Authority</label>
+                                                    <InputText class="form-control" @bind-Value="cert.IssuingAuthority"/>
+                                                </div>
+
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Cert Number</label>
+                                                    <InputText class="form-control" @bind-Value="cert.CertificationNumber"/>
+                                                </div>
+
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Issued</label>
+                                                    <InputDate TValue="DateOnly?" class="form-control" @bind-Value="cert.IssuedDate"/>
+                                                </div>
+
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Expires</label>
+                                                    <InputDate TValue="DateOnly?" class="form-control" @bind-Value="cert.ExpiryDate"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+
+                                <button type="button" class="btn btn-outline-primary"
+                                        @onclick="AddCertification">
+                                    + Add Certification
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            }
-            <button type="button" class="btn btn-outline-primary"
-                    @onclick="() => profile.EducationHistory.Add(new DriverEducation { DriverProfileId = profile.Id })">
-                + Add Education
-            </button>
-        </div>
 
-        <div class="@(activeTab == 6 ? "" : "d-none")">
-            @foreach (var (cert, ci) in profile.Certifications.Select((c, i) => (c, i)))
-            {
-                <div class="card mb-3">
-                    <div class="card-header d-flex justify-content-between">
-                        <span>@(string.IsNullOrEmpty(cert.Name) ? $"Certification #{ci + 1}" : cert.Name)</span>
-                        <button type="button" class="btn btn-sm btn-outline-danger"
-                                @onclick="() => profile.Certifications.Remove(cert)">Remove
-                        </button>
+                    <div class="mt-4 d-flex gap-2 align-items-center flex-wrap">
+                        <button type="button" class="btn btn-outline-secondary" @onclick="CancelEdit">Cancel</button>
+
+                        @if (isNew && activeTab > 0)
+                        {
+                            <button type="button" class="btn btn-outline-secondary" @onclick="GoPrevious">
+                                &larr; Previous
+                            </button>
+                        }
+
+                        @if (isNew && activeTab < tabs.Length - 1)
+                        {
+                            <button type="button" class="btn btn-outline-primary" @onclick="GoNext">
+                                Next &rarr;
+                            </button>
+                        }
+
+                        @if (!isNew || maxReachedTab == tabs.Length - 1)
+                        {
+                            <button type="submit" class="btn btn-primary">
+                                @(isNew ? "Create Profile" : "Save Changes")
+                            </button>
+                        }
+
+                        @if (isNew && maxReachedTab < tabs.Length - 1)
+                        {
+                            <small class="text-muted ms-2">Review all @tabs.Length sections to enable Save.</small>
+                        }
                     </div>
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Name *</label>
-                                <InputText class="form-control" @bind-Value="cert.Name"
-                                           placeholder="e.g. TWIC Card, HazMat Certification"/>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Issuing Authority</label>
-                                <InputText class="form-control" @bind-Value="cert.IssuingAuthority"/>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Cert Number</label>
-                                <InputText class="form-control" @bind-Value="cert.CertificationNumber"/>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Issued</label>
-                                <InputDate TValue="DateOnly?" class="form-control" @bind-Value="cert.IssuedDate"/>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Expires</label>
-                                <InputDate TValue="DateOnly?" class="form-control" @bind-Value="cert.ExpiryDate"/>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
-            <button type="button" class="btn btn-outline-primary"
-                    @onclick="() => profile.Certifications.Add(new DriverCertification { DriverProfileId = profile.Id })">
-                + Add Certification
-            </button>
+
+                    @if (!string.IsNullOrEmpty(successMessage))
+                    {
+                        <div class="alert alert-success mt-3">@successMessage</div>
+                    }
+                </EditForm>
+            </div>
         </div>
 
-        <div class="mt-4 d-flex gap-2 align-items-center flex-wrap">
-            @if (activeTab > 0)
-            {
-                <button type="button" class="btn btn-outline-secondary" @onclick="GoPrevious">
-                    &larr; Previous
-                </button>
-            }
-            @if (activeTab < tabs.Length - 1)
-            {
-                <button type="button" class="btn btn-outline-primary" @onclick="GoNext">
-                    Next &rarr;
-                </button>
-            }
-            @if (!isNew || maxReachedTab == tabs.Length - 1)
-            {
-                <button type="submit" class="btn btn-primary">
-                    @(isNew ? "Create Profile" : "Save Changes")
-                </button>
-                @if (!isNew)
-                {
-                    <button type="button" class="btn btn-outline-secondary" @onclick="CancelEdit">Cancel</button>
-                }
-            }
-            @if (isNew && maxReachedTab < tabs.Length - 1)
-            {
-                <small class="text-muted ms-2">Review all @tabs.Length sections to enable Save.</small>
-            }
-        </div>
-
-        @if (!string.IsNullOrEmpty(successMessage))
+        @if (showCancelConfirm)
         {
-            <div class="alert alert-success mt-3">@successMessage</div>
-        }
-    </EditForm>
+            <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Discard changes?</h5>
+                        </div>
 
-    @if (showCancelConfirm)
-    {
-        <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Discard changes?</h5>
-                    </div>
-                    <div class="modal-body">
-                        You have unsaved changes. Are you sure you want to discard them?
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-secondary" @onclick="() => showCancelConfirm = false">Continue Editing
-                        </button>
-                        <button class="btn btn-danger" @onclick="ConfirmCancel">Discard Changes</button>
+                        <div class="modal-body">
+                            You have unsaved changes. Are you sure you want to discard them?
+                        </div>
+
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" @onclick="() => showCancelConfirm = false">
+                                Continue Editing
+                            </button>
+                            <button class="btn btn-danger" @onclick="ConfirmCancel">Discard Changes</button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        }
     }
-}
+</div>
 
 @code {
     [SupplyParameterFromQuery] public string? ReturnUrl { get; set; }
@@ -518,6 +598,8 @@ else
     private string? newSkill;
     private DriverProfile? originalSnapshot;
     private bool showCancelConfirm;
+
+    private static DateOnly Today => DateOnly.FromDateTime(DateTime.Today);
 
     private static readonly string[] tabs =
         ["Personal", "Driving Stats", "License & Medical", "Skills", "Employment", "Education", "Certifications"];
@@ -539,19 +621,19 @@ else
 
         if (existing is null)
         {
-            // creating a new profile for current user
             isNew = true;
             maxReachedTab = 0;
-            profile = new DriverProfile { UserId = userId };
-            // snapshot empty
+            profile = new DriverProfile
+            {
+                UserId = userId,
+                DateOfBirth = Today
+            };
             originalSnapshot = null;
         }
         else
         {
-            // editing existing profile: only owner may edit
             if (Id > 0 && existing.UserId != userId)
             {
-                // not the owner - redirect to view
                 Nav.NavigateTo($"/profiles/{existing.Id}");
                 return;
             }
@@ -559,7 +641,6 @@ else
             isNew = false;
             maxReachedTab = tabs.Length - 1;
             profile = existing;
-            // snapshot original for cancel detection
             originalSnapshot = CloneProfile(profile);
         }
     }
@@ -568,6 +649,7 @@ else
     {
         if (isNew && index > maxReachedTab)
             return;
+
         activeTab = index;
     }
 
@@ -575,7 +657,9 @@ else
     {
         if (activeTab >= tabs.Length - 1)
             return;
+
         activeTab++;
+
         if (activeTab > maxReachedTab)
             maxReachedTab = activeTab;
     }
@@ -600,7 +684,6 @@ else
         }
         else
         {
-            // enforce server-side owner check
             await ProfileService.UpdateAsync(profile!, currentUserId);
         }
 
@@ -619,38 +702,101 @@ else
     {
         if (add)
         {
-            if (!list.Contains(value)) list.Add(value);
+            if (!list.Contains(value))
+                list.Add(value);
         }
-        else list.Remove(value);
+        else
+        {
+            list.Remove(value);
+        }
     }
 
     private void ToggleTrailerType(DriverEmployment emp, TrailerType type, bool add)
     {
         if (add)
         {
-            if (!emp.TrailerTypes.Contains(type)) emp.TrailerTypes.Add(type);
+            if (!emp.TrailerTypes.Contains(type))
+                emp.TrailerTypes.Add(type);
         }
-        else emp.TrailerTypes.Remove(type);
+        else
+        {
+            emp.TrailerTypes.Remove(type);
+        }
     }
 
     private void AddEmployment()
     {
-        profile?.EmploymentHistory.Add(new DriverEmployment { DriverProfileId = profile!.Id, StartDate = DateOnly.FromDateTime(DateTime.Today) });
+        profile?.EmploymentHistory.Add(new DriverEmployment
+        {
+            DriverProfileId = profile!.Id,
+            StartDate = Today
+        });
+    }
+
+    private void AddLicense()
+    {
+        if (profile is null)
+            return;
+
+        profile.License = new DriverLicense
+        {
+            DriverProfileId = profile.Id,
+            IssuedDate = Today,
+            ExpiryDate = Today
+        };
+    }
+
+    private void AddMedicalCard()
+    {
+        if (profile is null)
+            return;
+
+        profile.MedicalCard = new DriverMedicalCard
+        {
+            DriverProfileId = profile.Id,
+            IssuedDate = Today,
+            ExpiryDate = Today
+        };
+    }
+
+    private void AddEducation()
+    {
+        if (profile is null)
+            return;
+
+        profile.EducationHistory.Add(new DriverEducation
+        {
+            DriverProfileId = profile.Id,
+            GraduationDate = Today
+        });
+    }
+
+    private void AddCertification()
+    {
+        if (profile is null)
+            return;
+
+        profile.Certifications.Add(new DriverCertification
+        {
+            DriverProfileId = profile.Id,
+            IssuedDate = Today,
+            ExpiryDate = Today
+        });
     }
 
     private void AddSkill()
     {
-        if (string.IsNullOrWhiteSpace(newSkill) || profile is null) return;
+        if (string.IsNullOrWhiteSpace(newSkill) || profile is null)
+            return;
+
         profile.Skills.Add(newSkill.Trim());
         newSkill = null;
     }
 
     private void CancelEdit()
     {
-        // if editing existing profile, just navigate back to view page without saving
         if (!isNew && profile is not null)
         {
-            // if there are changes show confirmation
             if (!IsUnchanged(profile, originalSnapshot))
             {
                 showCancelConfirm = true;
@@ -668,6 +814,7 @@ else
     private void ConfirmCancel()
     {
         showCancelConfirm = false;
+
         if (profile is not null && originalSnapshot is not null)
         {
             profile = originalSnapshot;
@@ -681,7 +828,6 @@ else
 
     private static DriverProfile CloneProfile(DriverProfile src)
     {
-        // shallow deep-clone relevant fields for comparison
         return new DriverProfile
         {
             Id = src.Id,
@@ -768,9 +914,12 @@ else
 
     private static bool IsUnchanged(DriverProfile? a, DriverProfile? b)
     {
-        if (a is null && b is null) return true;
-        if (a is null || b is null) return false;
-        // compare scalar fields quickly
+        if (a is null && b is null)
+            return true;
+
+        if (a is null || b is null)
+            return false;
+
         if (a.FirstName != b.FirstName) return false;
         if (a.LastName != b.LastName) return false;
         if (a.DateOfBirth != b.DateOfBirth) return false;
@@ -781,13 +930,11 @@ else
         if (a.TotalMilesDriven != b.TotalMilesDriven) return false;
         if (a.AccidentFreeMiles != b.AccidentFreeMiles) return false;
         if (a.AverageWeeklyMiles != b.AverageWeeklyMiles) return false;
-        // compare lists by count and content
         if (!a.Skills.SequenceEqual(b.Skills)) return false;
         if (a.EmploymentHistory.Count != b.EmploymentHistory.Count) return false;
-        // skip detailed employment comparison for brevity; assume changed if counts differ
         if (a.EducationHistory.Count != b.EducationHistory.Count) return false;
         if (a.Certifications.Count != b.Certifications.Count) return false;
+
         return true;
     }
-
 }

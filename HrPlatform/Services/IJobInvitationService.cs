@@ -1,6 +1,5 @@
 ﻿using HrPlatform.Data.Entities;
 using HrPlatform.Data.Enums;
-using HrPlatform.Models;
 
 namespace HrPlatform.Services;
 
@@ -23,7 +22,7 @@ public interface IJobInvitationService
     /// <summary>
     /// Returns all job invitations for a specific driver (for /driver/invitations).
     /// </summary>
-    // Task<List<JobInvitation>> GetForDriverAsync(string userId);
+    Task<List<JobInvitation>> GetForDriverAsync(string userId);
 
     /// <summary>
     /// Returns all job invitations across all jobs belonging to a company
@@ -32,5 +31,5 @@ public interface IJobInvitationService
     // Task<List<JobInvitation>> GetForCompanyAsync(string companyId, int? jobId = null);
 
     /// <summary>Updates the status of a job invitation (Accept / Decline).</summary>
-    // Task<bool> UpdateStatusAsync(int invitationId, string userId, JobInvitationStatus status);
+    Task<bool> UpdateStatusAsync(int invitationId, string userId, JobInvitationStatus status);
 }
