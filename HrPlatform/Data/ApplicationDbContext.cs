@@ -19,6 +19,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<DriverCertification> DriverCertifications => Set<DriverCertification>();
     public DbSet<JobApplication> JobApplications => Set<JobApplication>();
     public DbSet<Invitation> Invitations { get; set; }
+    public DbSet<JobInvitation> JobInvitations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -142,6 +143,29 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.Property(e => e.Token).IsRequired().HasMaxLength(64);
             entity.Property(e => e.Email).IsRequired().HasMaxLength(256);
             entity.Property(e => e.Role).IsRequired().HasMaxLength(50);
+        });
+
+        // ── JobInvitation ────────────────────────────────────
+        b.Entity<JobInvitation>(e =>
+        {
+            e.HasKey(x => x.Id);
+
+            // One invitation per driver per job
+            e.HasIndex(x => new { x.UserId, x.JobId }).IsUnique();
+
+            e.HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(x => x.Job)
+                .WithMany()
+                .HasForeignKey(x => x.JobId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.Property(x => x.Status)
+                .HasConversion<string>()
+                .HasMaxLength(20);
         });
     }
 }

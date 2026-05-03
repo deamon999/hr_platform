@@ -2,6 +2,7 @@
 @using System.ComponentModel.DataAnnotations
 @using System.Text
 @using System.Text.Encodings.Web
+@using HrPlatform.Data.Entities
 @using Microsoft.AspNetCore.WebUtilities
 
 @inject UserManager<ApplicationUser> UserManager
@@ -11,28 +12,28 @@
 @inject ILogger<Register> Logger
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
+@inject IInvitationService InvitationService
+@inject IJobInvitationService JobInvitationService
 
 <PageTitle>Register</PageTitle>
 
 <h1>Register</h1>
 
-@* $1$ Show a banner when the user arrived via an invitation link #1# *@
-@* @if (_invitation is not null) *@
-@* { *@
-@*     <div class="alert alert-info mb-3"> *@
-@*         <strong>You've been invited</strong> as a <strong>@_invitation.Role</strong>. *@
-@*         Your email address has been pre-filled and cannot be changed. *@
-@*     </div> *@
-@* } *@
-@* *@
-@* $1$ Show an error when the token is present but invalid/expired #1# *@
-@* @if (_tokenInvalid) *@
-@* { *@
-@*     <div class="alert alert-danger mb-3"> *@
-@*         This invitation link is invalid or has already been used. *@
-@*         Please ask an administrator to send you a new invitation. *@
-@*     </div> *@
-@* } *@
+@if (_invitation is not null)
+{
+    <div class="alert alert-info mb-3">
+        <strong>You've been invited</strong> as a <strong>@_invitation.Role</strong>.
+        Your email address has been pre-filled from invitation.
+    </div>
+}
+
+@if (_tokenInvalid)
+{
+    <div class="alert alert-danger mb-3">
+        This invitation link is invalid or has already been used.
+        Please ask an administrator to send you a new invitation.
+    </div>
+}
 
 <div class="row">
     <div class="col-lg-6">
@@ -68,24 +69,35 @@
 
 @code {
     private IEnumerable<IdentityError>? identityErrors;
-    
-    // ── Query-string token injected from the invitation email link ──
-    [SupplyParameterFromQuery]
-    private string? Token { get; set; }
 
+    [SupplyParameterFromQuery] private string? Token { get; set; }
     [SupplyParameterFromForm] private InputModel Input { get; set; } = default!;
-
     [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
+
+    private Invitation? _invitation;
+    private bool _tokenInvalid;
 
     private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         Input ??= new InputModel();
+        if (!string.IsNullOrWhiteSpace(Token))
+        {
+            _invitation = await InvitationService.GetValidAsync(Token);
+
+            if (_invitation is not null)
+            {
+                Input.Email = _invitation.Email;
+            }
+        }
     }
 
     public async Task RegisterUser(EditContext editContext)
     {
+        // If page was loaded with an invalid token, block submission.
+        if (_tokenInvalid) return;
+
         var user = CreateUser();
 
         await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
@@ -98,6 +110,30 @@
             identityErrors = result.Errors;
             return;
         }
+
+        if (_invitation is not null)
+        {
+            if (RoleConstants.Manager.Equals(_invitation.Role, StringComparison.OrdinalIgnoreCase))
+            {
+                user.CompanyId = _invitation.CompanyId;
+                await UserManager.UpdateAsync(user);
+                await UserManager.AddToRoleAsync(user, RoleConstants.Manager);
+            }
+            else if (RoleConstants.Driver.Equals(_invitation.Role, StringComparison.OrdinalIgnoreCase))
+            {
+                await UserManager.AddToRoleAsync(user, RoleConstants.Driver);
+                if (_invitation.JobId.HasValue)
+                {
+                    await JobInvitationService.CreateFromRegistrationAsync(
+                        user.Id, _invitation.JobId.Value);
+                }
+            }
+
+
+            _invitation.IsUsed = true;
+            await InvitationService.MarkUsedAsync(Token);
+        }
+        // ────────────────────────────────────────────────────────
 
         Logger.LogInformation("User created a new account with password.");
 

@@ -2,6 +2,7 @@
 @page "/jobs/invite/{Id:int}"
 @rendermode InteractiveServer
 
+@using System.Security.Claims
 @using HrPlatform.Data.Entities
 @using HrPlatform.Models
 
@@ -55,8 +56,7 @@
                         <div class="mb-3">
                             <label class="form-label">Contact Method</label>
 
-                            <InputRadioGroup @bind-Value="_model.ContactMethod" Name="contactMethod"
-                                             @onchange="OnContactMethodChanged">
+                            <InputRadioGroup @bind-Value="_model.ContactMethod" Name="contactMethod">
                                 <div class="form-check form-check-inline">
                                     <InputRadio class="form-check-input" Value="@ContactMethod.Email"
                                                 id="contactEmail"/>
@@ -147,44 +147,40 @@
     private bool _sending;
     private List<Company> _companies = new();
     private List<string> _roles = new();
+    private AuthenticationState auth;
 
     protected override async Task OnInitializedAsync()
     {
         _companies = await CompanyService.GetAllAsync();
-        var auth = await AuthState.GetAuthenticationStateAsync();
+        _roles = RoleManager.Roles
+            .Select(r => r.Name)
+            .ToList()!;
+        auth = await AuthState.GetAuthenticationStateAsync();
         var user = auth.User;
-        if (Id.HasValue)
+        if (Id.HasValue && user.IsInRole(RoleConstants.Manager))
         {
             _model.JobId = Id.Value;
-            _roles = RoleManager.Roles
-                .Where(r => r.Name.Equals(RoleConstants.Driver))
-                .Select(r => r.Name)
+            _roles = _roles
+                .Where(r => r.Equals(RoleConstants.Driver, StringComparison.OrdinalIgnoreCase))
                 .ToList()!;
             _model.Role = RoleConstants.Driver;
-            _model.CompanyId = Convert.ToInt32(user.FindFirst("companyId"));
+            _model.CompanyId = Convert.ToInt32(user.FindFirstValue("companyId"));
         }
         else if (!Id.HasValue && user.IsInRole(RoleConstants.Manager))
         {
             // load roles synchronously from RoleManager (store may not support EF async here)
-            _roles = RoleManager.Roles
-                .Where(r => !r.Name!.Equals(RoleConstants.Admin) && !r.Name.Equals(RoleConstants.Driver))
-                .Select(r => r.Name)
+            _roles = _roles
+                .Where(r => !r.Equals(RoleConstants.Admin) && !r.Equals(RoleConstants.Driver))
                 .ToList()!;
-        }
-    }
-
-    private void OnContactMethodChanged(ChangeEventArgs e)
-    {
-        if (_model.ContactMethod == ContactMethod.Phone)
-        {
-            _model.Email = string.Empty;
+            _model.CompanyId = Convert.ToInt32(user.FindFirstValue("companyId"));
         }
         else
         {
-            _model.Phone = string.Empty;
+            _roles = _roles
+                .Where(r => !r.Equals(RoleConstants.Admin))
+                .ToList()!;
         }
     }
-
 
     private async Task HandleSubmit()
     {
@@ -194,7 +190,7 @@
 
         try
         {
-            if (_model.Role == "Manager")
+            if (auth.User.IsInRole(RoleConstants.Manager))
             {
                 if (_model.CompanyId is null)
                 {
@@ -228,7 +224,8 @@
                 Email = normalisedEmail,
                 Phone = normalisedPhone,
                 Role = _model.Role,
-                CompanyId = _model.Role == "Manager" ? _model.CompanyId : null
+                CompanyId = _model.CompanyId,
+                JobId = _model.JobId
             };
 
             var link = Nav.ToAbsoluteUri($"/Account/Register?token={invitation.Token}");

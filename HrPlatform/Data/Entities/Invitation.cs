@@ -28,9 +28,6 @@ public class Invitation
     /// <summary>Whether the invitation has already been consumed.</summary>
     public bool IsUsed { get; set; } = false;
 
-    /// <summary>Whether the invitation is waiting for job application.</summary>
-    public bool IsJobPending { get; set; }
-
     /// <summary>Invitation link expires after 7 days by default.</summary>
     public DateTime ExpiresAt { get; set; } = DateTime.UtcNow.AddDays(7);
 

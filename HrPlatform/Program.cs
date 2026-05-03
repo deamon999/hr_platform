@@ -57,6 +57,7 @@ public class Program
         builder.Services.AddScoped<ICompanyService, CompanyService>();
         builder.Services.AddScoped<IAdminUserService, AdminUserService>();
         builder.Services.AddScoped<IInvitationService, InvitationService>();
+        builder.Services.AddScoped<IJobInvitationService, JobInvitationService>();
 
         var app = builder.Build();
 
