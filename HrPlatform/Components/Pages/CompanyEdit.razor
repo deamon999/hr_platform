@@ -1,11 +1,14 @@
 @page "/companies/new"
 @page "/companies/{Id:int}"
 @page "/companies/edit/{Id:int}"
+@page "/my-company"
+@using System.Security.Claims
 @rendermode InteractiveServer
 
-@attribute [Authorize(Roles = RoleConstants.Admin)]
+@attribute [Authorize(Roles = $"{RoleConstants.Driver},{RoleConstants.Manager}")]
 @inject ICompanyService CompanySvc
 @inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthState
 
 <PageTitle>@Title</PageTitle>
 
@@ -25,24 +28,25 @@ else
 
         <div class="mb-3">
             <label class="form-label">Name *</label>
-            <InputText class="form-control" @bind-Value="company.Name"/>
+            <InputText class="form-control" @bind-Value="company.Name" disabled="@isView"/>
         </div>
         <div class="mb-3">
             <label class="form-label">Registration #</label>
-            <InputText class="form-control" @bind-Value="company.RegistrationNumber"/>
+            <InputText class="form-control" @bind-Value="company.RegistrationNumber" disabled="@isView"/>
         </div>
         <div class="mb-3">
             <label class="form-label">Date Registered</label>
-            <InputDate class="form-control" @bind-Value="company.DateRegistered"/>
+            <InputDate class="form-control" @bind-Value="company.DateRegistered" disabled="@isView"/>
         </div>
         <div class="mb-3">
             <label class="form-label">Address</label>
-            <InputText class="form-control" @bind-Value="company.Address"/>
+            <InputText class="form-control" @bind-Value="company.Address" disabled="@isView"/>
         </div>
 
         <div class="d-flex gap-2">
             @if (isView)
             {
+                <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => GoToEdit(company.Id)">Edit</button>
                 <button type="button" class="btn btn-secondary" @onclick="Cancel">Back</button>
             }
             else
@@ -57,13 +61,18 @@ else
 @code {
     [Parameter] public int Id { get; set; }
     private Company? company;
+    private int companyId;
     private bool isNew;
     private bool isView;
+    private ClaimsPrincipal user;
 
     private string Title => isView ? "Company Details" : (isNew ? "Create Company" : "Edit Company");
 
     protected override async Task OnInitializedAsync()
     {
+        companyId = Id;
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        user = auth.User;
         var uri = Nav.Uri.ToLower();
 
         // Determine mode based on URL
@@ -76,7 +85,13 @@ else
         }
         else
         {
-            company = await CompanySvc.GetByIdAsync(Id);
+            if (companyId == 0)
+            {
+                string companyClaim = user.FindFirst("companyId")?.Value;
+                companyId = int.Parse(companyClaim);
+            }
+
+            company = await CompanySvc.GetByIdAsync(companyId);
             if (company is null) Nav.NavigateTo("/companies");
         }
     }
@@ -90,12 +105,29 @@ else
         else
             await CompanySvc.UpdateAsync(company!);
 
-        Nav.NavigateTo("/companies");
+        GoBack();
     }
 
     private void Cancel()
     {
-        Nav.NavigateTo("/companies");
+        GoBack();
+    }
+
+    private void GoToEdit(int id)
+    {
+        Nav.NavigateTo($"/companies/edit/{id}");
+    }
+
+    private void GoBack()
+    {
+        if (user.IsInRole(RoleConstants.Admin))
+        {
+            Nav.NavigateTo("/companies");
+        }
+        else
+        {
+            Nav.NavigateTo("/my-company");
+        }
     }
 
 }

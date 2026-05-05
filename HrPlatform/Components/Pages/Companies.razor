@@ -22,34 +22,65 @@ else if (!companies.Any())
 }
 else
 {
-    <div class="table-responsive">
-        <table class="table">
-            <thead>
-            <tr>
-                <th>Name</th>
-                <th>Reg #</th>
-                <th>Registered</th>
-                <th></th>
-            </tr>
-            </thead>
-            <tbody>
-            @foreach (var c in companies)
-            {
+    <div class="d-none d-lg-block">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
                 <tr>
-                    <td>@c.Name</td>
-                    <td>@c.RegistrationNumber</td>
-                    <td>@(c.DateRegistered?.ToString("d") ?? "—")</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary" @onclick="() => GoToView(c.Id)">View</button>
-                        <button class="btn btn-sm btn-outline-secondary" @onclick="() => GoToEdit(c.Id)">Edit</button>
-                        <button type="button" class="btn btn-sm btn-outline-danger"
-                                @onclick="async () => ConfirmDelete(c)">Delete
-                        </button>
-                    </td>
+                    <th>Name</th>
+                    <th>Reg #</th>
+                    <th>Registered</th>
+                    <th>Actions</th>
                 </tr>
-            }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                @foreach (var c in companies)
+                {
+                    <tr>
+                        <td><strong>@c.Name</strong></td>
+                        <td>@c.RegistrationNumber</td>
+                        <td>@((c.DateRegistered?.ToString("d") ?? "—"))</td>
+                        <td>
+                            <div class="d-flex gap-1 flex-nowrap">
+                                <button type="button" class="btn btn-sm btn-primary" @onclick="() => GoToView(c.Id)">View</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => GoToEdit(c.Id)">Edit</button>
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                        @onclick="async () => ConfirmDelete(c)">Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="d-block d-lg-none">
+        @foreach (var c in companies)
+        {
+            var company = c;
+            <div class="card mb-3 shadow-sm border-0">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title mb-0 fw-bold">@company.Name</h5>
+                        <div></div>
+                    </div>
+
+                    <div class="mb-3 text-muted small">
+                        <strong>Reg #:</strong> @company.RegistrationNumber<br/>
+                        <strong>Registered:</strong> @((company.DateRegistered?.ToString("d") ?? "—"))
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2 mt-3 pt-3 border-top">
+                        <button type="button" class="btn btn-sm btn-primary flex-grow-1" @onclick="() => GoToView(company.Id)">View</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary flex-grow-1" @onclick="() => GoToEdit(company.Id)">Edit</button>
+                        <button type="button" class="btn btn-sm btn-outline-danger flex-grow-1" @onclick="async () => ConfirmDelete(company)">Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
     </div>
 }
 
