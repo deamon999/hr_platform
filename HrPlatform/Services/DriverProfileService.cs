@@ -32,7 +32,7 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
     {
         return await db.DriverProfiles
             .Include(p => p.License)
-            .Include(p => p.Applications)
+            .Include(p => p.User)
             .OrderBy(p => p.LastName).ThenBy(p => p.FirstName)
             .ToListAsync();
     }
@@ -41,8 +41,8 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
     {
         return await db.DriverProfiles
             .Include(p => p.License)
-            .Include(p => p.Applications)
-            .Where(p => p.Applications.Any(a => a.Job.CompanyId == companyId))
+            .Include(p => p.User)
+            .Where(p => p.User.Applications.Any(a => a.Job.CompanyId == companyId))
             .OrderBy(p => p.LastName).ThenBy(p => p.FirstName)
             .ToListAsync();
     }

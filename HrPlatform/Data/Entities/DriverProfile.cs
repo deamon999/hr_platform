@@ -8,6 +8,8 @@ public class DriverProfile
     public int Id { get; set; }
 
     [Required] public string UserId { get; set; } = default!;
+    // Add the navigation property
+    public ApplicationUser? User { get; set; }
 
     [Required] [MaxLength(100)] public string FirstName { get; set; } = default!;
 
@@ -58,8 +60,6 @@ public class DriverProfile
     [ValidateComplexType] public ICollection<DriverEducation> EducationHistory { get; set; } = [];
 
     [ValidateComplexType] public ICollection<DriverCertification> Certifications { get; set; } = [];
-
-    public ICollection<JobApplication> Applications { get; set; } = [];
 
     public IEnumerable<TrailerType> AllTrailerTypes =>
         EmploymentHistory.SelectMany(e => e.TrailerTypes).Distinct();

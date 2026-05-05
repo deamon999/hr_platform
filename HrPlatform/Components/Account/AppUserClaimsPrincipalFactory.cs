@@ -27,20 +27,32 @@ public class AppUserClaimsPrincipalFactory
         var identity = await base.GenerateClaimsAsync(user);
 
         // Project only the fields we need to keep the query small
-        var userWithCompany = await _db.Users
+        var userData = await _db.Users
             .AsNoTracking()
             .Where(u => u.Id == user.Id)
             .Select(u => new
             {
                 u.CompanyId,
-                CompanyName = u.Company != null ? u.Company.Name : string.Empty
+                CompanyName = u.Company != null ? u.Company.Name : string.Empty,
+                // Cast to int? to safely handle users who don't have a profile yet
+                DriverProfileId = u.DriverProfile != null ? (int?)u.DriverProfile.Id : null
             })
             .SingleOrDefaultAsync();
 
-        if (userWithCompany?.CompanyId != null)
+        if (userData != null)
         {
-            identity.AddClaim(new Claim("companyId", userWithCompany.CompanyId.Value.ToString()));
-            identity.AddClaim(new Claim("companyName", userWithCompany.CompanyName ?? string.Empty));
+            // Add Company claims if applicable (for Managers/Recruiters)
+            if (userData.CompanyId.HasValue)
+            {
+                identity.AddClaim(new Claim("companyId", userData.CompanyId.Value.ToString()));
+                identity.AddClaim(new Claim("companyName", userData.CompanyName ?? string.Empty));
+            }
+
+            // Add Driver Profile claim if applicable (for Drivers)
+            if (userData.DriverProfileId.HasValue)
+            {
+                identity.AddClaim(new Claim("driverProfileId", userData.DriverProfileId.Value.ToString()));
+            }
         }
 
         return identity;

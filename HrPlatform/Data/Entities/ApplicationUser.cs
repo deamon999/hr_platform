@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Identity;
 
 namespace HrPlatform.Data.Models;
 
-// Add profile data for application users by adding properties to the ApplicationUser class
 public class ApplicationUser : IdentityUser
 {
     public string? FirstName { get; set; }
@@ -11,5 +10,12 @@ public class ApplicationUser : IdentityUser
 
     // reference to Company entity (for Manager and Company users)
     public int? CompanyId { get; set; }
+
     public Company? Company { get; set; }
+
+    // reference to DriverProfile entity (for Driver users)
+    public int? driverProfileId { get; set; }
+    public DriverProfile? DriverProfile { get; set; }
+
+    public ICollection<JobApplication> Applications { get; set; } = [];
 }
