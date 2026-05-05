@@ -11,49 +11,38 @@
 @inject NavigationManager Nav
 @inject IAdminUserService UserService
 
-<h2>User Management</h2>
+<PageTitle>User Management</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">User Management</h2>
+</div>
 
 @if (isLoading)
 {
     <p>Loading...</p>
 }
-else if (IsViewMode)
-{
-    <h3>View User</h3>
-    <div class="card">
-        <div class="card-body">
-            <p><strong>Username:</strong> @model?.Username</p>
-            <p><strong>Email:</strong> @model?.Email</p>
-            <p><strong>Phone:</strong> @model?.Phone</p>
-            <p><strong>Role:</strong> @model?.Roles</p>
-            <p><strong>Company ID:</strong> @model?.CompanyId</p>
-            <p><strong>Company Name:</strong> @model?.CompanyName</p>
-        </div>
-    </div>
-    <button class="btn btn-outline-secondary" type="button" @onclick="GoToUsers">Back</button>
-}
 else
 {
-    <h3>Edit User: </h3>
+    <h3>@(IsViewMode ? "View User:" : "Edit User:")</h3>
     <EditForm Model="model" OnValidSubmit="UpdateAsync">
         <DataAnnotationsValidator/>
         <ValidationSummary/>
 
         <div class="mb-3">
             <label class="form-label">User Name *</label>
-            <InputText class="form-control" @bind-Value="model.Username"/>
+            <InputText class="form-control" @bind-Value="model.Username" disabled="@IsViewMode"/>
         </div>
         <div class="mb-3">
             <label class="form-label">Email *</label>
-            <InputText class="form-control" @bind-Value="model.Email"/>
+            <InputText class="form-control" @bind-Value="model.Email" disabled="@IsViewMode"/>
         </div>
         <div class="mb-3">
             <label class="form-label">Phone *</label>
-            <InputText class="form-control" @bind-Value="model.Phone"/>
+            <InputText class="form-control" @bind-Value="model.Phone" disabled="@IsViewMode"/>
         </div>
         <div class="mb-3">
             <label class="form-label">Role</label>
-            <InputSelect class="form-select" @bind-Value="model.Roles">
+            <InputSelect class="form-select" @bind-Value="model.Roles" disabled="@IsViewMode">
                 @foreach (var r in roles)
                 {
                     <option value="@r">@r</option>
@@ -65,7 +54,7 @@ else
         {
             <div class="mb-3">
                 <label class="form-label">Company</label>
-                <InputSelect class="form-select" @bind-Value="model.CompanyId">
+                <InputSelect class="form-select" @bind-Value="model.CompanyId" disabled="@IsViewMode">
                     <option value="">— none —</option>
                     @foreach (var c in companies)
                     {
@@ -83,7 +72,10 @@ else
         }
 
         <div class="d-flex gap-2">
-            <button class="btn btn-primary" type="submit">Save User</button>
+            @if (!IsViewMode)
+            {
+                <button class="btn btn-primary" type="submit">Save User</button>
+            }
             <button class="btn btn-outline-secondary" type="button" @onclick="GoToUsers">Back</button>
         </div>
     </EditForm>
@@ -110,7 +102,7 @@ else
         isAdmin = user.IsInRole(RoleConstants.Admin);
 
         // load roles synchronously from RoleManager (store may not support EF async here)
-        roles =  RoleManager.Roles
+        roles = RoleManager.Roles
             .Where(r => !r.NormalizedName.Equals("ADMIN"))
             .Select(r => r.Name)
             .ToList();

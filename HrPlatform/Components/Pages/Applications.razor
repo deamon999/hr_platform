@@ -5,6 +5,8 @@
 @inject IJobApplicationService AppSvc
 @inject AuthenticationStateProvider AuthState
 
+<PageTitle>Applications</PageTitle>
+
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">Applications</h2>
     <div class="d-flex align-items-center gap-2">
@@ -28,7 +30,8 @@ else if (!apps.Any())
 }
 else
 {
-    <div class="table-responsive">
+    <div>
+    <div class="table-responsive d-none d-md-block">
         <table class="table table-hover align-middle">
             <thead class="table-light">
             <tr>
@@ -106,6 +109,78 @@ else
             </tbody>
         </table>
     </div>
+
+    <div class="d-block d-md-none">
+        @foreach (var app in apps)
+        {
+            <div class="card mb-3 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <h5 class="card-title mb-0"><strong>@app.Job.Title</strong></h5>
+                        <span class="badge @StatusBadge(app.Status)">@app.Status</span>
+                    </div>
+                    <div class="text-muted small mb-3">@(app.Job.Company?.Name ?? "")</div>
+
+                    <div class="row mb-3 text-muted">
+                        <div class="col-12 mb-2">
+                            <strong>Driver:</strong> <br/>
+                            @app.DriverProfile.FirstName @app.DriverProfile.LastName <br/>
+                            <small>@app.DriverProfile.Email</small>
+                        </div>
+                        <div class="col-6">
+                            <strong>Applied:</strong><br/>
+                            @app.AppliedAt.ToLocalTime().ToString("MM/dd/yyyy")
+                        </div>
+                        <div class="col-6">
+                            <strong>Reviewed:</strong><br/>
+                            @(app.ReviewedAt.HasValue ? app.ReviewedAt.Value.ToLocalTime().ToString("MM/dd/yyyy") : "—")
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-column gap-2 pt-3 border-top">
+                        @if (isManager)
+                        {
+                            <a href="/profiles/@app.DriverProfile.Id" class="btn btn-sm btn-outline-secondary w-100">
+                                View Profile
+                            </a>
+
+                            @if (reviewing != app.Id)
+                            {
+                                <button class="btn btn-sm btn-outline-info w-100" @onclick="() => BeginReview(app)">
+                                    Change Status
+                                </button>
+                            }
+                            else
+                            {
+                                <div class="p-2 border rounded bg-light d-flex flex-column gap-2 mt-2">
+                                    <label class="small fw-bold mb-0">Update Status</label>
+                                    <select class="form-select form-select-sm" @bind="reviewStatus">
+                                        @foreach (var s in Enum.GetValues<ApplicationStatus>())
+                                        {
+                                            <option value="@s">@s</option>
+                                        }
+                                    </select>
+                                    <input type="text" class="form-control form-control-sm" placeholder="Notes (optional)" @bind="reviewNotes"/>
+                                    <div class="d-flex gap-2 mt-1">
+                                        <button class="btn btn-sm btn-primary flex-fill" @onclick="SaveReviewAsync">Save</button>
+                                        <button class="btn btn-sm btn-secondary flex-fill" @onclick="() => reviewing = null">Cancel</button>
+                                    </div>
+                                </div>
+                            }
+                        }
+
+                        @if (isDriver)
+                        {
+                            <button type="button" class="btn btn-sm btn-outline-danger w-100" @onclick="() => ConfirmWithdraw(app)">
+                                Withdraw Application
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
 }
 
 @if (withdrawTarget is not null)

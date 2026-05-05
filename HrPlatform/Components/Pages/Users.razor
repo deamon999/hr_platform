@@ -8,7 +8,7 @@
 @inject IAdminUserService UserService
 @inject AuthenticationStateProvider AuthState
 
-<PageTitle>User Management</PageTitle>
+<PageTitle>Users</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">Users</h2>
@@ -43,7 +43,8 @@ else
         </div>
     }
 
-    <div class="table-responsive">
+    <div>
+    <div class="table-responsive d-none d-md-block">
         <table class="table table-hover align-middle">
             <thead class="table-light">
             <tr>
@@ -105,6 +106,60 @@ else
             </tbody>
         </table>
     </div>
+
+    <div class="d-block d-md-none">
+        @foreach (var user in users)
+        {
+            <div class="card mb-3 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title mb-0"><strong>@user.Username</strong></h5>
+                        <div>
+                            @if (user.IsConfirmed)
+                            {
+                                <span class="text-success fw-bold fs-5" title="Confirmed">✓</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted fs-5" title="Not Confirmed">✗</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="card-text text-muted mb-2">
+                        <div><strong>Email:</strong> @user.Email</div>
+                        <div><strong>Phone:</strong> @user.Phone</div>
+                        <div><strong>Company:</strong> @user.CompanyName</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <strong>Roles:</strong>
+                        @if (!string.IsNullOrEmpty(user.Roles))
+                        {
+                            <span class="badge bg-info">@user.Roles</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">No Roles</span>
+                        }
+                    </div>
+
+                    <div class="d-flex gap-2 pt-3 border-top">
+                        <button class="btn btn-sm btn-outline-primary flex-fill" @onclick="() => GoToView(user.UserId)">
+                            View
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary flex-fill" @onclick="() => GoToEdit(user.UserId)">
+                            Edit
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger flex-fill" @onclick="() => ConfirmDelete(user)">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
 }
 
 @if (deleteTarget is not null)

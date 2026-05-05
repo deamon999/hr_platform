@@ -44,7 +44,7 @@ else
         </div>
     }
 
-    <div class="table-responsive">
+    <div class="table-responsive d-none d-md-block">
         <table class="table table-hover align-middle">
             <thead class="table-light">
             <tr>
@@ -102,6 +102,67 @@ else
             }
             </tbody>
         </table>
+    </div>
+
+    <div class="d-block d-md-none">
+        @foreach (var inv in _recentInvitations)
+        {
+            <div class="card mb-3 shadow-sm border-0">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h6 class="card-title mb-0 fw-bold">
+                                @if (!string.IsNullOrWhiteSpace(inv.Email))
+                                {
+                                    @inv.Email
+                                }
+                                else
+                                {
+                                    @inv.Phone
+                                }
+                            </h6>
+                            @if (!string.IsNullOrWhiteSpace(inv.Phone) && !string.IsNullOrWhiteSpace(inv.Email))
+                            {
+                                <small class="text-muted">@inv.Phone</small>
+                            }
+                        </div>
+                        <div>
+                            @if (inv.IsUsed)
+                            {
+                                <span class="badge bg-success">Used</span>
+                            }
+                            else if (inv.ExpiresAt < DateTime.UtcNow)
+                            {
+                                <span class="badge bg-secondary">Expired</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="card-text">
+                        <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
+                            <span class="text-muted">Role:</span>
+                            <span class="badge @RoleBadgeClass(inv.Role)">@inv.Role</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
+                            <span class="text-muted">Company:</span>
+                            <span class="text-end text-break ms-2">@GetCompanyName(inv.CompanyId)</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between pt-1">
+                            <span class="text-muted">Expires:</span>
+                            <span class="@(inv.ExpiresAt < DateTime.UtcNow ? "text-danger fw-bold" : "")">
+                            @inv.ExpiresAt.ToString("MMM dd, yyyy")
+                        </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
     </div>
 }
 
@@ -173,4 +234,5 @@ else
     {
         Nav.NavigateTo("/users/invite");
     }
+
 }

@@ -140,8 +140,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.Token).IsUnique();
             entity.HasIndex(e => e.Email);
+            entity.HasIndex(e => e.Phone);
             entity.Property(e => e.Token).IsRequired().HasMaxLength(64);
             entity.Property(e => e.Email).IsRequired().HasMaxLength(256);
+            entity.Property(e => e.Phone).IsRequired().HasMaxLength(256);
             entity.Property(e => e.Role).IsRequired().HasMaxLength(50);
         });
 

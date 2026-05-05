@@ -1,4 +1,5 @@
 ﻿using HrPlatform.Data.Entities;
+using HrPlatform.Models;
 
 namespace HrPlatform.Services;
 
@@ -25,4 +26,12 @@ public interface IInvitationService
     /// already exists for the given email address.
     /// </summary>
     Task<bool> PendingExistsAsync(string email);
+
+    /// <summary>
+    /// Invites a driver to a job.
+    /// - If the email/phone belongs to an existing Driver → creates JobInvitation directly.
+    /// - If not registered → creates a regular Invitation (Driver role + JobId).
+    /// Sends appropriate email in both cases.
+    /// </summary>
+    Task<InviteResult> InviteAsync(Invitation invitation, Uri link);
 }

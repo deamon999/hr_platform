@@ -1,18 +1,11 @@
 ﻿using HrPlatform.Data.Entities;
 using HrPlatform.Data.Enums;
+using HrPlatform.Models;
 
 namespace HrPlatform.Services;
 
 public interface IJobInvitationService
 {
-    /// <summary>
-    /// Invites a driver to a job.
-    /// - If the email/phone belongs to an existing Driver → creates JobInvitation directly.
-    /// - If not registered → creates a regular Invitation (Driver role + JobId).
-    /// Sends appropriate email in both cases.
-    /// </summary>
-    // Task<InviteDriverResult> InviteDriverAsync(string emailOrPhone, int jobId);
-
     /// <summary>
     /// Called during registration when a regular Invitation carried a JobId.
     /// Creates the JobInvitation for the newly registered user.

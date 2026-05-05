@@ -2,10 +2,13 @@
 @attribute [Authorize(Roles = "Driver")]
 @rendermode InteractiveServer
 
+@using System.Security.Claims
 @using HrPlatform.Data.Entities
+@using Microsoft.AspNetCore.Server.HttpSys
 
 @inject IJobInvitationService JobInvitationService
 @inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<ApplicationUser> UserManager
 @inject NavigationManager Nav
 
 <PageTitle>My Job Invitations</PageTitle>
@@ -36,65 +39,124 @@ else
         <div class="alert @_statusClass alert-dismissible mb-3">
             @_statusMessage
             <button type="button" class="btn-close"
-                    @onclick="() => _statusMessage = null"></button>
+                    @onclick="@(() => _statusMessage = null)"></button>
         </div>
     }
 
-    <div class="row g-3">
-        @foreach (var inv in _invitations)
-        {
-            <div class="col-md-6 col-xl-4">
-                <div class="card h-100 shadow-sm @CardBorderClass(inv.Status)">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <span class="fw-semibold text-truncate me-2">@inv.Job.Title</span>
-                        <span class="badge @StatusBadgeClass(inv.Status) flex-shrink-0">
-                            @inv.Status
-                        </span>
-                    </div>
-                    <div class="card-body">
-                        <p class="mb-1 text-muted small">
-                            <strong>Company:</strong> @inv.Job.Company?.Name
-                        </p>
-                        <p class="mb-1 text-muted small">
-                            <strong>Invited:</strong> @inv.CreatedAt.ToString("MMM dd, yyyy")
-                        </p>
-                        @if (inv.ReviewedAt.HasValue)
-                        {
+    <div>
+        <div class="table-responsive d-none d-md-block">
+            <table class="table table-hover align-middle shadow-sm">
+                <thead class="table-light">
+                <tr>
+                    <th>Job</th>
+                    <th>Company</th>
+                    <th>Invited</th>
+                    <th>Responded</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var inv in _invitations)
+                {
+                    <tr>
+                        <td><strong>@inv.Job.Title</strong></td>
+                        <td><span class="text-muted">@(inv.Job.Company?.Name ?? "—")</span></td>
+                        <td class="text-nowrap">@inv.CreatedAt.ToString("MMM dd, yyyy")</td>
+                        <td class="text-nowrap">
+                            @(inv.ReviewedAt.HasValue ? inv.ReviewedAt.Value.ToString("MMM dd, yyyy") : "—")
+                        </td>
+                        <td>
+                            <span class="badge @(StatusBadgeClass(inv.Status))">@inv.Status</span>
+                        </td>
+                        <td>
+                            @if (inv.Status == JobInvitationStatus.Pending)
+                            {
+                                <div class="d-flex gap-1">
+                                    <button class="btn btn-success btn-sm"
+                                            @onclick="@(() => Respond(inv, JobInvitationStatus.Accepted))">
+                                        ✓ Accept
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-sm"
+                                            @onclick="@(() => Respond(inv, JobInvitationStatus.Declined))">
+                                        ✗ Decline
+                                    </button>
+                                </div>
+                            }
+                            else if (inv.Status == JobInvitationStatus.Accepted)
+                            {
+                                <button class="btn btn-primary btn-sm"
+                                        @onclick="@(() => GoToJobApply(inv.JobId))">
+                                    Apply for This Job →
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">No further action required.</span>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-block d-md-none">
+            <div class="d-flex flex-column gap-3">
+                @foreach (var inv in _invitations)
+                {
+                    <div class="card shadow-sm @(CardBorderClass(inv.Status))">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold text-truncate me-2">@inv.Job.Title</span>
+                            <span class="badge @(StatusBadgeClass(inv.Status)) flex-shrink-0">
+                                @inv.Status
+                            </span>
+                        </div>
+                        <div class="card-body">
                             <p class="mb-1 text-muted small">
-                                <strong>Responded:</strong>
-                                @inv.ReviewedAt.Value.ToString("MMM dd, yyyy")
+                                <strong>Company:</strong> @(inv.Job.Company?.Name ?? "—")
                             </p>
-                        }
-                    </div>
-                    <div class="card-footer bg-transparent">
-                        @if (inv.Status == JobInvitationStatus.Pending)
-                        {
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-success btn-sm flex-fill"
-                                        @onclick="() => Respond(inv, JobInvitationStatus.Accepted)">
-                                    ✓ Accept
+                            <p class="mb-1 text-muted small">
+                                <strong>Invited:</strong> @inv.CreatedAt.ToString("MMM dd, yyyy")
+                            </p>
+                            @if (inv.ReviewedAt.HasValue)
+                            {
+                                <p class="mb-1 text-muted small">
+                                    <strong>Responded:</strong>
+                                    @inv.ReviewedAt.Value.ToString("MMM dd, yyyy")
+                                </p>
+                            }
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            @if (inv.Status == JobInvitationStatus.Pending)
+                            {
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-success btn-sm flex-fill"
+                                            @onclick="@(() => Respond(inv, JobInvitationStatus.Accepted))">
+                                        ✓ Accept
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-sm flex-fill"
+                                            @onclick="@(() => Respond(inv, JobInvitationStatus.Declined))">
+                                        ✗ Decline
+                                    </button>
+                                </div>
+                            }
+                            else if (inv.Status == JobInvitationStatus.Accepted)
+                            {
+                                <button class="btn btn-primary btn-sm w-100"
+                                        @onclick="@(() => GoToJobApply(inv.JobId))">
+                                    Apply for This Job →
                                 </button>
-                                <button class="btn btn-outline-danger btn-sm flex-fill"
-                                        @onclick="() => Respond(inv, JobInvitationStatus.Declined)">
-                                    ✗ Decline
-                                </button>
-                            </div>
-                        }
-                        else if (inv.Status == JobInvitationStatus.Accepted)
-                        {
-                            <button class="btn btn-primary btn-sm w-100"
-                                    @onclick="() => GoToJobApply(inv.JobId)">
-                                Apply for This Job →
-                            </button>
-                        }
-                        else
-                        {
-                            <span class="text-muted small">No further action required.</span>
-                        }
+                            }
+                            else
+                            {
+                                <span class="text-muted small">No further action required.</span>
+                            }
+                        </div>
                     </div>
-                </div>
+                }
             </div>
-        }
+        </div>
     </div>
 }
 
@@ -150,19 +212,26 @@ else
         _statusClass = success ? "alert-success" : "alert-danger";
     }
 
-    private static string StatusBadgeClass(JobInvitationStatus s) => s switch
+    // FIX: Using standard method bodies stops the Razor parser from misinterpreting brackets.
+    private static string StatusBadgeClass(JobInvitationStatus s) 
     {
-        JobInvitationStatus.Pending => "bg-warning text-dark",
-        JobInvitationStatus.Accepted => "bg-success",
-        JobInvitationStatus.Declined => "bg-secondary",
-        _ => "bg-light text-dark"
-    };
+        return s switch
+        {
+            JobInvitationStatus.Pending => "bg-warning text-dark",
+            JobInvitationStatus.Accepted => "bg-success",
+            JobInvitationStatus.Declined => "bg-secondary",
+            _ => "bg-light text-dark"
+        };
+    }
 
-    private static string CardBorderClass(JobInvitationStatus s) => s switch
+    // FIX: Using standard method bodies stops the Razor parser from misinterpreting brackets.
+    private static string CardBorderClass(JobInvitationStatus s) 
     {
-        JobInvitationStatus.Accepted => "border-success",
-        JobInvitationStatus.Declined => "border-secondary opacity-75",
-        _ => ""
-    };
-
+        return s switch
+        {
+            JobInvitationStatus.Accepted => "border-success",
+            JobInvitationStatus.Declined => "border-secondary opacity-75",
+            _ => ""
+        };
+    }
 }

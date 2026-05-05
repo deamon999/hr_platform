@@ -55,7 +55,8 @@ namespace HrPlatform.Migrations
 
                     b.Property<string>("Phone")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("Role")
                         .IsRequired()
@@ -70,6 +71,8 @@ namespace HrPlatform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Email");
+
+                    b.HasIndex("Phone");
 
                     b.HasIndex("Token")
                         .IsUnique();

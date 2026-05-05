@@ -8,6 +8,8 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject NavigationManager Nav
 
+<PageTitle>Driver Profiles</PageTitle>
+
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">Driver Profiles</h2>
     @if (isAdmin)
@@ -32,7 +34,8 @@ else if (!profiles.Any())
 }
 else
 {
-    <div class="table-responsive">
+    <div>
+    <div class="table-responsive d-none d-md-block">
         <table class="table table-hover align-middle">
             <thead class="table-light">
             <tr>
@@ -77,6 +80,50 @@ else
             </tbody>
         </table>
     </div>
+
+    <div class="d-block d-md-none">
+        @foreach (var p in profiles)
+        {
+            <div class="card mb-3 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title mb-0"><strong>@p.LastName, @p.FirstName</strong></h5>
+                        @if (p.License is not null)
+                        {
+                            <span class="badge bg-dark">CDL-@p.License.Class</span>
+                        }
+                    </div>
+
+                    <div class="card-text text-muted mb-3">
+                        <div class="mb-2">
+                            <div>@p.Email</div>
+                            <div>@p.PhoneNumber</div>
+                        </div>
+                        
+                        @if (p.License is not null)
+                        {
+                            <div><strong>License #:</strong> @p.License.LicenseNumber</div>
+                        }
+                        <div><strong>Experience:</strong> @p.YearsOfExperience yrs</div>
+                        <div><strong>Applications:</strong> @p.Applications.Count</div>
+                    </div>
+
+                    <div class="d-flex gap-2 pt-3 border-top">
+                        <button class="btn btn-sm btn-outline-primary flex-fill" @onclick="() => GoToView(p.Id)">
+                            View
+                        </button>
+                        @if (p.UserId == currentUserId)
+                        {
+                            <button class="btn btn-sm btn-outline-secondary flex-fill" @onclick="() => GoToEdit(p.Id)">
+                                Edit
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
 }
 
 @code {

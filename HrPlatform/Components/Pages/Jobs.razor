@@ -6,6 +6,8 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 
+<PageTitle>Jobs</PageTitle>
+
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">Jobs</h2>
     @if (IsPostJobVisible)
@@ -45,9 +47,9 @@ else if (!jobs.Any())
 }
 else
 {
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <thead class="table-light">
+    <div class="table-responsive d-none d-lg-block">
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
             <tr>
                 <th>Title</th>
                 <th>Company</th>
@@ -59,8 +61,8 @@ else
                 <th>Apps</th>
                 <th></th>
             </tr>
-            </thead>
-            <tbody>
+        </thead>
+        <tbody>
             @foreach (var job in jobs)
             {
                 var rowJob = job;
@@ -71,8 +73,7 @@ else
                     <td>
                         @if (rowJob.PayRate.HasValue)
                         {
-                            <span
-                                class="text-nowrap">$@rowJob.PayRate.Value.ToString("N2")/@rowJob.PayPeriod?.ToString().ToLower()</span>
+                            <span class="text-nowrap">$@rowJob.PayRate.Value.ToString("N2")/@rowJob.PayPeriod?.ToString().ToLower()</span>
                         }
                     </td>
                     <td>
@@ -96,12 +97,14 @@ else
                     <td>
                         <div class="d-flex gap-1 flex-nowrap">
                             <button type="button" class="btn btn-sm btn-primary"
-                                    @onclick="() => GoToDetails(rowJob.Id)">View Details
+                                    @onclick="() => GoToDetails(rowJob.Id)">
+                                View Details
                             </button>
                             @if (!isDriver)
                             {
                                 <button type="button" class="btn btn-sm btn-outline-primary"
-                                        @onclick="() => GoToEdit(rowJob.Id)">Edit
+                                        @onclick="() => GoToEdit(rowJob.Id)">
+                                    Edit
                                 </button>
                                 <button type="button"
                                         class="btn btn-sm @(rowJob.IsActive ? "btn-outline-warning" : "btn-outline-success")"
@@ -110,16 +113,107 @@ else
                                     @(togglingJobId == rowJob.Id ? "Processing..." : rowJob.IsActive ? "Disable" : "Activate")
                                 </button>
                                 <button type="button" class="btn btn-sm btn-outline-danger"
-                                        @onclick="async () => ConfirmDelete(rowJob)">Delete
+                                        @onclick="async () => ConfirmDelete(rowJob)">
+                                    Delete
                                 </button>
                             }
                         </div>
                     </td>
                 </tr>
             }
-            </tbody>
-        </table>
-    </div>
+        </tbody>
+    </table>
+</div>
+
+<div class="d-block d-lg-none">
+    @foreach (var job in jobs)
+    {
+        var rowJob = job;
+        <div class="card mb-3 shadow-sm border-0">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h5 class="card-title mb-0 fw-bold">@rowJob.Title</h5>
+                    <div>
+                        @if (rowJob.IsActive)
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Inactive</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    @if (rowJob.Company != null && !string.IsNullOrEmpty(rowJob.Company.Name))
+                    {
+                        <div class="fw-bold text-primary">@rowJob.Company.Name</div>
+                    }
+                    <div class="text-muted small">
+                        @(rowJob.City != null ? $"{rowJob.City}, {rowJob.State}" : rowJob.State)
+                    </div>
+                </div>
+
+                <div class="card-text">
+                    <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
+                        <span class="text-muted">Pay:</span>
+                        <span class="fw-medium">
+                            @if (rowJob.PayRate.HasValue)
+                            {
+                                <span>$@rowJob.PayRate.Value.ToString("N2")/@rowJob.PayPeriod?.ToString().ToLower()</span>
+                            }
+                        </span>
+                    </div>
+
+                    <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
+                        <span class="text-muted">CDL Required:</span>
+                        <span>
+                            @if (rowJob.RequiredCdlClass.HasValue)
+                            {
+                                <span class="badge bg-dark">CDL-@rowJob.RequiredCdlClass</span>
+                            }
+                        </span>
+                    </div>
+
+                    <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
+                        <span class="text-muted">Posted:</span>
+                        <span>@rowJob.PostedAt.ToLocalTime().ToString("MM/dd/yyyy")</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between pb-2">
+                        <span class="text-muted">Applications:</span>
+                        <span class="badge bg-light text-dark border">@rowJob.Applications.Count</span>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2 mt-3 pt-3 border-top">
+                    <button type="button" class="btn btn-sm btn-primary flex-grow-1"
+                            @onclick="() => GoToDetails(rowJob.Id)">
+                        View Details
+                    </button>
+                    @if (!isDriver)
+                    {
+                        <button type="button" class="btn btn-sm btn-outline-primary flex-grow-1"
+                                @onclick="() => GoToEdit(rowJob.Id)">
+                            Edit
+                        </button>
+                        <button type="button"
+                                class="btn btn-sm @(rowJob.IsActive ? "btn-outline-warning" : "btn-outline-success") flex-grow-1"
+                                @onclick="async () => await ToggleActiveAsync(rowJob.Id, rowJob.IsActive)"
+                                disabled="@(togglingJobId == rowJob.Id)">
+                            @(togglingJobId == rowJob.Id ? "Processing..." : rowJob.IsActive ? "Disable" : "Activate")
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger flex-grow-1"
+                                @onclick="async () => ConfirmDelete(rowJob)">
+                            Delete
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
 }
 
 @if (deleteTarget is not null)
