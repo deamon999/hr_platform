@@ -44,12 +44,11 @@ else
 
         <div class="card-body">
             <div class="row g-3">
-                <div class="col-md-8">
+                <div class="col-md-6">
                     <label class="form-label">Job Title</label>
                     <input class="form-control" value="@Display(job.Title)" disabled/>
                 </div>
-
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <label class="form-label">Company</label>
                     <input class="form-control" value="@Display(job.Company?.Name)" disabled/>
                 </div>
@@ -58,90 +57,73 @@ else
                     <label class="form-label">City</label>
                     <input class="form-control" value="@Display(job.City)" disabled/>
                 </div>
-
                 <div class="col-md-3">
                     <label class="form-label">State</label>
                     <input class="form-control" value="@Display(job.State)" disabled/>
                 </div>
-
                 <div class="col-md-4">
                     <label class="form-label">Zip Code</label>
                     <input class="form-control" value="@Display(job.ZipCode)" disabled/>
                 </div>
 
-                <div class="col-md-4">
-                    <label class="form-label">Posted</label>
-                    <input class="form-control" value="@job.PostedAt.ToLocalTime().ToString("MM/dd/yyyy")" disabled/>
+                <div class="col-12">
+                    <label class="form-label">Job Description</label>
+                    <textarea class="form-control" rows="8" disabled>@Display(job.Description)</textarea>
                 </div>
 
-                <div class="col-md-4">
-                    <label class="form-label">Updated</label>
-                    <input class="form-control" value="@job.UpdatedAt.ToLocalTime().ToString("MM/dd/yyyy")" disabled/>
-                </div>
-
-                <div class="col-md-4">
-                    <label class="form-label">Employment Type</label>
-                    <input class="form-control" value="@(job.EmploymentType.HasValue ? job.EmploymentType.Value.GetDescriptionValue() : "")" disabled/>
-                </div>
-
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">Pay Rate</label>
                     <input class="form-control" value="@(job.PayRate.HasValue ? $"${job.PayRate.Value:N2}" : "")" disabled/>
                 </div>
-
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">Pay Period</label>
-                    <input class="form-control" value="@(job.PayPeriod?.ToString() ?? "")" disabled/>
+                    <input class="form-control" value="@(job.PayPeriod.HasValue ? $"per {job.PayPeriod.ToString()!.ToLower()}" : "")" disabled/>
                 </div>
-
-                <div class="col-md-4">
-                    <label class="form-label">Minimum Experience</label>
-                    <input class="form-control" value="@(job.MinYearsExperience > 0 ? $"{job.MinYearsExperience} yrs" : "")" disabled/>
-                </div>
-
-                <div class="col-12">
+                <div class="col-md-6">
                     <label class="form-label">Pay Notes</label>
                     <input class="form-control" value="@Display(job.PayNotes)" disabled/>
                 </div>
 
-                <div class="col-md-6">
+                <div class="col-md-3">
                     <label class="form-label">Required CDL Class</label>
-                    <input class="form-control" value="@(job.RequiredCdlClass.HasValue ? $"CDL-{job.RequiredCdlClass}" : "")" disabled/>
+                    <input class="form-control" value="@(job.RequiredCdlClass.HasValue ? $"CDL-{job.RequiredCdlClass}" : "Any")" disabled/>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Required Trailer Type</label>
+                    <input class="form-control" value="@(job.RequiredTrailerType?.ToString() ?? "Any")" disabled/>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Min. Years Experience</label>
+                    <input class="form-control" value="@(job.MinYearsExperience > 0 ? job.MinYearsExperience.ToString() : "")" disabled/>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Employment Type</label>
+                    <input class="form-control" value="@(job.EmploymentType.HasValue ? job.EmploymentType.Value.GetDescriptionValue() : "Any")"
+                           disabled/>
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label d-block">Required Endorsements</label>
+                    <div class="d-flex flex-wrap gap-3">
+                        @foreach (var end in Enum.GetValues<CdlEndorsement>())
+                        {
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="end_@end"
+                                       checked="@job.RequiredEndorsements.Contains(end)"
+                                       disabled/>
+                                <label class="form-check-label" for="end_@end">@end</label>
+                            </div>
+                        }
+                    </div>
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label">Required Trailer Type</label>
-                    <input class="form-control" value="@(job.RequiredTrailerType?.ToString() ?? "")" disabled/>
+                    <label class="form-label">Posted</label>
+                    <input class="form-control" value="@job.PostedAt.ToLocalTime().ToString("MM/dd/yyyy")" disabled/>
                 </div>
-
-                <div class="col-12">
-                    <label class="form-label">Required Endorsements</label>
-
-                    @if (job.RequiredEndorsements is not null && job.RequiredEndorsements.Any())
-                    {
-                        <div class="d-flex flex-wrap gap-3">
-                            @foreach (var endorsement in Enum.GetValues<CdlEndorsement>())
-                            {
-                                <div class="form-check">
-                                    <input type="checkbox"
-                                           class="form-check-input"
-                                           id="endorsement_@endorsement"
-                                           checked="@job.RequiredEndorsements.Contains(endorsement)"
-                                           disabled/>
-                                    <label class="form-check-label" for="endorsement_@endorsement">@endorsement</label>
-                                </div>
-                            }
-                        </div>
-                    }
-                    else
-                    {
-                        <input class="form-control" value="None" disabled/>
-                    }
-                </div>
-
-                <div class="col-12">
-                    <label class="form-label">Description</label>
-                    <textarea class="form-control" rows="5" disabled>@Display(job.Description)</textarea>
+                <div class="col-md-6">
+                    <label class="form-label">Updated</label>
+                    <input class="form-control" value="@job.UpdatedAt.ToLocalTime().ToString("MM/dd/yyyy")" disabled/>
                 </div>
             </div>
         </div>
@@ -156,18 +138,8 @@ else
 
                     <div class="row g-3 mb-3">
                         <div class="col-md-3">
-                            <label class="form-label">Application ID</label>
-                            <input class="form-control" value="#@appliedApp!.Id" disabled/>
-                        </div>
-
-                        <div class="col-md-3">
                             <label class="form-label">Job ID</label>
-                            <input class="form-control" value="#@appliedApp.JobId" disabled/>
-                        </div>
-
-                        <div class="col-md-3">
-                            <label class="form-label">Profile ID</label>
-                            <input class="form-control" value="#@appliedApp.DriverProfileId" disabled/>
+                            <input class="form-control" value="#@appliedApp.Job.Title" disabled/>
                         </div>
 
                         <div class="col-md-3">
@@ -249,7 +221,8 @@ else
 
                             <div class="col-md-4">
                                 <label class="form-label">CDL Class</label>
-                                <input class="form-control" value="@(driverProfile.License is not null ? $"CDL-{driverProfile.License.Class}" : "")" disabled/>
+                                <input class="form-control" value="@(driverProfile.License is not null ? $"CDL-{driverProfile.License.Class}" : "")"
+                                       disabled/>
                             </div>
 
                             <div class="col-md-4">
@@ -334,16 +307,12 @@ else
         </Authorized>
 
         <NotAuthorized>
-            <div class="alert alert-info">
-                @if (!isAuthenticated)
-                {
-                    <text>Please <a href="/Account/Login">sign in</a> to apply.</text>
-                }
-                else
-                {
-                    <text>You do not have permission to apply. Only users in the <strong>Driver</strong> role can apply.</text>
-                }
-            </div>
+            @if (!isAuthenticated)
+            {
+                <div class="alert alert-info">
+                    <NavLink href="/Account/Login">Please sign in to apply.</NavLink>
+                </div>
+            }
         </NotAuthorized>
     </AuthorizeView>
 
@@ -362,6 +331,7 @@ else
     private Job? job;
     private DriverProfile? driverProfile;
     private JobApplication? appliedApp;
+    private string userId;
     private bool alreadyApplied;
     private bool applied;
     private bool loading = true;
@@ -381,11 +351,11 @@ else
 
         if (isDriver)
         {
-            var userId = user.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+            userId = user.FindFirst(ClaimTypes.NameIdentifier)!.Value;
             driverProfile = await ProfileSvc.GetByUserIdAsync(userId);
 
             if (driverProfile is not null)
-                alreadyApplied = await AppSvc.HasAppliedAsync(Id, driverProfile.Id);
+                alreadyApplied = await AppSvc.HasAppliedAsync(Id, userId);
         }
 
         loading = false;
@@ -401,7 +371,7 @@ else
 
         try
         {
-            appliedApp = await AppSvc.ApplyAsync(Id, driverProfile.Id);
+            appliedApp = await AppSvc.ApplyAsync(Id, userId);
             applied = true;
         }
         catch (Exception ex)
@@ -454,4 +424,5 @@ else
             ? value.Value.ToString("yyyy-MM-dd")
             : string.Empty;
     }
+
 }

@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HrPlatform.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260503034549_JobInvitationModel")]
-    partial class JobInvitationModel
+    [Migration("20260505030439_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -58,7 +58,8 @@ namespace HrPlatform.Migrations
 
                     b.Property<string>("Phone")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("Role")
                         .IsRequired()
@@ -72,7 +73,13 @@ namespace HrPlatform.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CompanyId");
+
                     b.HasIndex("Email");
+
+                    b.HasIndex("JobId");
+
+                    b.HasIndex("Phone");
 
                     b.HasIndex("Token")
                         .IsUnique();
@@ -125,6 +132,9 @@ namespace HrPlatform.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int?>("CompanyId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("CompanyId1")
                         .HasColumnType("integer");
 
                     b.Property<string>("ConcurrencyStamp")
@@ -181,6 +191,8 @@ namespace HrPlatform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CompanyId");
+
+                    b.HasIndex("CompanyId1");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
@@ -656,9 +668,6 @@ namespace HrPlatform.Migrations
                     b.Property<DateTime>("AppliedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("DriverProfileId")
-                        .HasColumnType("integer");
-
                     b.Property<int>("JobId")
                         .HasColumnType("integer");
 
@@ -673,11 +682,15 @@ namespace HrPlatform.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("DriverProfileId");
+                    b.HasIndex("UserId");
 
-                    b.HasIndex("JobId", "DriverProfileId")
+                    b.HasIndex("JobId", "UserId")
                         .IsUnique();
 
                     b.ToTable("JobApplications");
@@ -836,6 +849,23 @@ namespace HrPlatform.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("HrPlatform.Data.Entities.Invitation", b =>
+                {
+                    b.HasOne("HrPlatform.Data.Models.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("HrPlatform.Data.Models.Job", "Job")
+                        .WithMany()
+                        .HasForeignKey("JobId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Company");
+
+                    b.Navigation("Job");
+                });
+
             modelBuilder.Entity("HrPlatform.Data.Entities.JobInvitation", b =>
                 {
                     b.HasOne("HrPlatform.Data.Models.Job", "Job")
@@ -858,8 +888,13 @@ namespace HrPlatform.Migrations
             modelBuilder.Entity("HrPlatform.Data.Models.ApplicationUser", b =>
                 {
                     b.HasOne("HrPlatform.Data.Models.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("HrPlatform.Data.Models.Company", null)
                         .WithMany("Users")
-                        .HasForeignKey("CompanyId");
+                        .HasForeignKey("CompanyId1");
 
                     b.Navigation("Company");
                 });
@@ -919,12 +954,22 @@ namespace HrPlatform.Migrations
                     b.Navigation("DriverProfile");
                 });
 
+            modelBuilder.Entity("HrPlatform.Data.Models.DriverProfile", b =>
+                {
+                    b.HasOne("HrPlatform.Data.Models.ApplicationUser", "User")
+                        .WithOne("DriverProfile")
+                        .HasForeignKey("HrPlatform.Data.Models.DriverProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("HrPlatform.Data.Models.Job", b =>
                 {
                     b.HasOne("HrPlatform.Data.Models.Company", "Company")
                         .WithMany("Jobs")
                         .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Company");
@@ -932,21 +977,21 @@ namespace HrPlatform.Migrations
 
             modelBuilder.Entity("HrPlatform.Data.Models.JobApplication", b =>
                 {
-                    b.HasOne("HrPlatform.Data.Models.DriverProfile", "DriverProfile")
-                        .WithMany("Applications")
-                        .HasForeignKey("DriverProfileId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("HrPlatform.Data.Models.Job", "Job")
                         .WithMany("Applications")
                         .HasForeignKey("JobId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("DriverProfile");
+                    b.HasOne("HrPlatform.Data.Models.ApplicationUser", "User")
+                        .WithMany("Applications")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Job");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -1051,6 +1096,13 @@ namespace HrPlatform.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("HrPlatform.Data.Models.ApplicationUser", b =>
+                {
+                    b.Navigation("Applications");
+
+                    b.Navigation("DriverProfile");
+                });
+
             modelBuilder.Entity("HrPlatform.Data.Models.Company", b =>
                 {
                     b.Navigation("Jobs");
@@ -1060,8 +1112,6 @@ namespace HrPlatform.Migrations
 
             modelBuilder.Entity("HrPlatform.Data.Models.DriverProfile", b =>
                 {
-                    b.Navigation("Applications");
-
                     b.Navigation("Certifications");
 
                     b.Navigation("EducationHistory");

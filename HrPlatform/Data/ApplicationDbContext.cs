@@ -9,14 +9,14 @@ namespace HrPlatform.Data;
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
     : IdentityDbContext<ApplicationUser>(options)
 {
-    public DbSet<Job> Jobs => Set<Job>();
-    public DbSet<Company> Companies => Set<Company>();
     public DbSet<DriverProfile> DriverProfiles => Set<DriverProfile>();
     public DbSet<DriverLicense> DriverLicenses => Set<DriverLicense>();
     public DbSet<DriverMedicalCard> DriverMedicalCards => Set<DriverMedicalCard>();
     public DbSet<DriverEmployment> DriverEmployments => Set<DriverEmployment>();
     public DbSet<DriverEducation> DriverEducations => Set<DriverEducation>();
     public DbSet<DriverCertification> DriverCertifications => Set<DriverCertification>();
+    public DbSet<Job> Jobs => Set<Job>();
+    public DbSet<Company> Companies => Set<Company>();
     public DbSet<JobApplication> JobApplications => Set<JobApplication>();
     public DbSet<Invitation> Invitations { get; set; }
     public DbSet<JobInvitation> JobInvitations { get; set; }
@@ -25,32 +25,33 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     {
         base.OnModelCreating(b);
 
-        b.Entity<Job>(e =>
+        b.Entity<ApplicationUser>(e =>
         {
-            e.Property(j => j.PayPeriod).HasConversion<string>();
-            e.Property(j => j.RequiredCdlClass).HasConversion<string>();
-            e.Property(j => j.EmploymentType).HasConversion<string>();
-            e.Property(j => j.RequiredTrailerType).HasConversion<string>();
-            e.Property(j => j.RequiredEndorsements).HasConversion(
-                v => string.Join(',', v.Select(e => e.ToString())),
-                v => v.Length == 0
-                    ? new List<CdlEndorsement>()
-                    : v.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                        .Select(Enum.Parse<CdlEndorsement>)
-                        .ToList()
-            );
-        });
+            e.HasOne(u => u.DriverProfile)
+                .WithOne(dp => dp.User)
+                .HasForeignKey<DriverProfile>(dp => dp.UserId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
 
-        b.Entity<Company>(e =>
-        {
-            e.HasMany(c => c.Jobs).WithOne(j => j.Company).HasForeignKey(j => j.CompanyId)
-                .OnDelete(DeleteBehavior.Restrict);
+            e.Ignore(u => u.driverProfileId);
+
+            // ADD THIS: Deletes the user if their associated Company is deleted
+            e.HasOne(u => u.Company)
+                .WithMany()
+                .HasForeignKey(u => u.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         b.Entity<DriverProfile>(e =>
         {
-            e.HasIndex(p => p.UserId).IsUnique();
             e.Ignore(p => p.AllTrailerTypes);
+
+            e.Property(p => p.Skills).HasConversion(
+                v => string.Join(',', v),
+                v => v.Length == 0
+                    ? new List<string>()
+                    : v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList()
+            );
         });
 
         b.Entity<DriverLicense>(e =>
@@ -59,6 +60,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .WithOne(p => p.License)
                 .HasForeignKey<DriverLicense>(l => l.DriverProfileId)
                 .OnDelete(DeleteBehavior.Cascade);
+
             e.HasIndex(l => l.LicenseNumber).IsUnique();
             e.Property(l => l.Class).HasConversion<string>();
             e.Property(l => l.Endorsements).HasConversion(
@@ -78,13 +80,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasForeignKey<DriverMedicalCard>(m => m.DriverProfileId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
-
-        b.Entity<DriverProfile>().Property(p => p.Skills).HasConversion(
-            v => string.Join(',', v),
-            v => v.Length == 0
-                ? new List<string>()
-                : v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList()
-        );
 
         b.Entity<DriverEmployment>(e =>
         {
@@ -110,6 +105,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .WithMany(p => p.EducationHistory)
                 .HasForeignKey(ed => ed.DriverProfileId)
                 .OnDelete(DeleteBehavior.Cascade);
+
             e.Property(ed => ed.Level).HasConversion<string>();
         });
 
@@ -121,17 +117,44 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        //*******************************************
+
+        b.Entity<Job>(e =>
+        {
+            e.Property(j => j.PayPeriod).HasConversion<string>();
+            e.Property(j => j.RequiredCdlClass).HasConversion<string>();
+            e.Property(j => j.EmploymentType).HasConversion<string>();
+            e.Property(j => j.RequiredTrailerType).HasConversion<string>();
+            e.Property(j => j.RequiredEndorsements).HasConversion(
+                v => string.Join(',', v.Select(e => e.ToString())),
+                v => v.Length == 0
+                    ? new List<CdlEndorsement>()
+                    : v.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(Enum.Parse<CdlEndorsement>)
+                        .ToList()
+            );
+        });
+
+        b.Entity<Company>(e =>
+        {
+            e.HasMany(c => c.Jobs)
+                .WithOne(j => j.Company)
+                .HasForeignKey(j => j.CompanyId)
+                // CHANGED: Restrict -> Cascade
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
         b.Entity<JobApplication>(e =>
         {
-            e.HasIndex(a => new { a.JobId, a.DriverProfileId }).IsUnique();
+            e.HasIndex(a => new { a.JobId, a.UserId }).IsUnique();
             e.HasOne(a => a.Job)
                 .WithMany(j => j.Applications)
                 .HasForeignKey(a => a.JobId)
                 .OnDelete(DeleteBehavior.Cascade);
-            e.HasOne(a => a.DriverProfile)
+            e.HasOne(a => a.User)
                 .WithMany(p => p.Applications)
-                .HasForeignKey(a => a.DriverProfileId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
             e.Property(a => a.Status).HasConversion<string>();
         });
 
@@ -145,6 +168,17 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.Property(e => e.Email).IsRequired().HasMaxLength(256);
             entity.Property(e => e.Phone).IsRequired().HasMaxLength(256);
             entity.Property(e => e.Role).IsRequired().HasMaxLength(50);
+
+            // 2. UPDATE THESE TO USE THE NAVIGATION PROPERTIES
+            entity.HasOne(e => e.Company)
+                .WithMany() // Leave empty if Company doesn't have a List<Invitation>
+                .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Job)
+                .WithMany() // Leave empty if Job doesn't have a List<Invitation>
+                .HasForeignKey(e => e.JobId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // ── JobInvitation ────────────────────────────────────

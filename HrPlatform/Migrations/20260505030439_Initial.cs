@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HrPlatform.Migrations
 {
     /// <inheritdoc />
-    public partial class Intial : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -50,63 +50,6 @@ namespace HrPlatform.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "DriverProfiles",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    UserId = table.Column<string>(type: "text", nullable: false),
-                    FirstName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    MiddleName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    LastName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    DateOfBirth = table.Column<DateOnly>(type: "date", nullable: false),
-                    PhoneNumber = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    AlternatePhone = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
-                    Email = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
-                    LinkedInUrl = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
-                    StreetAddress = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    City = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    State = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    ZipCode = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
-                    ProfessionalSummary = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
-                    YearsOfExperience = table.Column<int>(type: "integer", nullable: false),
-                    TotalMilesDriven = table.Column<long>(type: "bigint", nullable: false),
-                    AccidentFreeMiles = table.Column<long>(type: "bigint", nullable: false),
-                    StatesOperated = table.Column<int>(type: "integer", nullable: false),
-                    AverageWeeklyMiles = table.Column<int>(type: "integer", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Skills = table.Column<string>(type: "text", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_DriverProfiles", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Invitations",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ContactMethod = table.Column<int>(type: "integer", nullable: false),
-                    Token = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
-                    Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    Phone = table.Column<string>(type: "text", nullable: false),
-                    Role = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    CompanyId = table.Column<int>(type: "integer", nullable: true),
-                    JobId = table.Column<int>(type: "integer", nullable: true),
-                    IsUsed = table.Column<bool>(type: "boolean", nullable: false),
-                    IsJobPending = table.Column<bool>(type: "boolean", nullable: false),
-                    ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Invitations", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
@@ -135,6 +78,7 @@ namespace HrPlatform.Migrations
                     FirstName = table.Column<string>(type: "text", nullable: true),
                     LastName = table.Column<string>(type: "text", nullable: true),
                     CompanyId = table.Column<int>(type: "integer", nullable: true),
+                    CompanyId1 = table.Column<int>(type: "integer", nullable: true),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -156,6 +100,12 @@ namespace HrPlatform.Migrations
                     table.ForeignKey(
                         name: "FK_AspNetUsers_Companies_CompanyId",
                         column: x => x.CompanyId,
+                        principalTable: "Companies",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_AspNetUsers_Companies_CompanyId1",
+                        column: x => x.CompanyId1,
                         principalTable: "Companies",
                         principalColumn: "Id");
                 });
@@ -192,7 +142,244 @@ namespace HrPlatform.Migrations
                         column: x => x.CompanyId,
                         principalTable: "Companies",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AspNetUserClaims",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    ClaimType = table.Column<string>(type: "text", nullable: true),
+                    ClaimValue = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetUserClaims", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AspNetUserClaims_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AspNetUserLogins",
+                columns: table => new
+                {
+                    LoginProvider = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    ProviderKey = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    ProviderDisplayName = table.Column<string>(type: "text", nullable: true),
+                    UserId = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetUserLogins", x => new { x.LoginProvider, x.ProviderKey });
+                    table.ForeignKey(
+                        name: "FK_AspNetUserLogins_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AspNetUserPasskeys",
+                columns: table => new
+                {
+                    CredentialId = table.Column<byte[]>(type: "bytea", maxLength: 1024, nullable: false),
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    Data = table.Column<string>(type: "jsonb", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetUserPasskeys", x => x.CredentialId);
+                    table.ForeignKey(
+                        name: "FK_AspNetUserPasskeys_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AspNetUserRoles",
+                columns: table => new
+                {
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    RoleId = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetUserRoles", x => new { x.UserId, x.RoleId });
+                    table.ForeignKey(
+                        name: "FK_AspNetUserRoles_AspNetRoles_RoleId",
+                        column: x => x.RoleId,
+                        principalTable: "AspNetRoles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_AspNetUserRoles_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AspNetUserTokens",
+                columns: table => new
+                {
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    LoginProvider = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    Name = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    Value = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetUserTokens", x => new { x.UserId, x.LoginProvider, x.Name });
+                    table.ForeignKey(
+                        name: "FK_AspNetUserTokens_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DriverProfiles",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    FirstName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    MiddleName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    LastName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    DateOfBirth = table.Column<DateOnly>(type: "date", nullable: false),
+                    PhoneNumber = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    AlternatePhone = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    Email = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
+                    LinkedInUrl = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
+                    StreetAddress = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    City = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    State = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    ZipCode = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    ProfessionalSummary = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    YearsOfExperience = table.Column<int>(type: "integer", nullable: false),
+                    TotalMilesDriven = table.Column<long>(type: "bigint", nullable: false),
+                    AccidentFreeMiles = table.Column<long>(type: "bigint", nullable: false),
+                    StatesOperated = table.Column<int>(type: "integer", nullable: false),
+                    AverageWeeklyMiles = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Skills = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DriverProfiles", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DriverProfiles_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Invitations",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ContactMethod = table.Column<int>(type: "integer", nullable: false),
+                    Token = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    Phone = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    Role = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    CompanyId = table.Column<int>(type: "integer", nullable: true),
+                    JobId = table.Column<int>(type: "integer", nullable: true),
+                    IsUsed = table.Column<bool>(type: "boolean", nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Invitations", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Invitations_Companies_CompanyId",
+                        column: x => x.CompanyId,
+                        principalTable: "Companies",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Invitations_Jobs_JobId",
+                        column: x => x.JobId,
+                        principalTable: "Jobs",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "JobApplications",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    JobId = table.Column<int>(type: "integer", nullable: false),
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    Status = table.Column<string>(type: "text", nullable: false),
+                    AppliedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ReviewedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    ReviewerNotes = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_JobApplications", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_JobApplications_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_JobApplications_Jobs_JobId",
+                        column: x => x.JobId,
+                        principalTable: "Jobs",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "JobInvitations",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    JobId = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ReviewedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_JobInvitations", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_JobInvitations_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_JobInvitations_Jobs_JobId",
+                        column: x => x.JobId,
+                        principalTable: "Jobs",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -324,140 +511,6 @@ namespace HrPlatform.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "AspNetUserClaims",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    UserId = table.Column<string>(type: "text", nullable: false),
-                    ClaimType = table.Column<string>(type: "text", nullable: true),
-                    ClaimValue = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AspNetUserClaims", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_AspNetUserClaims_AspNetUsers_UserId",
-                        column: x => x.UserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "AspNetUserLogins",
-                columns: table => new
-                {
-                    LoginProvider = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    ProviderKey = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    ProviderDisplayName = table.Column<string>(type: "text", nullable: true),
-                    UserId = table.Column<string>(type: "text", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AspNetUserLogins", x => new { x.LoginProvider, x.ProviderKey });
-                    table.ForeignKey(
-                        name: "FK_AspNetUserLogins_AspNetUsers_UserId",
-                        column: x => x.UserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "AspNetUserPasskeys",
-                columns: table => new
-                {
-                    CredentialId = table.Column<byte[]>(type: "bytea", maxLength: 1024, nullable: false),
-                    UserId = table.Column<string>(type: "text", nullable: false),
-                    Data = table.Column<string>(type: "jsonb", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AspNetUserPasskeys", x => x.CredentialId);
-                    table.ForeignKey(
-                        name: "FK_AspNetUserPasskeys_AspNetUsers_UserId",
-                        column: x => x.UserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "AspNetUserRoles",
-                columns: table => new
-                {
-                    UserId = table.Column<string>(type: "text", nullable: false),
-                    RoleId = table.Column<string>(type: "text", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AspNetUserRoles", x => new { x.UserId, x.RoleId });
-                    table.ForeignKey(
-                        name: "FK_AspNetUserRoles_AspNetRoles_RoleId",
-                        column: x => x.RoleId,
-                        principalTable: "AspNetRoles",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_AspNetUserRoles_AspNetUsers_UserId",
-                        column: x => x.UserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "AspNetUserTokens",
-                columns: table => new
-                {
-                    UserId = table.Column<string>(type: "text", nullable: false),
-                    LoginProvider = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    Name = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    Value = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AspNetUserTokens", x => new { x.UserId, x.LoginProvider, x.Name });
-                    table.ForeignKey(
-                        name: "FK_AspNetUserTokens_AspNetUsers_UserId",
-                        column: x => x.UserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "JobApplications",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    JobId = table.Column<int>(type: "integer", nullable: false),
-                    DriverProfileId = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<string>(type: "text", nullable: false),
-                    AppliedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ReviewedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    ReviewerNotes = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_JobApplications", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_JobApplications_DriverProfiles_DriverProfileId",
-                        column: x => x.DriverProfileId,
-                        principalTable: "DriverProfiles",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_JobApplications_Jobs_JobId",
-                        column: x => x.JobId,
-                        principalTable: "Jobs",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -498,6 +551,11 @@ namespace HrPlatform.Migrations
                 name: "IX_AspNetUsers_CompanyId",
                 table: "AspNetUsers",
                 column: "CompanyId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AspNetUsers_CompanyId1",
+                table: "AspNetUsers",
+                column: "CompanyId1");
 
             migrationBuilder.CreateIndex(
                 name: "UserNameIndex",
@@ -545,9 +603,24 @@ namespace HrPlatform.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Invitations_CompanyId",
+                table: "Invitations",
+                column: "CompanyId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Invitations_Email",
                 table: "Invitations",
                 column: "Email");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Invitations_JobId",
+                table: "Invitations",
+                column: "JobId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Invitations_Phone",
+                table: "Invitations",
+                column: "Phone");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Invitations_Token",
@@ -556,14 +629,25 @@ namespace HrPlatform.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_JobApplications_DriverProfileId",
+                name: "IX_JobApplications_JobId_UserId",
                 table: "JobApplications",
-                column: "DriverProfileId");
+                columns: new[] { "JobId", "UserId" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_JobApplications_JobId_DriverProfileId",
+                name: "IX_JobApplications_UserId",
                 table: "JobApplications",
-                columns: new[] { "JobId", "DriverProfileId" },
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_JobInvitations_JobId",
+                table: "JobInvitations",
+                column: "JobId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_JobInvitations_UserId_JobId",
+                table: "JobInvitations",
+                columns: new[] { "UserId", "JobId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -615,16 +699,19 @@ namespace HrPlatform.Migrations
                 name: "JobApplications");
 
             migrationBuilder.DropTable(
-                name: "AspNetRoles");
+                name: "JobInvitations");
 
             migrationBuilder.DropTable(
-                name: "AspNetUsers");
+                name: "AspNetRoles");
 
             migrationBuilder.DropTable(
                 name: "DriverProfiles");
 
             migrationBuilder.DropTable(
                 name: "Jobs");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUsers");
 
             migrationBuilder.DropTable(
                 name: "Companies");

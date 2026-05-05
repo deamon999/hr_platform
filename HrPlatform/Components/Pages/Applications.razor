@@ -31,156 +31,156 @@ else if (!apps.Any())
 else
 {
     <div>
-    <div class="table-responsive d-none d-md-block">
-        <table class="table table-hover align-middle">
-            <thead class="table-light">
-            <tr>
-                <th>Job</th>
-                <th>Driver</th>
-                <th>Applied</th>
-                <th>Status</th>
-                <th>Reviewed</th>
-                <th>Actions</th>
-            </tr>
-            </thead>
-            <tbody>
+        <div class="table-responsive d-none d-md-block">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th>Job</th>
+                    <th>Driver</th>
+                    <th>Applied</th>
+                    <th>Status</th>
+                    <th>Reviewed</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var app in apps)
+                {
+                    <tr>
+                        <td>
+                            <strong>@app.Job.Title</strong><br/>
+                            <small class="text-muted">@(app.Job.Company?.Name ?? "")</small>
+                        </td>
+                        <td>
+                            @app.User.FirstName @app.User.LastName<br/>
+                            <small class="text-muted">@app.User.Email</small>
+                        </td>
+                        <td class="text-nowrap">@app.AppliedAt.ToLocalTime().ToString("MM/dd/yyyy")</td>
+                        <td>
+                            <span class="badge @StatusBadge(app.Status)">@app.Status</span>
+                        </td>
+                        <td class="text-nowrap">
+                            @(app.ReviewedAt.HasValue
+                                ? app.ReviewedAt.Value.ToLocalTime().ToString("MM/dd/yyyy")
+                                : "—")
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1 flex-wrap">
+                                @if (isManager)
+                                {
+                                    <a href="/profiles/@app.User.DriverProfile.Id"
+                                       class="btn btn-sm btn-outline-secondary">View Profile</a>
+
+                                    @if (reviewing != app.Id)
+                                    {
+                                        <button class="btn btn-sm btn-outline-info"
+                                                @onclick="() => BeginReview(app)">
+                                            Change Status
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <select class="form-select form-select-sm w-auto" @bind="reviewStatus">
+                                            @foreach (var s in Enum.GetValues<ApplicationStatus>())
+                                            {
+                                                <option value="@s">@s</option>
+                                            }
+                                        </select>
+                                        <input type="text" class="form-control form-control-sm"
+                                               placeholder="Notes (optional)"
+                                               @bind="reviewNotes" style="width:160px"/>
+                                        <button class="btn btn-sm btn-primary" @onclick="SaveReviewAsync">Save</button>
+                                        <button class="btn btn-sm btn-secondary" @onclick="() => reviewing = null">×</button>
+                                    }
+                                }
+
+                                @if (isDriver)
+                                {
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-danger"
+                                            @onclick="() => ConfirmWithdraw(app)">
+                                        Withdraw Application
+                                    </button>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-block d-md-none">
             @foreach (var app in apps)
             {
-                <tr>
-                    <td>
-                        <strong>@app.Job.Title</strong><br/>
-                        <small class="text-muted">@(app.Job.Company?.Name ?? "")</small>
-                    </td>
-                    <td>
-                        @app.DriverProfile.FirstName @app.DriverProfile.LastName<br/>
-                        <small class="text-muted">@app.DriverProfile.Email</small>
-                    </td>
-                    <td class="text-nowrap">@app.AppliedAt.ToLocalTime().ToString("MM/dd/yyyy")</td>
-                    <td>
-                        <span class="badge @StatusBadge(app.Status)">@app.Status</span>
-                    </td>
-                    <td class="text-nowrap">
-                        @(app.ReviewedAt.HasValue
-                            ? app.ReviewedAt.Value.ToLocalTime().ToString("MM/dd/yyyy")
-                            : "—")
-                    </td>
-                    <td>
-                        <div class="d-flex gap-1 flex-wrap">
+                <div class="card mb-3 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <h5 class="card-title mb-0"><strong>@app.Job.Title</strong></h5>
+                            <span class="badge @StatusBadge(app.Status)">@app.Status</span>
+                        </div>
+                        <div class="text-muted small mb-3">@(app.Job.Company?.Name ?? "")</div>
+
+                        <div class="row mb-3 text-muted">
+                            <div class="col-12 mb-2">
+                                <strong>Driver:</strong> <br/>
+                                @app.User.FirstName @app.User.LastName <br/>
+                                <small>@app.User.Email</small>
+                            </div>
+                            <div class="col-6">
+                                <strong>Applied:</strong><br/>
+                                @app.AppliedAt.ToLocalTime().ToString("MM/dd/yyyy")
+                            </div>
+                            <div class="col-6">
+                                <strong>Reviewed:</strong><br/>
+                                @(app.ReviewedAt.HasValue ? app.ReviewedAt.Value.ToLocalTime().ToString("MM/dd/yyyy") : "—")
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-column gap-2 pt-3 border-top">
                             @if (isManager)
                             {
-                                <a href="/profiles/@app.DriverProfile.Id"
-                                   class="btn btn-sm btn-outline-secondary">View Profile</a>
+                                <a href="/profiles/@app.User.DriverProfile.Id" class="btn btn-sm btn-outline-secondary w-100">
+                                    View Profile
+                                </a>
 
                                 @if (reviewing != app.Id)
                                 {
-                                    <button class="btn btn-sm btn-outline-info"
-                                            @onclick="() => BeginReview(app)">
+                                    <button class="btn btn-sm btn-outline-info w-100" @onclick="() => BeginReview(app)">
                                         Change Status
                                     </button>
                                 }
                                 else
                                 {
-                                    <select class="form-select form-select-sm w-auto" @bind="reviewStatus">
-                                        @foreach (var s in Enum.GetValues<ApplicationStatus>())
-                                        {
-                                            <option value="@s">@s</option>
-                                        }
-                                    </select>
-                                    <input type="text" class="form-control form-control-sm"
-                                           placeholder="Notes (optional)"
-                                           @bind="reviewNotes" style="width:160px"/>
-                                    <button class="btn btn-sm btn-primary" @onclick="SaveReviewAsync">Save</button>
-                                    <button class="btn btn-sm btn-secondary" @onclick="() => reviewing = null">×</button>
+                                    <div class="p-2 border rounded bg-light d-flex flex-column gap-2 mt-2">
+                                        <label class="small fw-bold mb-0">Update Status</label>
+                                        <select class="form-select form-select-sm" @bind="reviewStatus">
+                                            @foreach (var s in Enum.GetValues<ApplicationStatus>())
+                                            {
+                                                <option value="@s">@s</option>
+                                            }
+                                        </select>
+                                        <input type="text" class="form-control form-control-sm" placeholder="Notes (optional)" @bind="reviewNotes"/>
+                                        <div class="d-flex gap-2 mt-1">
+                                            <button class="btn btn-sm btn-primary flex-fill" @onclick="SaveReviewAsync">Save</button>
+                                            <button class="btn btn-sm btn-secondary flex-fill" @onclick="() => reviewing = null">Cancel</button>
+                                        </div>
+                                    </div>
                                 }
                             }
 
                             @if (isDriver)
                             {
-                                <button type="button"
-                                        class="btn btn-sm btn-outline-danger"
-                                        @onclick="() => ConfirmWithdraw(app)">
+                                <button type="button" class="btn btn-sm btn-outline-danger w-100" @onclick="() => ConfirmWithdraw(app)">
                                     Withdraw Application
                                 </button>
                             }
                         </div>
-                    </td>
-                </tr>
-            }
-            </tbody>
-        </table>
-    </div>
-
-    <div class="d-block d-md-none">
-        @foreach (var app in apps)
-        {
-            <div class="card mb-3 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-1">
-                        <h5 class="card-title mb-0"><strong>@app.Job.Title</strong></h5>
-                        <span class="badge @StatusBadge(app.Status)">@app.Status</span>
-                    </div>
-                    <div class="text-muted small mb-3">@(app.Job.Company?.Name ?? "")</div>
-
-                    <div class="row mb-3 text-muted">
-                        <div class="col-12 mb-2">
-                            <strong>Driver:</strong> <br/>
-                            @app.DriverProfile.FirstName @app.DriverProfile.LastName <br/>
-                            <small>@app.DriverProfile.Email</small>
-                        </div>
-                        <div class="col-6">
-                            <strong>Applied:</strong><br/>
-                            @app.AppliedAt.ToLocalTime().ToString("MM/dd/yyyy")
-                        </div>
-                        <div class="col-6">
-                            <strong>Reviewed:</strong><br/>
-                            @(app.ReviewedAt.HasValue ? app.ReviewedAt.Value.ToLocalTime().ToString("MM/dd/yyyy") : "—")
-                        </div>
-                    </div>
-
-                    <div class="d-flex flex-column gap-2 pt-3 border-top">
-                        @if (isManager)
-                        {
-                            <a href="/profiles/@app.DriverProfile.Id" class="btn btn-sm btn-outline-secondary w-100">
-                                View Profile
-                            </a>
-
-                            @if (reviewing != app.Id)
-                            {
-                                <button class="btn btn-sm btn-outline-info w-100" @onclick="() => BeginReview(app)">
-                                    Change Status
-                                </button>
-                            }
-                            else
-                            {
-                                <div class="p-2 border rounded bg-light d-flex flex-column gap-2 mt-2">
-                                    <label class="small fw-bold mb-0">Update Status</label>
-                                    <select class="form-select form-select-sm" @bind="reviewStatus">
-                                        @foreach (var s in Enum.GetValues<ApplicationStatus>())
-                                        {
-                                            <option value="@s">@s</option>
-                                        }
-                                    </select>
-                                    <input type="text" class="form-control form-control-sm" placeholder="Notes (optional)" @bind="reviewNotes"/>
-                                    <div class="d-flex gap-2 mt-1">
-                                        <button class="btn btn-sm btn-primary flex-fill" @onclick="SaveReviewAsync">Save</button>
-                                        <button class="btn btn-sm btn-secondary flex-fill" @onclick="() => reviewing = null">Cancel</button>
-                                    </div>
-                                </div>
-                            }
-                        }
-
-                        @if (isDriver)
-                        {
-                            <button type="button" class="btn btn-sm btn-outline-danger w-100" @onclick="() => ConfirmWithdraw(app)">
-                                Withdraw Application
-                            </button>
-                        }
                     </div>
                 </div>
-            </div>
-        }
+            }
+        </div>
     </div>
-</div>
 }
 
 @if (withdrawTarget is not null)
@@ -221,22 +221,43 @@ else
     private int? reviewing;
     private ApplicationStatus reviewStatus = ApplicationStatus.UnderReview;
     private string? reviewNotes;
+    
     private bool isManager;
     private bool isDriver;
+    private string? currentUserId;
+    private int? currentCompanyId;
+    
     private JobApplication? withdrawTarget;
 
     protected override async Task OnInitializedAsync()
     {
         var auth = await AuthState.GetAuthenticationStateAsync();
-        isManager = auth.User.IsInRole(RoleConstants.Manager);
-        isDriver = auth.User.IsInRole(RoleConstants.Driver);
+        var user = auth.User;
+        
+        isManager = user.IsInRole(RoleConstants.Manager);
+        isDriver = user.IsInRole(RoleConstants.Driver);
+        
+        // Extract Claims
+        currentUserId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        
+        var companyClaim = user.FindFirst("companyId")?.Value;
+        if (int.TryParse(companyClaim, out var parsedCompanyId))
+        {
+            currentCompanyId = parsedCompanyId;
+        }
 
         await LoadAsync();
     }
 
     private async Task LoadAsync()
     {
-        apps = await AppSvc.GetAllAsync(sortBy);
+        // Call the new filtered method
+        apps = await AppSvc.GetAllFilteredAsync(
+            currentUserId, 
+            isManager, 
+            isDriver, 
+            currentCompanyId, 
+            sortBy);
     }
 
     private static string StatusBadge(ApplicationStatus s)
