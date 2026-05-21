@@ -1,18 +1,51 @@
 ﻿using HrPlatform.Data;
 using HrPlatform.Data.Models;
+using HrPlatform.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace HrPlatform.Services;
 
 public class JobService(ApplicationDbContext db) : IJobService
 {
-    public async Task<List<Job>> GetAllAsync()
+    private IQueryable<Job> GetBaseQuery()
     {
-        return await db.Jobs
+        return db.Jobs
             .Include(j => j.Applications)
             .Include(j => j.Company)
-            .OrderByDescending(j => j.PostedAt)
-            .ToListAsync();
+            .OrderByDescending(j => j.PostedAt);
+    }
+
+    public async Task<List<Job>> GetAllAsync()
+    {
+        return await GetBaseQuery().ToListAsync();
+    }
+
+    public async Task<PaginationResult<Job>> GetPagedAsync(int pageNumber = 1, int pageSize = 10, string filter = "all", string sortBy = "date")
+    {
+        var query = db.Jobs
+            .Include(j => j.Applications)
+            .Include(j => j.Company)
+            .AsQueryable();
+
+        // 1. Apply Filter
+        query = filter switch
+        {
+            "active" => query.Where(j => j.IsActive),
+            "inactive" => query.Where(j => !j.IsActive),
+            _ => query
+        };
+
+        // 2. Apply Sort (EF Core safely translates navigation property null checks)
+        query = sortBy switch
+        {
+            "title" => query.OrderBy(j => j.Title),
+            "company" => query.OrderBy(j => j.Company.Name),
+            _ => query.OrderByDescending(j => j.PostedAt)
+        };
+
+        // Execute query and paginate
+        var jobs = await query.ToListAsync();
+        return jobs.Paginate(pageNumber, pageSize);
     }
 
     public async Task<Job?> GetByIdAsync(int id)

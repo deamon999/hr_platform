@@ -22,11 +22,11 @@
     }
 </div>
 
-@if (profiles is null)
+@if (pagedProfiles is null)
 {
     <p>Loading...</p>
 }
-else if (!profiles.Any())
+else if (!pagedProfiles.Any())
 {
     <div class="alert alert-info">
         @(isAdmin ? "No profiles exist yet." : "No drivers have applied to your company's jobs yet.")
@@ -48,7 +48,7 @@ else
                 </tr>
                 </thead>
                 <tbody>
-                @foreach (var p in profiles)
+                @foreach (var p in pagedProfiles)
                 {
                     <tr>
                         <td><strong>@p.LastName, @p.FirstName</strong></td>
@@ -82,7 +82,7 @@ else
         </div>
 
         <div class="d-block d-md-none">
-            @foreach (var p in profiles)
+            @foreach (var p in pagedProfiles)
             {
                 <div class="card mb-3 shadow-sm">
                     <div class="card-body">
@@ -123,35 +123,94 @@ else
                 </div>
             }
         </div>
+
+        @if (totalPages > 1)
+        {
+            <nav aria-label="Profile list pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                        <button class="page-link" @onclick="() => ChangePage(currentPage - 1)" tabindex="-1">Previous</button>
+                    </li>
+
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        var pageIndex = i;
+                        <li class="page-item @(currentPage == pageIndex ? "active" : "")">
+                            <button class="page-link" @onclick="() => ChangePage(pageIndex)">@pageIndex</button>
+                        </li>
+                    }
+
+                    <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                        <button class="page-link" @onclick="() => ChangePage(currentPage + 1)">Next</button>
+                    </li>
+                </ul>
+            </nav>
+        }
     </div>
 }
 
 @code {
-    private List<DriverProfile>? profiles;
+    private List<DriverProfile>? pagedProfiles;
     private bool isAdmin;
     private string? companyName;
     private string? currentUserId;
+    
+    // Pagination State
+    private int currentPage = 1;
+    private const int PageSize = 10;
+    private int totalPages = 1;
 
     protected override async Task OnInitializedAsync()
     {
         var auth = await AuthState.GetAuthenticationStateAsync();
         isAdmin = auth.User.IsInRole(RoleConstants.Admin);
-        currentUserId = auth.User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        currentUserId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        List<DriverProfile> allProfiles;
 
         if (isAdmin)
         {
-            profiles = await ProfileSvc.GetAllAsync();
+            allProfiles = await ProfileSvc.GetAllAsync();
         }
         else
         {
-            var userId = auth.User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
-            var user = await UserManager.FindByIdAsync(userId);
-            var companyId = user?.CompanyId;
+            if (currentUserId == null) 
+            {
+                allProfiles = new List<DriverProfile>();
+            }
+            else
+            {
+                var user = await UserManager.FindByIdAsync(currentUserId);
+                var companyId = user?.CompanyId;
 
-            profiles = companyId.HasValue
-                ? await ProfileSvc.GetByCompanyAsync(companyId.Value)
-                : new List<DriverProfile>();
+                allProfiles = companyId.HasValue
+                    ? await ProfileSvc.GetByCompanyAsync(companyId.Value)
+                    : new List<DriverProfile>();
+            }
         }
+
+        // Calculate Pages
+        totalPages = (int)Math.Ceiling(allProfiles.Count / (double)PageSize);
+        if (totalPages < 1) totalPages = 1;
+        if (currentPage > totalPages) currentPage = totalPages;
+
+        // Extract current page slice
+        pagedProfiles = allProfiles
+            .Skip((currentPage - 1) * PageSize)
+            .Take(PageSize)
+            .ToList();
+    }
+
+    private async Task ChangePage(int page)
+    {
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
+        await LoadAsync();
     }
 
     private void GoToView(int id)
@@ -163,5 +222,4 @@ else
     {
         Nav.NavigateTo($"/profiles/edit/{id}");
     }
-
 }

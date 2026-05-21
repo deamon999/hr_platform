@@ -6,6 +6,7 @@ namespace HrPlatform.Services;
 public interface IInvitationService
 {
     Task<List<Invitation>> GetRecentInvitationsAsync(int count);
+    Task<PaginationResult<Invitation>> GetRecentInvitationsPagedAsync(int pageNumber = 1, int pageSize = 10);
 
     /// <summary>Creates and persists a new invitation record.</summary>
     Task<Invitation> CreateAsync(Invitation invitation);

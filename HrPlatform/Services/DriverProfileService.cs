@@ -1,11 +1,18 @@
 ﻿using HrPlatform.Data;
 using HrPlatform.Data.Models;
+using HrPlatform.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace HrPlatform.Services;
 
 public class DriverProfileService(ApplicationDbContext db) : IDriverProfileService
 {
+    private IQueryable<DriverProfile> GetBaseQuery() =>
+        db.DriverProfiles
+            .Include(p => p.License)
+            .Include(p => p.User)
+            .OrderBy(p => p.LastName).ThenBy(p => p.FirstName);
+
     public async Task<DriverProfile?> GetByUserIdAsync(string userId)
     {
         return await db.DriverProfiles
@@ -30,11 +37,13 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
 
     public async Task<List<DriverProfile>> GetAllAsync()
     {
-        return await db.DriverProfiles
-            .Include(p => p.License)
-            .Include(p => p.User)
-            .OrderBy(p => p.LastName).ThenBy(p => p.FirstName)
-            .ToListAsync();
+        return await GetBaseQuery().ToListAsync();
+    }
+
+    public async Task<PaginationResult<DriverProfile>> GetAllPagedAsync(int pageNumber = 1, int pageSize = 10)
+    {
+        var profiles = await GetBaseQuery().ToListAsync();
+        return profiles.Paginate(pageNumber, pageSize);
     }
 
     public async Task<List<DriverProfile>> GetByCompanyAsync(int companyId)
@@ -45,6 +54,12 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
             .Where(p => p.User.Applications.Any(a => a.Job.CompanyId == companyId))
             .OrderBy(p => p.LastName).ThenBy(p => p.FirstName)
             .ToListAsync();
+    }
+
+    public async Task<PaginationResult<DriverProfile>> GetByCompanyPagedAsync(int companyId, int pageNumber = 1, int pageSize = 10)
+    {
+        var profiles = await GetByCompanyAsync(companyId);
+        return profiles.Paginate(pageNumber, pageSize);
     }
 
     public async Task<DriverProfile> CreateAsync(DriverProfile profile)

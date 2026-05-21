@@ -21,7 +21,7 @@
         Loading users…
     </div>
 }
-else if (!users.Any())
+else if (!pagedUsers.Any() && string.IsNullOrEmpty(_searchTerm))
 {
     <p>No registered users found.</p>
 }
@@ -44,122 +44,150 @@ else
     }
 
     <div>
-    <div class="table-responsive d-none d-md-block">
-        <table class="table table-hover align-middle">
-            <thead class="table-light">
-            <tr>
-                <th>Username</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Roles Assigned</th>
-                <th>Company Name</th>
-                <th>Confirmed</th>
-                <th>Actions</th>
-            </tr>
-            </thead>
-            <tbody>
-            @foreach (var user in users)
-            {
+        <div class="table-responsive d-none d-md-block">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
                 <tr>
-                    <td>
-                        <strong>@user.Username</strong>
-                    </td>
-                    <td>@user.Email</td>
-                    <td>@user.Phone</td>
-                    <td>
-                        @if (!string.IsNullOrEmpty(user.Roles))
-                        {
-                            <span class="badge bg-info">@user.Roles</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-secondary">No Roles</span>
-                        }
-                    </td>
-                    <td>@user.CompanyName</td>
-                    <td>
-                        @if (user.IsConfirmed)
-                        {
-                            <span class="text-success fw-bold">✓</span>
-                        }
-                        else
-                        {
-                            <span class="text-muted">✗</span>
-                        }
-                    </td>
-                    <td>
-                        <div class="d-flex gap-1">
-                            <button class="btn btn-sm btn-outline-primary" @onclick="() => GoToView(user.UserId)">
-                                View
-                            </button>
-                            <button class="btn btn-sm btn-outline-secondary" @onclick="() => GoToEdit(user.UserId)">
-                                Edit
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-danger"
-                                    @onclick="() => ConfirmDelete(user)">
-                                Delete
-                            </button>
-                        </div>
-                    </td>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Roles Assigned</th>
+                    <th>Company Name</th>
+                    <th>Confirmed</th>
+                    <th>Actions</th>
                 </tr>
-            }
-            </tbody>
-        </table>
-    </div>
-
-    <div class="d-block d-md-none">
-        @foreach (var user in users)
-        {
-            <div class="card mb-3 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <h5 class="card-title mb-0"><strong>@user.Username</strong></h5>
-                        <div>
-                            @if (user.IsConfirmed)
+                </thead>
+                <tbody>
+                @foreach (var user in pagedUsers)
+                {
+                    <tr>
+                        <td>
+                            <strong>@user.Username</strong>
+                        </td>
+                        <td>@user.Email</td>
+                        <td>@user.Phone</td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(user.Roles))
                             {
-                                <span class="text-success fw-bold fs-5" title="Confirmed">✓</span>
+                                <span class="badge bg-info">@user.Roles</span>
                             }
                             else
                             {
-                                <span class="text-muted fs-5" title="Not Confirmed">✗</span>
+                                <span class="badge bg-secondary">No Roles</span>
+                            }
+                        </td>
+                        <td>@user.CompanyName</td>
+                        <td>
+                            @if (user.IsConfirmed)
+                            {
+                                <span class="text-success fw-bold">✓</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">✗</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <button class="btn btn-sm btn-outline-primary" @onclick="() => GoToView(user.UserId)">
+                                    View
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" @onclick="() => GoToEdit(user.UserId)">
+                                    Edit
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                        @onclick="() => ConfirmDelete(user)">
+                                    Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-block d-md-none">
+            @foreach (var user in pagedUsers)
+            {
+                <div class="card mb-3 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0"><strong>@user.Username</strong></h5>
+                            <div>
+                                @if (user.IsConfirmed)
+                                {
+                                    <span class="text-success fw-bold fs-5" title="Confirmed">✓</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted fs-5" title="Not Confirmed">✗</span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="card-text text-muted mb-2">
+                            <div><strong>Email:</strong> @user.Email</div>
+                            <div><strong>Phone:</strong> @user.Phone</div>
+                            <div><strong>Company:</strong> @user.CompanyName</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <strong>Roles:</strong>
+                            @if (!string.IsNullOrEmpty(user.Roles))
+                            {
+                                <span class="badge bg-info">@user.Roles</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">No Roles</span>
                             }
                         </div>
-                    </div>
 
-                    <div class="card-text text-muted mb-2">
-                        <div><strong>Email:</strong> @user.Email</div>
-                        <div><strong>Phone:</strong> @user.Phone</div>
-                        <div><strong>Company:</strong> @user.CompanyName</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <strong>Roles:</strong>
-                        @if (!string.IsNullOrEmpty(user.Roles))
-                        {
-                            <span class="badge bg-info">@user.Roles</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-secondary">No Roles</span>
-                        }
-                    </div>
-
-                    <div class="d-flex gap-2 pt-3 border-top">
-                        <button class="btn btn-sm btn-outline-primary flex-fill" @onclick="() => GoToView(user.UserId)">
-                            View
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary flex-fill" @onclick="() => GoToEdit(user.UserId)">
-                            Edit
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-danger flex-fill" @onclick="() => ConfirmDelete(user)">
-                            Delete
-                        </button>
+                        <div class="d-flex gap-2 pt-3 border-top">
+                            <button class="btn btn-sm btn-outline-primary flex-fill" @onclick="() => GoToView(user.UserId)">
+                                View
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary flex-fill" @onclick="() => GoToEdit(user.UserId)">
+                                Edit
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger flex-fill" @onclick="() => ConfirmDelete(user)">
+                                Delete
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
+            }
+        </div>
+        
+        @if (pagedUsers.Count == 0 && !string.IsNullOrEmpty(_searchTerm))
+        {
+            <div class="alert alert-info">No users match your search.</div>
         }
     </div>
-</div>
+
+    @if (totalPages > 1)
+    {
+        <nav aria-label="User list pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => ChangePage(currentPage - 1)" tabindex="-1">Previous</button>
+                </li>
+
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    var pageIndex = i;
+                    <li class="page-item @(currentPage == pageIndex ? "active" : "")">
+                        <button class="page-link" @onclick="() => ChangePage(pageIndex)">@pageIndex</button>
+                    </li>
+                }
+
+                <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => ChangePage(currentPage + 1)">Next</button>
+                </li>
+            </ul>
+        </nav>
+    }
 }
 
 @if (deleteTarget is not null)
@@ -187,14 +215,23 @@ else
 }
 
 @code {
-    private List<UserViewModel> users = new();
+    private List<UserViewModel> pagedUsers = new();
+    
+    // UI State
     private string _searchTerm = string.Empty;
     private string? _statusMessage;
     private string _statusClass = "alert-success";
     private bool isLoading = true;
     private UserViewModel? deleteTarget;
+    
+    // Auth State
     private bool isAdmin;
     private int? companyId;
+    
+    // Pagination State
+    private int currentPage = 1;
+    private const int PageSize = 10;
+    private int totalPages = 1;
 
     protected override async Task OnInitializedAsync()
     {
@@ -222,21 +259,35 @@ else
         {
             isLoading = true;
 
-            users = isAdmin
+            // 1. Fetch entire accessible roster
+            var allUsers = isAdmin
                 ? await UserService.GetAllUsersWithRolesAsync()
                 : companyId.HasValue
                     ? await UserService.GetUsersByCompanyWithRolesAsync(companyId.Value)
                     : new List<UserViewModel>();
 
-            if (!string.IsNullOrEmpty(searchTerm))
+            // 2. Apply Search Filter
+            var filteredUsers = allUsers;
+            if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                users = users.Where(u =>
-                        string.IsNullOrEmpty(_searchTerm) ||
-                        (u.Email?.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                        (u.Username?.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                        (u.CompanyName?.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase) ?? false))
+                filteredUsers = allUsers.Where(u =>
+                        (u.Email?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                        (u.Username?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                        (u.CompanyName?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false))
                     .ToList();
             }
+
+            // 3. Calculate Pages
+            totalPages = (int)Math.Ceiling(filteredUsers.Count / (double)PageSize);
+            if (totalPages < 1) totalPages = 1;
+
+            if (currentPage > totalPages) currentPage = totalPages; // Safety guard
+
+            // 4. Extract current page slice
+            pagedUsers = filteredUsers
+                .Skip((currentPage - 1) * PageSize)
+                .Take(PageSize)
+                .ToList();
         }
         catch (Exception ex)
         {
@@ -253,6 +304,14 @@ else
     private async Task HandleSearchInput(ChangeEventArgs e)
     {
         _searchTerm = e.Value?.ToString() ?? string.Empty;
+        currentPage = 1; // Always reset to page 1 when typing a new search
+        await LoadAsync(_searchTerm);
+    }
+    
+    private async Task ChangePage(int page)
+    {
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
         await LoadAsync(_searchTerm);
     }
 
@@ -273,13 +332,17 @@ else
 
     private async Task DeleteConfirmedAsync()
     {
-        if (deleteTarget is null)
-        {
-            return;
-        }
+        if (deleteTarget is null) return;
 
         await UserService.DeleteAsync(deleteTarget.UserId);
         deleteTarget = null;
-        await LoadAsync(null);
+        
+        // Smart reload: go back one page if we delete the last item on the current page
+        await LoadAsync(_searchTerm);
+        if (pagedUsers.Count == 0 && currentPage > 1)
+        {
+            currentPage--;
+            await LoadAsync(_searchTerm);
+        }
     }
 }

@@ -1,4 +1,5 @@
 @page "/companies"
+@using HrPlatform.Models
 @rendermode InteractiveServer
 
 @attribute [Authorize(Roles = RoleConstants.Admin)]
@@ -12,11 +13,11 @@
     <button type="button" class="btn btn-primary" @onclick="GoToCreate">Create Company</button>
 </div>
 
-@if (companies is null)
+@if (paginationResult is null)
 {
     <p>Loading...</p>
 }
-else if (!companies.Any())
+else if (!paginationResult.Items.Any())
 {
     <div class="alert alert-info">No companies created yet.</div>
 }
@@ -34,7 +35,7 @@ else
                 </tr>
                 </thead>
                 <tbody>
-                @foreach (var c in companies)
+                @foreach (var c in paginationResult.Items)
                 {
                     <tr>
                         <td><strong>@c.Name</strong></td>
@@ -57,7 +58,7 @@ else
     </div>
 
     <div class="d-block d-lg-none">
-        @foreach (var c in companies)
+        @foreach (var c in paginationResult.Items)
         {
             var company = c;
             <div class="card mb-3 shadow-sm border-0">
@@ -82,6 +83,31 @@ else
             </div>
         }
     </div>
+
+    @if (paginationResult.TotalPages > 1)
+    {
+        <nav aria-label="Company list pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+
+                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => ChangePage(currentPage - 1)" tabindex="-1">Previous</button>
+                </li>
+
+                @for (int i = 1; i <= paginationResult.TotalPages; i++)
+                {
+                    var pageIndex = i; // Local variable capture needed for Blazor loops
+                    <li class="page-item @(currentPage == pageIndex ? "active" : "")">
+                        <button class="page-link" @onclick="() => ChangePage(pageIndex)">@pageIndex</button>
+                    </li>
+                }
+
+                <li class="page-item @(currentPage == paginationResult.TotalPages ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => ChangePage(currentPage + 1)">Next</button>
+                </li>
+
+            </ul>
+        </nav>
+    }
 }
 
 @if (deleteTarget is not null)
@@ -106,8 +132,12 @@ else
 }
 
 @code {
-    private List<Company>? companies;
+    private PaginationResult<Company>? paginationResult;
     private Company? deleteTarget;
+
+    // Pagination State
+    private int currentPage = 1;
+    private const int PageSize = 10;
 
     protected override async Task OnInitializedAsync()
     {
@@ -116,7 +146,17 @@ else
 
     private async Task LoadAsync()
     {
-        companies = await CompanySvc.GetAllAsync();
+        // Calling your paged service
+        paginationResult = await CompanySvc.GetPagedAsync(currentPage, PageSize);
+    }
+
+    private async Task ChangePage(int page)
+    {
+        // Prevent out-of-bounds clicks
+        if (page < 1 || page > (paginationResult?.TotalPages ?? 1)) return;
+
+        currentPage = page;
+        await LoadAsync();
     }
 
     private void GoToCreate()
@@ -144,7 +184,13 @@ else
         if (deleteTarget is null) return;
         await CompanySvc.DeleteAsync(deleteTarget.Id);
         deleteTarget = null;
-        await LoadAsync();
-    }
 
+        // Reload current page after delete, falling back to page 1 if current page becomes empty
+        await LoadAsync();
+        if (paginationResult?.Items.Any() == false && currentPage > 1)
+        {
+            currentPage--;
+            await LoadAsync();
+        }
+    }
 }

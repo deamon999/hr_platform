@@ -26,6 +26,16 @@ public class AdminUserService : IAdminUserService
         return await BuildUserViewModelsAsync(users);
     }
 
+    public async Task<PaginationResult<UserViewModel>> GetAllUsersWithRolesPagedAsync(int pageNumber = 1, int pageSize = 10)
+    {
+        var users = await _context.Users
+            .Include(applicationUser => applicationUser.Company)
+            .ToListAsync();
+
+        var viewModels = await BuildUserViewModelsAsync(users);
+        return viewModels.Paginate(pageNumber, pageSize);
+    }
+
     public async Task<List<UserViewModel>> GetUsersByCompanyWithRolesAsync(int companyId)
     {
         var users = await _context.Users
@@ -34,6 +44,17 @@ public class AdminUserService : IAdminUserService
             .ToListAsync();
 
         return await BuildUserViewModelsAsync(users);
+    }
+
+    public async Task<PaginationResult<UserViewModel>> GetUsersByCompanyWithRolesPagedAsync(int companyId, int pageNumber = 1, int pageSize = 10)
+    {
+        var users = await _context.Users
+            .Include(applicationUser => applicationUser.Company)
+            .Where(u => u.CompanyId == companyId)
+            .ToListAsync();
+
+        var viewModels = await BuildUserViewModelsAsync(users);
+        return viewModels.Paginate(pageNumber, pageSize);
     }
 
     public async Task<UserViewModel> GetUserByIdAsync(string id)

@@ -33,6 +33,14 @@ public class InvitationService : IInvitationService
             .ToListAsync();
     }
 
+    public async Task<PaginationResult<Invitation>> GetRecentInvitationsPagedAsync(int pageNumber = 1, int pageSize = 10)
+    {
+        var invitations = await _db.Invitations
+            .OrderByDescending(i => i.CreatedAt)
+            .ToListAsync();
+
+        return invitations.Paginate(pageNumber, pageSize);
+    }
 
     public async Task<Invitation> CreateAsync(Invitation invitation)
     {

@@ -89,6 +89,7 @@
             if (_invitation is not null)
             {
                 Input.Email = _invitation.Email;
+                _tokenInvalid = _invitation.IsUsed || _invitation.ExpiresAt.Second < DateTime.Now.Second;
             }
         }
     }
@@ -111,6 +112,7 @@
             return;
         }
 
+        // --- ROLE ASSIGNMENT LOGIC ---
         if (_invitation is not null)
         {
             if (RoleConstants.Manager.Equals(_invitation.Role, StringComparison.OrdinalIgnoreCase))
@@ -128,12 +130,21 @@
                         user.Id, _invitation.JobId.Value);
                 }
             }
-
+            else
+            {
+                // Fallback if an invitation exists but has an unknown role
+                await UserManager.AddToRoleAsync(user, RoleConstants.Driver);
+            }
 
             _invitation.IsUsed = true;
             await InvitationService.MarkUsedAsync(Token);
         }
-        // ────────────────────────────────────────────────────────
+        else
+        {
+            // DEFAULT ROLE: Assign Driver to all organic, non-invited sign-ups
+            await UserManager.AddToRoleAsync(user, RoleConstants.Driver);
+        }
+        // --------------------------------
 
         Logger.LogInformation("User created a new account with password.");
 

@@ -4,6 +4,7 @@
 
 @using System.Security.Claims
 @using HrPlatform.Data.Entities
+@using HrPlatform.Models
 @using Microsoft.AspNetCore.Server.HttpSys
 
 @inject IJobInvitationService JobInvitationService
@@ -15,17 +16,17 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="mb-0">Job Invitations</h3>
-    <span class="badge bg-secondary">@_invitations.Count invitation(s)</span>
+    <span class="badge bg-secondary">@(_paginationResult?.TotalCount ?? 0) invitation(s)</span>
 </div>
 
-@if (_loading)
+@if (_loading || _paginationResult is null)
 {
     <div class="d-flex align-items-center gap-2 text-muted">
         <div class="spinner-border spinner-border-sm"></div>
         Loading…
     </div>
 }
-else if (_invitations.Count == 0)
+else if (!_paginationResult.Items.Any())
 {
     <div class="text-center text-muted py-5">
         <p class="fs-5">No job invitations yet.</p>
@@ -57,7 +58,7 @@ else
                 </tr>
                 </thead>
                 <tbody>
-                @foreach (var inv in _invitations)
+                @foreach (var inv in _paginationResult.Items)
                 {
                     <tr>
                         <td><strong>@inv.Job.Title</strong></td>
@@ -103,7 +104,7 @@ else
 
         <div class="d-block d-md-none">
             <div class="d-flex flex-column gap-3">
-                @foreach (var inv in _invitations)
+                @foreach (var inv in _paginationResult.Items)
                 {
                     <div class="card shadow-sm @(CardBorderClass(inv.Status))">
                         <div class="card-header d-flex justify-content-between align-items-center">
@@ -157,15 +158,42 @@ else
                 }
             </div>
         </div>
+
+        @if (_paginationResult.TotalPages > 1)
+        {
+            <nav aria-label="Job invitations pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                        <button class="page-link" @onclick="() => ChangePage(currentPage - 1)" tabindex="-1">Previous</button>
+                    </li>
+
+                    @for (int i = 1; i <= _paginationResult.TotalPages; i++)
+                    {
+                        var pageIndex = i;
+                        <li class="page-item @(currentPage == pageIndex ? "active" : "")">
+                            <button class="page-link" @onclick="() => ChangePage(pageIndex)">@pageIndex</button>
+                        </li>
+                    }
+
+                    <li class="page-item @(currentPage == _paginationResult.TotalPages ? "disabled" : "")">
+                        <button class="page-link" @onclick="() => ChangePage(currentPage + 1)">Next</button>
+                    </li>
+                </ul>
+            </nav>
+        }
     </div>
 }
 
 @code {
-    private List<JobInvitation> _invitations = new();
+    private PaginationResult<JobInvitation>? _paginationResult;
     private bool _loading = true;
     private string? _statusMessage;
     private string _statusClass = "alert-success";
     private string? _userId;
+
+    // Pagination State
+    private int currentPage = 1;
+    private const int PageSize = 10;
 
     protected override async Task OnInitializedAsync()
     {
@@ -181,7 +209,14 @@ else
 
     private async Task LoadInvitations()
     {
-        _invitations = await JobInvitationService.GetForDriverAsync(_userId!);
+        _paginationResult = await JobInvitationService.GetForDriverPagedAsync(_userId!, currentPage, PageSize);
+    }
+
+    private async Task ChangePage(int page)
+    {
+        if (page < 1 || page > (_paginationResult?.TotalPages ?? 1)) return;
+        currentPage = page;
+        await LoadInvitations();
     }
 
     private async Task Respond(JobInvitation inv, JobInvitationStatus status)
@@ -212,8 +247,7 @@ else
         _statusClass = success ? "alert-success" : "alert-danger";
     }
 
-    // FIX: Using standard method bodies stops the Razor parser from misinterpreting brackets.
-    private static string StatusBadgeClass(JobInvitationStatus s) 
+    private static string StatusBadgeClass(JobInvitationStatus s)
     {
         return s switch
         {
@@ -224,8 +258,7 @@ else
         };
     }
 
-    // FIX: Using standard method bodies stops the Razor parser from misinterpreting brackets.
-    private static string CardBorderClass(JobInvitationStatus s) 
+    private static string CardBorderClass(JobInvitationStatus s)
     {
         return s switch
         {
@@ -234,4 +267,5 @@ else
             _ => ""
         };
     }
+
 }

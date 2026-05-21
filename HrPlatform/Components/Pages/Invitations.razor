@@ -22,7 +22,7 @@
         Loading invitations…
     </div>
 }
-else if (!_recentInvitations.Any())
+else if (!pagedInvitations.Any() && string.IsNullOrEmpty(_searchTerm))
 {
     <div class="alert alert-info">No invitations found.</div>
 }
@@ -30,7 +30,7 @@ else
 {
     <div class="mb-3" style="max-width:320px">
         <input class="form-control"
-               placeholder="Search by email or phone number or company name"
+               placeholder="Search by email, phone, or company"
                value="@_searchTerm"
                @oninput="HandleSearchInput"/>
     </div>
@@ -56,7 +56,7 @@ else
             </tr>
             </thead>
             <tbody>
-            @foreach (var inv in _recentInvitations)
+            @foreach (var inv in pagedInvitations)
             {
                 <tr>
                     <td>
@@ -105,7 +105,7 @@ else
     </div>
 
     <div class="d-block d-md-none">
-        @foreach (var inv in _recentInvitations)
+        @foreach (var inv in pagedInvitations)
         {
             <div class="card mb-3 shadow-sm border-0">
                 <div class="card-body">
@@ -164,15 +164,50 @@ else
             </div>
         }
     </div>
+
+    @if (pagedInvitations.Count == 0 && !string.IsNullOrEmpty(_searchTerm))
+    {
+        <div class="alert alert-info">No invitations match your search.</div>
+    }
+
+    @if (totalPages > 1)
+    {
+        <nav aria-label="Invitation list pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => ChangePage(currentPage - 1)" tabindex="-1">Previous</button>
+                </li>
+
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    var pageIndex = i;
+                    <li class="page-item @(currentPage == pageIndex ? "active" : "")">
+                        <button class="page-link" @onclick="() => ChangePage(pageIndex)">@pageIndex</button>
+                    </li>
+                }
+
+                <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => ChangePage(currentPage + 1)">Next</button>
+                </li>
+            </ul>
+        </nav>
+    }
 }
 
 @code {
-    private List<Invitation> _recentInvitations = new();
+    private List<Invitation> pagedInvitations = new();
+    
+    // UI State
     private string _searchTerm = string.Empty;
     private string? _statusMessage;
     private string _statusClass = "alert-success";
     private bool isLoading = true;
     private List<Company> _companies = new();
+    
+    // Pagination State
+    private int currentPage = 1;
+    private const int PageSize = 10;
+    private int totalPages = 1;
 
     protected override async Task OnInitializedAsync()
     {
@@ -182,39 +217,53 @@ else
 
     private string GetCompanyName(int? companyId)
     {
-        if (companyId is null)
-        {
-            return "—";
-        }
-
-        return _companies.FirstOrDefault(c => c.Id == companyId.Value)?.Name
-               ?? $"Company #{companyId.Value}";
+        if (companyId is null) return "—";
+        return _companies.FirstOrDefault(c => c.Id == companyId.Value)?.Name ?? $"Company #{companyId.Value}";
     }
 
     private async Task LoadAsync(string? searchTerm)
     {
         isLoading = true;
-        _recentInvitations = await InvitationService.GetRecentInvitationsAsync(20);
-        var user = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
 
-        if (user.IsInRole("Manager") && user.FindFirst("companyId") != null)
+        try
         {
-            _recentInvitations = _recentInvitations
-                .Where(i => i.CompanyId == Convert.ToInt32(user.FindFirst("companyId")!.Value))
+            // Fetch a larger pool of data so pagination has content to work with
+            var allInvitations = await InvitationService.GetRecentInvitationsAsync(500); 
+            var user = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
+
+            // 1. Role-based filtering
+            if (user.IsInRole("Manager") && user.FindFirst("companyId") != null)
+            {
+                var userCompanyId = Convert.ToInt32(user.FindFirst("companyId")!.Value);
+                allInvitations = allInvitations.Where(i => i.CompanyId == userCompanyId).ToList();
+            }
+
+            // 2. Search Text Filtering
+            var filteredInvitations = allInvitations;
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                filteredInvitations = allInvitations.Where(u =>
+                        (u.Email?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                        (u.Phone?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                        (GetCompanyName(u.CompanyId)?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false))
+                    .ToList();
+            }
+
+            // 3. Calculate Pages
+            totalPages = (int)Math.Ceiling(filteredInvitations.Count / (double)PageSize);
+            if (totalPages < 1) totalPages = 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+
+            // 4. Extract current page items
+            pagedInvitations = filteredInvitations
+                .Skip((currentPage - 1) * PageSize)
+                .Take(PageSize)
                 .ToList();
         }
-
-        if (!string.IsNullOrEmpty(searchTerm))
+        finally
         {
-            _recentInvitations = _recentInvitations.Where(u =>
-                    string.IsNullOrEmpty(_searchTerm) ||
-                    (u.Email?.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                    (u.Phone?.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                    (GetCompanyName(u.CompanyId)?.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase) ?? false))
-                .ToList();
+            isLoading = false;
         }
-
-        isLoading = false;
     }
 
     private static string RoleBadgeClass(string role) => role switch
@@ -227,6 +276,14 @@ else
     private async Task HandleSearchInput(ChangeEventArgs e)
     {
         _searchTerm = e.Value?.ToString() ?? string.Empty;
+        currentPage = 1; // Always reset to page 1 when modifying search filter
+        await LoadAsync(_searchTerm);
+    }
+
+    private async Task ChangePage(int page)
+    {
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
         await LoadAsync(_searchTerm);
     }
 
@@ -234,5 +291,4 @@ else
     {
         Nav.NavigateTo("/users/invite");
     }
-
 }

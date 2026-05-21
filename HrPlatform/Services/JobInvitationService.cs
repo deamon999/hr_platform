@@ -2,6 +2,7 @@
 using HrPlatform.Data.Entities;
 using HrPlatform.Data.Enums;
 using HrPlatform.Data.Models;
+using HrPlatform.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -74,6 +75,12 @@ public class JobInvitationService : IJobInvitationService
             .ToListAsync();
     }
 
+    public async Task<PaginationResult<JobInvitation>> GetForDriverPagedAsync(string userId, int pageNumber = 1, int pageSize = 10)
+    {
+        var invitations = await GetForDriverAsync(userId);
+        return invitations.Paginate(pageNumber, pageSize);
+    }
+
     //
     // public async Task<List<JobInvitation>> GetForCompanyAsync(
     //     string companyId, Guid? jobId = null)
@@ -125,16 +132,16 @@ public class JobInvitationService : IJobInvitationService
     // ──────────────────────────────────────────────────────────
 
     private static string BuildJobInviteEmail(Job job, Uri link) => $"""
-                                                                     <p>Hello,</p>
-                                                                     <p>You have been invited to apply for the position of
-                                                                        <strong>{job.Title}</strong> at <strong>{job.Company?.Name}</strong>.</p>
-                                                                     <p>
-                                                                       <a href="{link}" style="
-                                                                          display:inline-block;padding:10px 20px;
-                                                                          background:#0d6efd;color:#fff;
-                                                                          text-decoration:none;border-radius:4px;">
-                                                                         View Invitation
-                                                                       </a>
-                                                                     </p>
-                                                                     """;
+                                                                      <p>Hello,</p>
+                                                                      <p>You have been invited to apply for the position of
+                                                                         <strong>{job.Title}</strong> at <strong>{job.Company?.Name}</strong>.</p>
+                                                                      <p>
+                                                                        <a href="{link}" style="
+                                                                           display:inline-block;padding:10px 20px;
+                                                                           background:#0d6efd;color:#fff;
+                                                                           text-decoration:none;border-radius:4px;">
+                                                                          View Invitation
+                                                                        </a>
+                                                                      </p>
+                                                                      """;
 }

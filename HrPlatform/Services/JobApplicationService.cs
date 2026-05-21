@@ -1,6 +1,7 @@
 ﻿using HrPlatform.Data;
 using HrPlatform.Data.Enums;
 using HrPlatform.Data.Models;
+using HrPlatform.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace HrPlatform.Services;
@@ -30,6 +31,12 @@ public class JobApplicationService(ApplicationDbContext db) : IJobApplicationSer
             "job" => await q.OrderBy(a => a.Job.Title).ThenByDescending(a => a.AppliedAt).ToListAsync(),
             _ => await q.OrderByDescending(a => a.AppliedAt).ToListAsync()
         };
+    }
+
+    public async Task<PaginationResult<JobApplication>> GetAllPagedAsync(int pageNumber = 1, int pageSize = 10, string? sortBy = null)
+    {
+        var apps = await GetAllAsync(sortBy);
+        return apps.Paginate(pageNumber, pageSize);
     }
 
     public async Task<List<JobApplication>> GetByJobAsync(int jobId)
@@ -129,5 +136,18 @@ public class JobApplicationService(ApplicationDbContext db) : IJobApplicationSer
             "job" => await q.OrderBy(a => a.Job.Title).ThenByDescending(a => a.AppliedAt).ToListAsync(),
             _ => await q.OrderByDescending(a => a.AppliedAt).ToListAsync()
         };
+    }
+
+    public async Task<PaginationResult<JobApplication>> GetAllFilteredPagedAsync(
+        string? userId, 
+        bool isManager, 
+        bool isDriver, 
+        int? companyId, 
+        int pageNumber = 1, 
+        int pageSize = 10, 
+        string? sortBy = null)
+    {
+        var apps = await GetAllFilteredAsync(userId, isManager, isDriver, companyId, sortBy);
+        return apps.Paginate(pageNumber, pageSize);
     }
 }

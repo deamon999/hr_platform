@@ -11,7 +11,7 @@
     <h2 class="mb-0">Applications</h2>
     <div class="d-flex align-items-center gap-2">
         <label class="form-label mb-0">Sort by:</label>
-        <select class="form-select form-select-sm w-auto" @bind="sortBy" @bind:after="LoadAsync">
+        <select class="form-select form-select-sm w-auto" @bind="sortBy" @bind:after="HandleSortChange">
             <option value="date">Date Applied</option>
             <option value="status">Status</option>
             <option value="driver">Driver Name</option>
@@ -20,11 +20,11 @@
     </div>
 </div>
 
-@if (apps is null)
+@if (pagedApps is null)
 {
     <p>Loading...</p>
 }
-else if (!apps.Any())
+else if (!pagedApps.Any())
 {
     <div class="alert alert-info">No applications found.</div>
 }
@@ -44,7 +44,7 @@ else
                 </tr>
                 </thead>
                 <tbody>
-                @foreach (var app in apps)
+                @foreach (var app in pagedApps)
                 {
                     <tr>
                         <td>
@@ -111,7 +111,7 @@ else
         </div>
 
         <div class="d-block d-md-none">
-            @foreach (var app in apps)
+            @foreach (var app in pagedApps)
             {
                 <div class="card mb-3 shadow-sm">
                     <div class="card-body">
@@ -180,6 +180,29 @@ else
                 </div>
             }
         </div>
+
+        @if (totalPages > 1)
+        {
+            <nav aria-label="Application list pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                        <button class="page-link" @onclick="() => ChangePage(currentPage - 1)" tabindex="-1">Previous</button>
+                    </li>
+
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        var pageIndex = i;
+                        <li class="page-item @(currentPage == pageIndex ? "active" : "")">
+                            <button class="page-link" @onclick="() => ChangePage(pageIndex)">@pageIndex</button>
+                        </li>
+                    }
+
+                    <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                        <button class="page-link" @onclick="() => ChangePage(currentPage + 1)">Next</button>
+                    </li>
+                </ul>
+            </nav>
+        }
     </div>
 }
 
@@ -216,7 +239,7 @@ else
 }
 
 @code {
-    private List<JobApplication>? apps;
+    private List<JobApplication>? pagedApps;
     private string sortBy = "date";
     private int? reviewing;
     private ApplicationStatus reviewStatus = ApplicationStatus.UnderReview;
@@ -228,6 +251,11 @@ else
     private int? currentCompanyId;
     
     private JobApplication? withdrawTarget;
+    
+    // Pagination State
+    private int currentPage = 1;
+    private const int PageSize = 10;
+    private int totalPages = 1;
 
     protected override async Task OnInitializedAsync()
     {
@@ -249,15 +277,45 @@ else
         await LoadAsync();
     }
 
+    private async Task HandleSortChange()
+    {
+        currentPage = 1; // Drop to page 1 when sort order changes
+        await LoadAsync();
+    }
+
     private async Task LoadAsync()
     {
-        // Call the new filtered method
-        apps = await AppSvc.GetAllFilteredAsync(
+        // 1. Fetch all items matching criteria and sorting
+        var allApps = await AppSvc.GetAllFilteredAsync(
             currentUserId, 
             isManager, 
             isDriver, 
             currentCompanyId, 
             sortBy);
+
+        if (allApps == null)
+        {
+            pagedApps = new List<JobApplication>();
+            return;
+        }
+
+        // 2. Calculate Pages
+        totalPages = (int)Math.Ceiling(allApps.Count / (double)PageSize);
+        if (totalPages < 1) totalPages = 1;
+        if (currentPage > totalPages) currentPage = totalPages;
+
+        // 3. Extract current page slice
+        pagedApps = allApps
+            .Skip((currentPage - 1) * PageSize)
+            .Take(PageSize)
+            .ToList();
+    }
+
+    private async Task ChangePage(int page)
+    {
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
+        await LoadAsync();
     }
 
     private static string StatusBadge(ApplicationStatus s)
@@ -301,6 +359,14 @@ else
 
         await AppSvc.WithdrawAsync(withdrawTarget.Id);
         withdrawTarget = null;
+        
         await LoadAsync();
+        
+        // Smart reload: If you withdraw the last app on page 3, drop back to page 2
+        if (pagedApps?.Count == 0 && currentPage > 1)
+        {
+            currentPage--;
+            await LoadAsync();
+        }
     }
 }

@@ -1,5 +1,6 @@
 ﻿@page "/"
 @page "/jobs"
+@using HrPlatform.Models
 @rendermode InteractiveServer
 
 @inject IJobService JobSvc
@@ -16,12 +17,10 @@
     }
 </div>
 
-@* status messages removed; simplified UI *@
-
 <div class="d-flex flex-wrap gap-3 mb-3 align-items-center">
     <div class="d-flex align-items-center gap-2">
         <label class="form-label mb-0">Filter:</label>
-        <select class="form-select form-select-sm w-auto" @bind="filter" @bind:after="LoadAsync">
+        <select class="form-select form-select-sm w-auto" @bind="filter" @bind:after="ResetPageAndLoad">
             <option value="all">All</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
@@ -29,7 +28,7 @@
     </div>
     <div class="d-flex align-items-center gap-2">
         <label class="form-label mb-0">Sort:</label>
-        <select class="form-select form-select-sm w-auto" @bind="sortBy" @bind:after="ApplySort">
+        <select class="form-select form-select-sm w-auto" @bind="sortBy" @bind:after="ResetPageAndLoad">
             <option value="date">Date Posted</option>
             <option value="title">Title</option>
             <option value="company">Company</option>
@@ -37,19 +36,19 @@
     </div>
 </div>
 
-@if (jobs is null)
+@if (paginationResult is null)
 {
     <p>Loading...</p>
 }
-else if (!jobs.Any())
+else if (!paginationResult.Items.Any())
 {
     <div class="alert alert-info">No jobs found.</div>
 }
 else
 {
     <div class="table-responsive d-none d-lg-block">
-    <table class="table table-hover align-middle">
-        <thead class="table-light">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
             <tr>
                 <th>Title</th>
                 <th>Company</th>
@@ -61,11 +60,10 @@ else
                 <th>Apps</th>
                 <th></th>
             </tr>
-        </thead>
-        <tbody>
-            @foreach (var job in jobs)
+            </thead>
+            <tbody>
+            @foreach (var rowJob in paginationResult.Items)
             {
-                var rowJob = job;
                 <tr>
                     <td><strong>@rowJob.Title</strong></td>
                     <td>@(rowJob.Company?.Name ?? "")</td>
@@ -121,99 +119,121 @@ else
                     </td>
                 </tr>
             }
-        </tbody>
-    </table>
-</div>
+            </tbody>
+        </table>
+    </div>
 
-<div class="d-block d-lg-none">
-    @foreach (var job in jobs)
-    {
-        var rowJob = job;
-        <div class="card mb-3 shadow-sm border-0">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <h5 class="card-title mb-0 fw-bold">@rowJob.Title</h5>
-                    <div>
-                        @if (rowJob.IsActive)
-                        {
-                            <span class="badge bg-success">Active</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-secondary">Inactive</span>
-                        }
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    @if (rowJob.Company != null && !string.IsNullOrEmpty(rowJob.Company.Name))
-                    {
-                        <div class="fw-bold text-primary">@rowJob.Company.Name</div>
-                    }
-                    <div class="text-muted small">
-                        @(rowJob.City != null ? $"{rowJob.City}, {rowJob.State}" : rowJob.State)
-                    </div>
-                </div>
-
-                <div class="card-text">
-                    <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
-                        <span class="text-muted">Pay:</span>
-                        <span class="fw-medium">
-                            @if (rowJob.PayRate.HasValue)
+    <div class="d-block d-lg-none">
+        @foreach (var rowJob in paginationResult.Items)
+        {
+            <div class="card mb-3 shadow-sm border-0">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title mb-0 fw-bold">@rowJob.Title</h5>
+                        <div>
+                            @if (rowJob.IsActive)
                             {
-                                <span>$@rowJob.PayRate.Value.ToString("N2")/@rowJob.PayPeriod?.ToString().ToLower()</span>
+                                <span class="badge bg-success">Active</span>
                             }
-                        </span>
-                    </div>
-
-                    <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
-                        <span class="text-muted">CDL Required:</span>
-                        <span>
-                            @if (rowJob.RequiredCdlClass.HasValue)
+                            else
                             {
-                                <span class="badge bg-dark">CDL-@rowJob.RequiredCdlClass</span>
+                                <span class="badge bg-secondary">Inactive</span>
                             }
-                        </span>
+                        </div>
                     </div>
 
-                    <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
-                        <span class="text-muted">Posted:</span>
-                        <span>@rowJob.PostedAt.ToLocalTime().ToString("MM/dd/yyyy")</span>
+                    <div class="mb-3">
+                        @if (rowJob.Company != null && !string.IsNullOrEmpty(rowJob.Company.Name))
+                        {
+                            <div class="fw-bold text-primary">@rowJob.Company.Name</div>
+                        }
+                        <div class="text-muted small">
+                            @(rowJob.City != null ? $"{rowJob.City}, {rowJob.State}" : rowJob.State)
+                        </div>
                     </div>
 
-                    <div class="d-flex justify-content-between pb-2">
-                        <span class="text-muted">Applications:</span>
-                        <span class="badge bg-light text-dark border">@rowJob.Applications.Count</span>
-                    </div>
-                </div>
+                    <div class="card-text">
+                        <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
+                            <span class="text-muted">Pay:</span>
+                            <span class="fw-medium">
+                                @if (rowJob.PayRate.HasValue)
+                                {
+                                    <span>$@rowJob.PayRate.Value.ToString("N2")/@rowJob.PayPeriod?.ToString().ToLower()</span>
+                                }
+                            </span>
+                        </div>
 
-                <div class="d-flex flex-wrap gap-2 mt-3 pt-3 border-top">
-                    <button type="button" class="btn btn-sm btn-primary flex-grow-1"
-                            @onclick="() => GoToDetails(rowJob.Id)">
-                        View Details
-                    </button>
-                    @if (!isDriver)
-                    {
-                        <button type="button" class="btn btn-sm btn-outline-primary flex-grow-1"
-                                @onclick="() => GoToEdit(rowJob.Id)">
-                            Edit
+                        <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
+                            <span class="text-muted">CDL Required:</span>
+                            <span>
+                                @if (rowJob.RequiredCdlClass.HasValue)
+                                {
+                                    <span class="badge bg-dark">CDL-@rowJob.RequiredCdlClass</span>
+                                }
+                            </span>
+                        </div>
+
+                        <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
+                            <span class="text-muted">Posted:</span>
+                            <span>@rowJob.PostedAt.ToLocalTime().ToString("MM/dd/yyyy")</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between pb-2">
+                            <span class="text-muted">Applications:</span>
+                            <span class="badge bg-light text-dark border">@rowJob.Applications.Count</span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2 mt-3 pt-3 border-top">
+                        <button type="button" class="btn btn-sm btn-primary flex-grow-1"
+                                @onclick="() => GoToDetails(rowJob.Id)">
+                            View Details
                         </button>
-                        <button type="button"
-                                class="btn btn-sm @(rowJob.IsActive ? "btn-outline-warning" : "btn-outline-success") flex-grow-1"
-                                @onclick="async () => await ToggleActiveAsync(rowJob.Id, rowJob.IsActive)"
-                                disabled="@(togglingJobId == rowJob.Id)">
-                            @(togglingJobId == rowJob.Id ? "Processing..." : rowJob.IsActive ? "Disable" : "Activate")
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-danger flex-grow-1"
-                                @onclick="async () => ConfirmDelete(rowJob)">
-                            Delete
-                        </button>
-                    }
+                        @if (!isDriver)
+                        {
+                            <button type="button" class="btn btn-sm btn-outline-primary flex-grow-1"
+                                    @onclick="() => GoToEdit(rowJob.Id)">
+                                Edit
+                            </button>
+                            <button type="button"
+                                    class="btn btn-sm @(rowJob.IsActive ? "btn-outline-warning" : "btn-outline-success") flex-grow-1"
+                                    @onclick="async () => await ToggleActiveAsync(rowJob.Id, rowJob.IsActive)"
+                                    disabled="@(togglingJobId == rowJob.Id)">
+                                @(togglingJobId == rowJob.Id ? "Processing..." : rowJob.IsActive ? "Disable" : "Activate")
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger flex-grow-1"
+                                    @onclick="async () => ConfirmDelete(rowJob)">
+                                Delete
+                            </button>
+                        }
+                    </div>
                 </div>
             </div>
-        </div>
+        }
+    </div>
+
+    @if (paginationResult.TotalPages > 1)
+    {
+        <nav aria-label="Job list pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => ChangePage(currentPage - 1)" tabindex="-1">Previous</button>
+                </li>
+
+                @for (int i = 1; i <= paginationResult.TotalPages; i++)
+                {
+                    var pageIndex = i;
+                    <li class="page-item @(currentPage == pageIndex ? "active" : "")">
+                        <button class="page-link" @onclick="() => ChangePage(pageIndex)">@pageIndex</button>
+                    </li>
+                }
+
+                <li class="page-item @(currentPage == paginationResult.TotalPages ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => ChangePage(currentPage + 1)">Next</button>
+                </li>
+            </ul>
+        </nav>
     }
-</div>
 }
 
 @if (deleteTarget is not null)
@@ -238,9 +258,17 @@ else
 }
 
 @code {
-    private List<Job>? jobs;
+    private PaginationResult<Job>? paginationResult;
+
+    // Filtering & Sorting State
     private string filter = "all";
     private string sortBy = "date";
+
+    // Pagination State
+    private int currentPage = 1;
+    private const int PageSize = 10;
+
+    // Component State
     private Job? deleteTarget;
     private bool IsPostJobVisible;
     private int? togglingJobId;
@@ -251,30 +279,27 @@ else
         var user = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
         isDriver = user.IsInRole("Driver");
         IsPostJobVisible = (user.IsInRole("Manager") && user.FindFirst("companyId") != null) || user.IsInRole("Admin");
+
+        await LoadAsync();
+    }
+
+    private async Task ResetPageAndLoad()
+    {
+        // Drop down to page 1 if a sort/filter changes
+        currentPage = 1;
         await LoadAsync();
     }
 
     private async Task LoadAsync()
     {
-        var all = await JobSvc.GetAllAsync();
-        jobs = (filter switch
-        {
-            "active" => all.Where(j => j.IsActive),
-            "inactive" => all.Where(j => !j.IsActive),
-            _ => all.AsEnumerable()
-        }).ToList();
-        ApplySort();
+        paginationResult = await JobSvc.GetPagedAsync(currentPage, PageSize, filter, sortBy);
     }
 
-    private void ApplySort()
+    private async Task ChangePage(int page)
     {
-        if (jobs is null) return;
-        jobs = sortBy switch
-        {
-            "title" => [.. jobs.OrderBy(j => j.Title)],
-            "company" => jobs.OrderBy(j => j.Company?.Name).ToList(),
-            _ => [.. jobs.OrderByDescending(j => j.PostedAt)]
-        };
+        if (page < 1 || page > (paginationResult?.TotalPages ?? 1)) return;
+        currentPage = page;
+        await LoadAsync();
     }
 
     private async Task ToggleActiveAsync(int jobId, bool currentActive)
@@ -316,7 +341,14 @@ else
         if (deleteTarget is null) return;
         await JobSvc.DeleteAsync(deleteTarget.Id);
         deleteTarget = null;
+
+        // Smart reload: go back one page if we delete the last item on the current page
         await LoadAsync();
+        if (paginationResult?.Items.Any() == false && currentPage > 1)
+        {
+            currentPage--;
+            await LoadAsync();
+        }
     }
 
 }

@@ -1,5 +1,6 @@
 using HrPlatform.Data;
 using HrPlatform.Data.Models;
+using HrPlatform.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace HrPlatform.Services;
@@ -9,6 +10,12 @@ public class CompanyService(ApplicationDbContext db) : ICompanyService
     public async Task<List<Company>> GetAllAsync()
     {
         return await db.Companies.OrderBy(c => c.Name).ToListAsync();
+    }
+
+    public async Task<PaginationResult<Company>> GetPagedAsync(int pageNumber = 1, int pageSize = 10)
+    {
+        var companies = await db.Companies.OrderBy(c => c.Name).ToListAsync();
+        return companies.Paginate(pageNumber, pageSize);
     }
 
     public async Task<Company?> GetByIdAsync(int id)

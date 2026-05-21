@@ -18,6 +18,11 @@ public interface IJobInvitationService
     Task<List<JobInvitation>> GetForDriverAsync(string userId);
 
     /// <summary>
+    /// Returns all job invitations for a specific driver with pagination.
+    /// </summary>
+    Task<PaginationResult<JobInvitation>> GetForDriverPagedAsync(string userId, int pageNumber = 1, int pageSize = 10);
+
+    /// <summary>
     /// Returns all job invitations across all jobs belonging to a company
     /// (for /manager/job-invitations). Optionally filtered by a single job.
     /// </summary>
