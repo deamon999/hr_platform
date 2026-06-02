@@ -59,6 +59,7 @@ public class Program
         builder.Services.AddScoped<IInvitationService, InvitationService>();
         builder.Services.AddScoped<IJobInvitationService, JobInvitationService>();
 
+        builder.Services.AddHostedService<CredentialExpiryService>();
         var app = builder.Build();
 
         using (var scope = app.Services.CreateScope())

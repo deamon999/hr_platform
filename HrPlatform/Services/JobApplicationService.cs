@@ -6,7 +6,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPlatform.Services;
 
-public class JobApplicationService(ApplicationDbContext db) : IJobApplicationService
+public class JobApplicationService(
+    ApplicationDbContext db,
+    IEmailService emailService,
+    ISmsService smsService) : IJobApplicationService
 {
     public async Task<JobApplication?> GetAsync(int id)
     {
@@ -79,7 +82,73 @@ public class JobApplicationService(ApplicationDbContext db) : IJobApplicationSer
         app.ReviewedAt = DateTime.UtcNow;
         app.ReviewerNotes = notes;
         await db.SaveChangesAsync();
+
+        await NotifyDriverAsync(app, status, notes);
     }
+
+    private async Task NotifyDriverAsync(
+        JobApplication app, ApplicationStatus status, string? notes)
+    {
+        var driver = app.User;
+        if (driver is null) return;
+
+        var jobTitle = app.Job?.Title ?? "the position";
+        var company = app.Job?.Company?.Name ?? "the company";
+        var driverName = $"{driver.FirstName} {driver.LastName}".Trim();
+
+        var subject = status switch
+        {
+            ApplicationStatus.Accepted =>
+                $"Congratulations! Your application for {jobTitle} was accepted",
+            ApplicationStatus.Rejected =>
+                $"Your application for {jobTitle} has been reviewed",
+            ApplicationStatus.UnderReview =>
+                $"Your application for {jobTitle} is now under review",
+            _ => $"Update on your application for {jobTitle}"
+        };
+
+        if (!string.IsNullOrWhiteSpace(driver.Email))
+        {
+            await emailService.SendEmailAsync(
+                driver.Email,
+                driverName,
+                subject,
+                BuildStatusEmail(jobTitle, company, status, notes));
+        }
+
+        // SMS fallback / supplement
+        if (!string.IsNullOrWhiteSpace(driver.PhoneNumber))
+        {
+            var smsText = status switch
+            {
+                ApplicationStatus.Accepted =>
+                    $"Good news! Your application for {jobTitle} at {company}" +
+                    " was accepted. Log in for details.",
+                ApplicationStatus.Rejected =>
+                    $"Your application for {jobTitle} at {company}" +
+                    " has been reviewed. Log in to see feedback.",
+                _ => $"Your application for {jobTitle} at {company}" +
+                     " has been updated. Log in to check your status."
+            };
+            await smsService.SendDriverInviteAsync(
+                driver.PhoneNumber, driverName, null, "/applications");
+        }
+    }
+
+    private static string BuildStatusEmail(
+        string job, string company,
+        ApplicationStatus status, string? notes) => $"""
+                                                     <p>Hello,</p>
+                                                     <p>Your application for <strong>{job}</strong>
+                                                     at <strong>{company}</strong> has been updated.</p>
+                                                     <p><strong>New status:</strong> {status}</p>
+                                                     {(!string.IsNullOrEmpty(notes)
+                                                         ? $"<p><em>Note from recruiter: {notes}</em></p>"
+                                                         : "")}
+                                                     <p><a href=\"#\" style=\"background:#0d6efd;color:#fff;
+                                                        padding:10px 20px;text-decoration:none;
+                                                        border-radius:4px;\">View My Applications</a></p>
+                                                     """;
 
     public async Task WithdrawAsync(int id)
     {
@@ -89,12 +158,12 @@ public class JobApplicationService(ApplicationDbContext db) : IJobApplicationSer
         db.JobApplications.Remove(app);
         await db.SaveChangesAsync();
     }
-    
+
     public async Task<List<JobApplication>> GetAllFilteredAsync(
-        string? userId, 
-        bool isManager, 
-        bool isDriver, 
-        int? companyId, 
+        string? userId,
+        bool isManager,
+        bool isDriver,
+        int? companyId,
         string? sortBy = null)
     {
         var q = db.JobApplications
@@ -125,7 +194,7 @@ public class JobApplicationService(ApplicationDbContext db) : IJobApplicationSer
                 q = q.Where(a => a.UserId == userId);
             }
         }
-        
+
         // Note: If the user is an Admin (neither Driver nor Manager), 
         // no filters are applied, and they see everything.
 
@@ -139,12 +208,12 @@ public class JobApplicationService(ApplicationDbContext db) : IJobApplicationSer
     }
 
     public async Task<PaginationResult<JobApplication>> GetAllFilteredPagedAsync(
-        string? userId, 
-        bool isManager, 
-        bool isDriver, 
-        int? companyId, 
-        int pageNumber = 1, 
-        int pageSize = 10, 
+        string? userId,
+        bool isManager,
+        bool isDriver,
+        int? companyId,
+        int pageNumber = 1,
+        int pageSize = 10,
         string? sortBy = null)
     {
         var apps = await GetAllFilteredAsync(userId, isManager, isDriver, companyId, sortBy);

@@ -1,7 +1,6 @@
 ﻿@page "/users"
 @rendermode InteractiveServer
 
-@using System.Security.Claims
 @using HrPlatform.Models
 @attribute [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.Manager}")]
 @inject NavigationManager Nav
@@ -159,7 +158,7 @@ else
                 </div>
             }
         </div>
-        
+
         @if (pagedUsers.Count == 0 && !string.IsNullOrEmpty(_searchTerm))
         {
             <div class="alert alert-info">No users match your search.</div>
@@ -216,18 +215,18 @@ else
 
 @code {
     private List<UserViewModel> pagedUsers = new();
-    
+
     // UI State
     private string _searchTerm = string.Empty;
     private string? _statusMessage;
     private string _statusClass = "alert-success";
     private bool isLoading = true;
     private UserViewModel? deleteTarget;
-    
+
     // Auth State
     private bool isAdmin;
     private int? companyId;
-    
+
     // Pagination State
     private int currentPage = 1;
     private const int PageSize = 10;
@@ -307,7 +306,7 @@ else
         currentPage = 1; // Always reset to page 1 when typing a new search
         await LoadAsync(_searchTerm);
     }
-    
+
     private async Task ChangePage(int page)
     {
         if (page < 1 || page > totalPages) return;
@@ -336,7 +335,7 @@ else
 
         await UserService.DeleteAsync(deleteTarget.UserId);
         deleteTarget = null;
-        
+
         // Smart reload: go back one page if we delete the last item on the current page
         await LoadAsync(_searchTerm);
         if (pagedUsers.Count == 0 && currentPage > 1)
@@ -345,4 +344,5 @@ else
             await LoadAsync(_searchTerm);
         }
     }
+
 }
