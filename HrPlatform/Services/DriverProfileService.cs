@@ -1,4 +1,5 @@
 ﻿using HrPlatform.Data;
+using HrPlatform.Data.Enums;
 using HrPlatform.Data.Models;
 using HrPlatform.Models;
 using Microsoft.EntityFrameworkCore;
@@ -35,20 +36,37 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
             .FirstOrDefaultAsync(p => p.Id == id);
     }
 
-    public async Task<List<DriverProfile>> GetAllAsync()
+    public async Task<List<DriverProfile>> GetAllAsync(AvailabilityStatus? status)
     {
-        return await GetBaseQuery().ToListAsync();
+        IQueryable<DriverProfile> queryable = GetBaseQuery();
+        if (status != null)
+        {
+            queryable = queryable.Where(p => p.AvailabilityStatus == status);
+        }
+
+        return await queryable.ToListAsync();
     }
 
-    public async Task<PaginationResult<DriverProfile>> GetAllPagedAsync(int pageNumber = 1, int pageSize = 10)
+    public async Task<PaginationResult<DriverProfile>> GetAllPagedAsync(AvailabilityStatus? status, int pageNumber = 1, int pageSize = 10)
     {
-        var profiles = await GetBaseQuery().ToListAsync();
-        return profiles.Paginate(pageNumber, pageSize);
+        IQueryable<DriverProfile> queryable = GetBaseQuery();
+        if (status != null)
+        {
+            queryable = queryable.Where(p => p.AvailabilityStatus == status);
+        }
+
+        return await queryable.PaginateAsync(pageNumber, pageSize);
     }
 
-    public async Task<List<DriverProfile>> GetByCompanyAsync(int companyId)
+    public async Task<List<DriverProfile>> GetByCompanyAsync(int companyId, AvailabilityStatus? status)
     {
-        return await db.DriverProfiles
+        IQueryable<DriverProfile> queryable = GetBaseQuery();
+        if (status != null)
+        {
+            queryable = queryable.Where(p => p.AvailabilityStatus == status);
+        }
+
+        return await queryable
             .Include(p => p.License)
             .Include(p => p.User)
             .Where(p => p.User.Applications.Any(a => a.Job.CompanyId == companyId))
@@ -56,10 +74,17 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
             .ToListAsync();
     }
 
-    public async Task<PaginationResult<DriverProfile>> GetByCompanyPagedAsync(int companyId, int pageNumber = 1, int pageSize = 10)
+    public async Task<PaginationResult<DriverProfile>> GetByCompanyPagedAsync(AvailabilityStatus? status, int companyId, int pageNumber = 1,
+        int pageSize = 10)
     {
-        var profiles = await GetByCompanyAsync(companyId);
-        return profiles.Paginate(pageNumber, pageSize);
+        IQueryable<DriverProfile> queryable = GetBaseQuery();
+        if (status != null)
+        {
+            queryable = queryable.Where(p => p.AvailabilityStatus == status);
+        }
+
+        queryable.Where(p => p.User.Applications.Any(a => a.Job.CompanyId == companyId));
+        return await queryable.PaginateAsync(pageNumber, pageSize);
     }
 
     public async Task<DriverProfile> CreateAsync(DriverProfile profile)

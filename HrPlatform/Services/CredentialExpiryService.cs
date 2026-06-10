@@ -3,19 +3,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPlatform.Services;
 
-public class CredentialExpiryService : BackgroundService
+public class CredentialExpiryService(
+    IServiceProvider services,
+    ILogger<CredentialExpiryService> logger) : BackgroundService
 {
-    private readonly IServiceProvider _services;
-    private readonly ILogger<CredentialExpiryService> _logger;
-
-    public CredentialExpiryService(
-        IServiceProvider services,
-        ILogger<CredentialExpiryService> logger)
-    {
-        _services = services;
-        _logger = logger;
-    }
-
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
         // Wait for app to fully start
@@ -29,7 +20,7 @@ public class CredentialExpiryService : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Credential expiry check failed");
+                logger.LogError(ex, "Credential expiry check failed");
             }
 
             // Run once per day at next midnight
@@ -41,7 +32,7 @@ public class CredentialExpiryService : BackgroundService
 
     private async Task RunChecksAsync()
     {
-        using var scope = _services.CreateScope();
+        using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var email = scope.ServiceProvider.GetRequiredService<IEmailService>();
 
@@ -69,7 +60,7 @@ public class CredentialExpiryService : BackgroundService
                 $"Action required: Your CDL expires in {daysLeft} days",
                 BuildLicenseAlert(name, lic.Class.ToString(), lic.ExpiryDate, daysLeft));
 
-            _logger.LogInformation(
+            logger.LogInformation(
                 "License expiry alert sent to {Email} ({Days} days)",
                 user.Email, daysLeft);
         }

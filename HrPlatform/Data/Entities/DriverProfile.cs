@@ -8,6 +8,7 @@ public class DriverProfile
     public int Id { get; set; }
 
     [Required] public string UserId { get; set; } = default!;
+
     // Add the navigation property
     public ApplicationUser? User { get; set; }
 
@@ -37,6 +38,10 @@ public class DriverProfile
     [MaxLength(50)] public string? State { get; set; }
 
     [MaxLength(20)] public string? ZipCode { get; set; }
+
+    public AvailabilityStatus AvailabilityStatus { get; set; } = AvailabilityStatus.OpenToOpportunities;
+
+    public DateOnly? AvailableFrom { get; set; }
 
     [MaxLength(2000)] public string? ProfessionalSummary { get; set; }
 

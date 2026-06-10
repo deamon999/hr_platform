@@ -9,6 +9,9 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">Applications</h2>
+</div>
+
+<div class="d-flex flex-wrap gap-3 mb-3 align-items-center">
     <div class="d-flex align-items-center gap-2">
         <label class="form-label mb-0">Sort by:</label>
         <select class="form-select form-select-sm w-auto" @bind="sortBy" @bind:after="HandleSortChange">
@@ -244,14 +247,14 @@ else
     private int? reviewing;
     private ApplicationStatus reviewStatus = ApplicationStatus.UnderReview;
     private string? reviewNotes;
-    
+
     private bool isManager;
     private bool isDriver;
     private string? currentUserId;
     private int? currentCompanyId;
-    
+
     private JobApplication? withdrawTarget;
-    
+
     // Pagination State
     private int currentPage = 1;
     private const int PageSize = 10;
@@ -261,13 +264,13 @@ else
     {
         var auth = await AuthState.GetAuthenticationStateAsync();
         var user = auth.User;
-        
+
         isManager = user.IsInRole(RoleConstants.Manager);
         isDriver = user.IsInRole(RoleConstants.Driver);
-        
+
         // Extract Claims
         currentUserId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        
+
         var companyClaim = user.FindFirst("companyId")?.Value;
         if (int.TryParse(companyClaim, out var parsedCompanyId))
         {
@@ -287,10 +290,10 @@ else
     {
         // 1. Fetch all items matching criteria and sorting
         var allApps = await AppSvc.GetAllFilteredAsync(
-            currentUserId, 
-            isManager, 
-            isDriver, 
-            currentCompanyId, 
+            currentUserId,
+            isManager,
+            isDriver,
+            currentCompanyId,
             sortBy);
 
         if (allApps == null)
@@ -359,9 +362,9 @@ else
 
         await AppSvc.WithdrawAsync(withdrawTarget.Id);
         withdrawTarget = null;
-        
+
         await LoadAsync();
-        
+
         // Smart reload: If you withdraw the last app on page 3, drop back to page 2
         if (pagedApps?.Count == 0 && currentPage > 1)
         {
@@ -369,4 +372,5 @@ else
             await LoadAsync();
         }
     }
+
 }

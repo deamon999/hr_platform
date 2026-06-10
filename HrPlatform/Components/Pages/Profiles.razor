@@ -1,5 +1,7 @@
 ﻿@page "/profiles"
 @using System.Security.Claims
+@using HrPlatform.Models
+@using HrPlatform.Utils
 @rendermode InteractiveServer
 
 @attribute [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.Manager}")]
@@ -22,11 +24,26 @@
     }
 </div>
 
+
+<div class="d-flex flex-wrap gap-3 mb-3 align-items-center">
+    <div class="d-flex align-items-center gap-2">
+        <label class="form-label mb-0">Availability:</label>
+        <select class="form-select form-select-sm w-auto"
+                @bind="availFilter" @bind:after="ResetPageAndLoad">
+            <option value="">All</option>
+            @foreach (var s in Enum.GetValues<AvailabilityStatus>())
+            {
+                <option value="@s">@s.GetDescriptionValue()</option>
+            }
+        </select>
+    </div>
+</div>
+
 @if (pagedProfiles is null)
 {
     <p>Loading...</p>
 }
-else if (!pagedProfiles.Any())
+else if (!pagedProfiles.Items.Any())
 {
     <div class="alert alert-info">
         @(isAdmin ? "No profiles exist yet." : "No drivers have applied to your company's jobs yet.")
@@ -42,13 +59,14 @@ else
                     <th>Name</th>
                     <th>Contact</th>
                     <th>CDL</th>
+                    <th>Availability</th>
                     <th>Experience</th>
                     <th>Applications</th>
                     <th></th>
                 </tr>
                 </thead>
                 <tbody>
-                @foreach (var p in pagedProfiles)
+                @foreach (var p in pagedProfiles.Items)
                 {
                     <tr>
                         <td><strong>@p.LastName, @p.FirstName</strong></td>
@@ -62,6 +80,17 @@ else
                                 <span class="badge bg-dark">CDL-@p.License.Class</span>
                                 <small class="ms-1">@p.License.LicenseNumber</small>
                             }
+                        </td>
+                        <td>
+                            @{
+                                var (badge, bg) = p.AvailabilityStatus switch
+                                {
+                                    AvailabilityStatus.ActivelyLooking => ("Actively looking", "bg-success"),
+                                    AvailabilityStatus.OpenToOpportunities => ("Open", "bg-info text-dark"),
+                                    _ => ("Not available", "bg-secondary")
+                                };
+                            }
+                            <span class="badge @bg">@badge</span>
                         </td>
                         <td>@p.YearsOfExperience yrs</td>
                         <td>@p.User.Applications.Count</td>
@@ -82,7 +111,7 @@ else
         </div>
 
         <div class="d-block d-md-none">
-            @foreach (var p in pagedProfiles)
+            @foreach (var p in pagedProfiles.Items)
             {
                 <div class="card mb-3 shadow-sm">
                     <div class="card-body">
@@ -104,6 +133,16 @@ else
                             {
                                 <div><strong>License #:</strong> @p.License.LicenseNumber</div>
                             }
+                            <div><strong>Availability:</strong>
+                                @{
+                                    var (badge, bg) = p.AvailabilityStatus switch
+                                    {
+                                        AvailabilityStatus.ActivelyLooking => ("Actively looking", "bg-success"),
+                                        AvailabilityStatus.OpenToOpportunities => ("Open", "bg-info text-dark"),
+                                        _ => ("Not available", "bg-secondary")
+                                    };
+                                }
+                                <span class="badge @bg">@badge</span></div>
                             <div><strong>Experience:</strong> @p.YearsOfExperience yrs</div>
                             <div><strong>Applications:</strong> @p.User.Applications.Count</div>
                         </div>
@@ -150,11 +189,14 @@ else
 }
 
 @code {
-    private List<DriverProfile>? pagedProfiles;
+    private PaginationResult<DriverProfile>? pagedProfiles;
     private bool isAdmin;
     private string? companyName;
     private string? currentUserId;
-    
+
+    // Filter by Status
+    private AvailabilityStatus? availFilter;
+
     // Pagination State
     private int currentPage = 1;
     private const int PageSize = 10;
@@ -169,41 +211,57 @@ else
         await LoadAsync();
     }
 
+    // Helper to reset to page 1 when filtering/sorting changes
+    private async Task ResetPageAndLoad()
+    {
+        currentPage = 1;
+        await LoadAsync();
+    }
+
     private async Task LoadAsync()
     {
-        List<DriverProfile> allProfiles;
-
+        // NOTE: You may need to pass 'sortBy' into your ProfileSvc methods if you want it to actually sort in the DB.
         if (isAdmin)
         {
-            allProfiles = await ProfileSvc.GetAllAsync();
+            pagedProfiles = await ProfileSvc.GetAllPagedAsync(availFilter, currentPage, PageSize);
         }
         else
         {
-            if (currentUserId == null) 
+            if (currentUserId == null)
             {
-                allProfiles = new List<DriverProfile>();
+                pagedProfiles = new PaginationResult<DriverProfile>
+                {
+                    Items = new List<DriverProfile>(),
+                    TotalCount = 0,
+                    PageNumber = 0,
+                    PageSize = 0
+                };
             }
             else
             {
                 var user = await UserManager.FindByIdAsync(currentUserId);
                 var companyId = user?.CompanyId;
 
-                allProfiles = companyId.HasValue
-                    ? await ProfileSvc.GetByCompanyAsync(companyId.Value)
-                    : new List<DriverProfile>();
+                pagedProfiles = companyId.HasValue
+                    ? await ProfileSvc.GetByCompanyPagedAsync(availFilter, companyId.Value, currentPage, PageSize)
+                    : new PaginationResult<DriverProfile>
+                    {
+                        Items = new List<DriverProfile>(),
+                        TotalCount = 0,
+                        PageNumber = 0,
+                        PageSize = 0
+                    };
             }
         }
 
         // Calculate Pages
-        totalPages = (int)Math.Ceiling(allProfiles.Count / (double)PageSize);
+        if (pagedProfiles != null)
+        {
+            totalPages = pagedProfiles.TotalPages;
+        }
+
         if (totalPages < 1) totalPages = 1;
         if (currentPage > totalPages) currentPage = totalPages;
-
-        // Extract current page slice
-        pagedProfiles = allProfiles
-            .Skip((currentPage - 1) * PageSize)
-            .Take(PageSize)
-            .ToList();
     }
 
     private async Task ChangePage(int page)
@@ -222,4 +280,5 @@ else
     {
         Nav.NavigateTo($"/profiles/edit/{id}");
     }
+
 }

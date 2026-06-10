@@ -1,6 +1,7 @@
 ﻿@page "/profiles/new"
 @page "/profiles/edit/{Id:int}"
 @using System.Security.Claims
+@using HrPlatform.Utils
 @rendermode InteractiveServer
 
 @attribute [Authorize]
@@ -132,6 +133,23 @@
                                     <div class="col-md-4">
                                         <label class="form-label">Zip Code</label>
                                         <InputText class="form-control" @bind-Value="profile.ZipCode"/>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Availability</label>
+                                        <InputSelect class="form-select" @bind-Value="profile.AvailabilityStatus">
+                                            @foreach (var s in Enum.GetValues<AvailabilityStatus>())
+                                            {
+                                                <option value="@s">@s.GetDescriptionValue()</option>
+                                            }
+                                        </InputSelect>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Available from</label>
+                                        <InputDate TValue="DateOnly?" class="form-control"
+                                                   @bind-Value="profile.AvailableFrom"/>
+                                        <small class="text-muted">Leave blank if available now</small>
                                     </div>
 
                                     <div class="col-12">
@@ -689,15 +707,18 @@
             await ProfileService.UpdateAsync(profile!, currentUserId);
         }
 
-        successMessage = "Profile saved.";
+        // 1. Set the success message
+        successMessage = "Profile saved successfully! Redirecting...";
 
-        if (!string.IsNullOrEmpty(ReturnUrl))
-        {
-            Nav.NavigateTo(ReturnUrl);
-            return;
-        }
-
+        // 2. Force the UI to re-render so the user sees the message
         StateHasChanged();
+
+        // 3. Wait briefly (e.g., 1.5 seconds)
+        await Task.Delay(1500);
+
+        // 4. Navigate to the ReturnUrl if present, otherwise to /my-profile
+        var destination = !string.IsNullOrEmpty(ReturnUrl) ? ReturnUrl : "/my-profile";
+        Nav.NavigateTo(destination);
     }
 
     private void ToggleEndorsement(List<CdlEndorsement> list, CdlEndorsement value, bool add)
@@ -939,4 +960,5 @@
 
         return true;
     }
+
 }
