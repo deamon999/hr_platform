@@ -60,6 +60,26 @@
     }
     else
     {
+        <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <h4 class="text-muted">Profile completeness</h4>
+                <span class="badge @profile.CompletenessBadgeClass">
+                    @profile.CompletenessLabel (@profile.CompletenessScore%)
+                </span>
+            </div>
+            <div class="progress" style="height:6px">
+                <div class="progress-bar @profile.CompletenessBadgeClass"
+                     style="width:@(profile.CompletenessScore)%">
+                </div>
+            </div>
+            @if (profile.CompletenessScore < 85 && isOwner)
+            {
+                <small class="text-muted">
+                    @GetCompletenessHint(profile)
+                </small>
+            }
+        </div>
+        <hr/>
         <div class="row">
             <div class="col-lg-3 mb-4 mb-lg-0">
                 <ul class="nav nav-pills flex-column">
@@ -147,7 +167,7 @@
                                     <label class="form-label">Zip Code</label>
                                     <input class="form-control" value="@Display(profile.ZipCode)" disabled/>
                                 </div>
-                                
+
                                 <div class="col-md-4">
                                     <label class="form-label">Availability</label>
                                     <input class="form-control" value="@Display(profile.AvailabilityStatus.GetDescriptionValue())" disabled/>
@@ -653,4 +673,15 @@
     {
         return value.HasValue && value.Value != default ? value.Value.ToString("yyyy-MM-dd") : string.Empty;
     }
+
+    private static string GetCompletenessHint(DriverProfile p)
+    {
+        if (p.License == null) return "Add your CDL license to unlock more job matches.";
+        if (p.MedicalCard == null) return "Add your DOT medical card — required by most carriers.";
+        if (!p.EmploymentHistory.Any()) return "Add at least one previous employer.";
+        if (p.YearsOfExperience == 0) return "Fill in your driving stats — years experience and total miles.";
+        if (string.IsNullOrEmpty(p.ProfessionalSummary)) return "Add a short professional summary.";
+        return "Add certifications or skills to stand out.";
+    }
+
 }

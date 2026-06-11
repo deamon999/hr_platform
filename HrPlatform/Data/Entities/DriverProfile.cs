@@ -68,4 +68,55 @@ public class DriverProfile
 
     public IEnumerable<TrailerType> AllTrailerTypes =>
         EmploymentHistory.SelectMany(e => e.TrailerTypes).Distinct();
+
+    /// <summary>
+    /// Returns a 0-100 completeness score based on the 7 most
+    /// important hiring criteria for CDL drivers.
+    /// </summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public int CompletenessScore
+    {
+        get
+        {
+            var checks = new[]
+            {
+                !string.IsNullOrWhiteSpace(FirstName) &&
+                !string.IsNullOrWhiteSpace(LastName) &&
+                !string.IsNullOrWhiteSpace(PhoneNumber),
+
+                License != null &&
+                License.ExpiryDate > DateOnly.FromDateTime(DateTime.Today),
+
+                MedicalCard != null &&
+                MedicalCard.ExpiryDate > DateOnly.FromDateTime(DateTime.Today),
+
+                EmploymentHistory.Any(),
+
+                YearsOfExperience > 0 && TotalMilesDriven > 0,
+
+                !string.IsNullOrWhiteSpace(ProfessionalSummary),
+
+                Certifications.Any() || Skills.Any()
+            };
+            return checks.Count(c => c) * 100 / checks.Length;
+        }
+    }
+
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public string CompletenessLabel => CompletenessScore switch
+    {
+        >= 85 => "Complete",
+        >= 60 => "Good",
+        >= 40 => "Needs work",
+        _ => "Incomplete"
+    };
+
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public string CompletenessBadgeClass => CompletenessScore switch
+    {
+        >= 85 => "bg-success",
+        >= 60 => "bg-info text-dark",
+        >= 40 => "bg-warning text-dark",
+        _ => "bg-danger"
+    };
 }
