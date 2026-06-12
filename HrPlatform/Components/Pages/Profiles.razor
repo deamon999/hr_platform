@@ -29,13 +29,37 @@
     <div class="d-flex align-items-center gap-2">
         <label class="form-label mb-0">Availability:</label>
         <select class="form-select form-select-sm w-auto"
-                @bind="availFilter" @bind:after="ResetPageAndLoad">
+                @bind="profileSearch.Availability" @bind:after="ResetPageAndLoad">
             <option value="">All</option>
             @foreach (var s in Enum.GetValues<AvailabilityStatus>())
             {
                 <option value="@s">@s.GetDescriptionValue()</option>
             }
         </select>
+        <input class="form-control form-control-sm"
+               style="max-width:200px"
+               placeholder="Search name..."
+               @bind="profileSearch.Name"
+               @bind:after="ResetPageAndLoad"/>
+        <select class="form-select form-select-sm w-auto"
+                @bind="profileSearch.CdlClass" @bind:after="ResetPageAndLoad">
+            <option value="">Any CDL class</option>
+            @foreach (var c in Enum.GetValues<CdlClass>())
+            {
+                <option value="@c">@c.GetDescriptionValue()</option>
+            }
+        </select>
+        <select class="form-select form-select-sm w-auto"
+                @bind="profileSearch.RequiredEndorsement" @bind:after="LoadAsync">
+            <option value="">Any endorsement</option>
+            @foreach (var e in Enum.GetValues<CdlEndorsement>())
+            {
+                <option value="@e">@e.GetDescriptionValue()</option>
+            }
+        </select>
+        <button class="btn btn-sm btn-outline-secondary" title="Clear all filters" @onclick="ClearFilters">
+            Clear
+        </button>
     </div>
 </div>
 
@@ -195,7 +219,7 @@ else
     private string? currentUserId;
 
     // Filter by Status
-    private AvailabilityStatus? availFilter;
+    private ProfileSearch? profileSearch = new ProfileSearch();
 
     // Pagination State
     private int currentPage = 1;
@@ -218,12 +242,19 @@ else
         await LoadAsync();
     }
 
+    private async Task ClearFilters()
+    {
+        // Reset the search model to defaults and reload
+        profileSearch = new ProfileSearch();
+        await ResetPageAndLoad();
+    }
+
     private async Task LoadAsync()
     {
         // NOTE: You may need to pass 'sortBy' into your ProfileSvc methods if you want it to actually sort in the DB.
         if (isAdmin)
         {
-            pagedProfiles = await ProfileSvc.GetAllPagedAsync(availFilter, currentPage, PageSize);
+            pagedProfiles = await ProfileSvc.GetAllPagedAsync(profileSearch, currentPage, PageSize);
         }
         else
         {
@@ -243,7 +274,7 @@ else
                 var companyId = user?.CompanyId;
 
                 pagedProfiles = companyId.HasValue
-                    ? await ProfileSvc.GetByCompanyPagedAsync(availFilter, companyId.Value, currentPage, PageSize)
+                    ? await ProfileSvc.GetByCompanyPagedAsync(profileSearch, companyId.Value, currentPage, PageSize)
                     : new PaginationResult<DriverProfile>
                     {
                         Items = new List<DriverProfile>(),

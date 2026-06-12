@@ -25,8 +25,32 @@ public class DriverEmployment
 
     public int? AverageWeeklyMiles { get; set; }
 
-    // Stored as comma-delimited string via EF value conversion — no junction table needed
-    public List<TrailerType> TrailerTypes { get; set; } = [];
+    // Navigation property for trailer types junction table
+    public ICollection<DriverEmploymentTrailerType> TrailerTypes { get; set; } = [];
 
     [MaxLength(2000)] public string? Responsibilities { get; set; }
+
+    // Helper methods for managing trailer types
+    public bool HasTrailerType(TrailerType trailerType) =>
+        TrailerTypes.Any(t => t.TrailerType == trailerType);
+
+    public void AddTrailerType(TrailerType trailerType)
+    {
+        if (!HasTrailerType(trailerType))
+        {
+            TrailerTypes.Add(new DriverEmploymentTrailerType { TrailerType = trailerType });
+        }
+    }
+
+    public void RemoveTrailerType(TrailerType trailerType)
+    {
+        var existing = TrailerTypes.FirstOrDefault(t => t.TrailerType == trailerType);
+        if (existing != null)
+        {
+            TrailerTypes.Remove(existing);
+        }
+    }
+
+    public IEnumerable<TrailerType> GetTrailerTypeValues() =>
+        TrailerTypes.Select(t => t.TrailerType);
 }

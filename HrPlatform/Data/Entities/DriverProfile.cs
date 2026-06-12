@@ -58,7 +58,8 @@ public class DriverProfile
 
     [ValidateComplexType] public DriverMedicalCard? MedicalCard { get; set; }
 
-    public List<string> Skills { get; set; } = [];
+    // Navigation property for skills junction table
+    public ICollection<DriverProfileSkill> Skills { get; set; } = [];
 
     [ValidateComplexType] public ICollection<DriverEmployment> EmploymentHistory { get; set; } = [];
 
@@ -67,7 +68,7 @@ public class DriverProfile
     [ValidateComplexType] public ICollection<DriverCertification> Certifications { get; set; } = [];
 
     public IEnumerable<TrailerType> AllTrailerTypes =>
-        EmploymentHistory.SelectMany(e => e.TrailerTypes).Distinct();
+        EmploymentHistory.SelectMany(e => e.TrailerTypes.Select(t => t.TrailerType)).Distinct();
 
     /// <summary>
     /// Returns a 0-100 completeness score based on the 7 most
@@ -119,4 +120,28 @@ public class DriverProfile
         >= 40 => "bg-warning text-dark",
         _ => "bg-danger"
     };
+
+    // Helper methods for managing skills
+    public bool HasSkill(string skill) =>
+        Skills.Any(s => s.Skill.Equals(skill, StringComparison.OrdinalIgnoreCase));
+
+    public void AddSkill(string skill)
+    {
+        if (!string.IsNullOrWhiteSpace(skill) && !HasSkill(skill))
+        {
+            Skills.Add(new DriverProfileSkill { Skill = skill.Trim() });
+        }
+    }
+
+    public void RemoveSkill(string skill)
+    {
+        var existing = Skills.FirstOrDefault(s => s.Skill.Equals(skill, StringComparison.OrdinalIgnoreCase));
+        if (existing != null)
+        {
+            Skills.Remove(existing);
+        }
+    }
+
+    public IEnumerable<string> GetSkillValues() =>
+        Skills.Select(s => s.Skill);
 }

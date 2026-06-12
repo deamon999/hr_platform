@@ -383,15 +383,35 @@ namespace HrPlatform.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<string>("TrailerTypes")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
 
                     b.HasIndex("DriverProfileId");
 
                     b.ToTable("DriverEmployments");
+                });
+
+            modelBuilder.Entity("HrPlatform.Data.Models.DriverEmploymentTrailerType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DriverEmploymentId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TrailerType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DriverEmploymentId");
+
+                    b.HasIndex("TrailerType");
+
+                    b.ToTable("DriverEmploymentTrailerTypes");
                 });
 
             modelBuilder.Entity("HrPlatform.Data.Models.DriverLicense", b =>
@@ -408,10 +428,6 @@ namespace HrPlatform.Migrations
 
                     b.Property<int>("DriverProfileId")
                         .HasColumnType("integer");
-
-                    b.Property<string>("Endorsements")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<DateOnly>("ExpiryDate")
                         .HasColumnType("date");
@@ -442,6 +458,30 @@ namespace HrPlatform.Migrations
                         .IsUnique();
 
                     b.ToTable("DriverLicenses");
+                });
+
+            modelBuilder.Entity("HrPlatform.Data.Models.DriverLicenseEndorsement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DriverLicenseId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Endorsement")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DriverLicenseId");
+
+                    b.HasIndex("Endorsement");
+
+                    b.ToTable("DriverLicenseEndorsements");
                 });
 
             modelBuilder.Entity("HrPlatform.Data.Models.DriverMedicalCard", b =>
@@ -546,10 +586,6 @@ namespace HrPlatform.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
-                    b.Property<string>("Skills")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("State")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
@@ -584,6 +620,31 @@ namespace HrPlatform.Migrations
                         .IsUnique();
 
                     b.ToTable("DriverProfiles");
+                });
+
+            modelBuilder.Entity("HrPlatform.Data.Models.DriverProfileSkill", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DriverProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Skill")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DriverProfileId");
+
+                    b.HasIndex("Skill");
+
+                    b.ToTable("DriverProfileSkills");
                 });
 
             modelBuilder.Entity("HrPlatform.Data.Models.Job", b =>
@@ -935,6 +996,17 @@ namespace HrPlatform.Migrations
                     b.Navigation("DriverProfile");
                 });
 
+            modelBuilder.Entity("HrPlatform.Data.Models.DriverEmploymentTrailerType", b =>
+                {
+                    b.HasOne("HrPlatform.Data.Models.DriverEmployment", "DriverEmployment")
+                        .WithMany("TrailerTypes")
+                        .HasForeignKey("DriverEmploymentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DriverEmployment");
+                });
+
             modelBuilder.Entity("HrPlatform.Data.Models.DriverLicense", b =>
                 {
                     b.HasOne("HrPlatform.Data.Models.DriverProfile", "DriverProfile")
@@ -944,6 +1016,17 @@ namespace HrPlatform.Migrations
                         .IsRequired();
 
                     b.Navigation("DriverProfile");
+                });
+
+            modelBuilder.Entity("HrPlatform.Data.Models.DriverLicenseEndorsement", b =>
+                {
+                    b.HasOne("HrPlatform.Data.Models.DriverLicense", "DriverLicense")
+                        .WithMany("Endorsements")
+                        .HasForeignKey("DriverLicenseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DriverLicense");
                 });
 
             modelBuilder.Entity("HrPlatform.Data.Models.DriverMedicalCard", b =>
@@ -965,6 +1048,17 @@ namespace HrPlatform.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("HrPlatform.Data.Models.DriverProfileSkill", b =>
+                {
+                    b.HasOne("HrPlatform.Data.Models.DriverProfile", "DriverProfile")
+                        .WithMany("Skills")
+                        .HasForeignKey("DriverProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DriverProfile");
                 });
 
             modelBuilder.Entity("HrPlatform.Data.Models.Job", b =>
@@ -1113,6 +1207,16 @@ namespace HrPlatform.Migrations
                     b.Navigation("Users");
                 });
 
+            modelBuilder.Entity("HrPlatform.Data.Models.DriverEmployment", b =>
+                {
+                    b.Navigation("TrailerTypes");
+                });
+
+            modelBuilder.Entity("HrPlatform.Data.Models.DriverLicense", b =>
+                {
+                    b.Navigation("Endorsements");
+                });
+
             modelBuilder.Entity("HrPlatform.Data.Models.DriverProfile", b =>
                 {
                     b.Navigation("Certifications");
@@ -1124,6 +1228,8 @@ namespace HrPlatform.Migrations
                     b.Navigation("License");
 
                     b.Navigation("MedicalCard");
+
+                    b.Navigation("Skills");
                 });
 
             modelBuilder.Entity("HrPlatform.Data.Models.Job", b =>

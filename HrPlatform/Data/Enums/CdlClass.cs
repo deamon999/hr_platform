@@ -1,8 +1,10 @@
-﻿namespace HrPlatform.Data.Enums;
+﻿using System.ComponentModel;
+
+namespace HrPlatform.Data.Enums;
 
 public enum CdlClass
 {
-    A,
-    B,
-    C
+    [Description("CDL-A")] A,
+    [Description("CDL-B")] B,
+    [Description("CDL-C")] C
 }

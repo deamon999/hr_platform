@@ -15,12 +15,36 @@ public class DriverLicense
 
     [Required] public CdlClass Class { get; set; }
 
-    // Stored as "Hazmat,Tanker" — no junction table needed
-    public List<CdlEndorsement> Endorsements { get; set; } = [];
+    // Navigation property for endorsements junction table
+    public ICollection<DriverLicenseEndorsement> Endorsements { get; set; } = [];
 
     [MaxLength(200)] public string? Restrictions { get; set; }
 
     [Required] public DateOnly IssuedDate { get; set; }
 
     [Required] public DateOnly ExpiryDate { get; set; }
+
+    // Helper methods for managing endorsements
+    public bool HasEndorsement(CdlEndorsement endorsement) =>
+        Endorsements.Any(e => e.Endorsement == endorsement);
+
+    public void AddEndorsement(CdlEndorsement endorsement)
+    {
+        if (!HasEndorsement(endorsement))
+        {
+            Endorsements.Add(new DriverLicenseEndorsement { Endorsement = endorsement });
+        }
+    }
+
+    public void RemoveEndorsement(CdlEndorsement endorsement)
+    {
+        var existing = Endorsements.FirstOrDefault(e => e.Endorsement == endorsement);
+        if (existing != null)
+        {
+            Endorsements.Remove(existing);
+        }
+    }
+
+    public IEnumerable<CdlEndorsement> GetEndorsementValues() =>
+        Endorsements.Select(e => e.Endorsement);
 }

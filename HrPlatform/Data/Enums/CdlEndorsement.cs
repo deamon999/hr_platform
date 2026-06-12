@@ -1,11 +1,17 @@
-﻿namespace HrPlatform.Data.Enums;
+﻿using System.ComponentModel;
+
+namespace HrPlatform.Data.Enums;
 
 public enum CdlEndorsement
 {
-    Hazmat,
-    Tanker,
+    [Description("Hazardous Materials")] Hazmat,
+    [Description("Tank Vehicles")] Tanker,
+
+    [Description("Double/Triple Trailers")]
     Doubles,
-    Passenger,
-    SchoolBus,
+    [Description("Passenger Transport")] Passenger,
+    [Description("School Bus")] SchoolBus,
+
+    [Description("Hazardous Materials + Tank Vehicles Combination")]
     HazTanker
 }

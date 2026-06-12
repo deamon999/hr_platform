@@ -274,8 +274,8 @@
                                                 {
                                                     <div class="form-check">
                                                         <input type="checkbox" class="form-check-input" id="end_@end"
-                                                               checked="@profile.License.Endorsements.Contains(end)"
-                                                               @onchange="e => ToggleEndorsement(profile.License.Endorsements, end, (bool)e.Value!)"/>
+                                                               checked="@profile.License.HasEndorsement(end)"
+                                                               @onchange="e => ToggleEndorsement(profile.License, end, (bool)e.Value!)"/>
                                                         <label class="form-check-label" for="end_@end">@end</label>
                                                     </div>
                                                 }
@@ -340,9 +340,9 @@
                                     @foreach (var skill in profile.Skills)
                                     {
                                         <span class="badge bg-info text-dark d-flex align-items-center gap-1">
-                                            @skill
+                                            @skill.Skill
                                             <button type="button" class="btn-close btn-sm"
-                                                    @onclick="() => profile.Skills.Remove(skill)">
+                                                    @onclick="() => profile.RemoveSkill(skill.Skill)">
                                             </button>
                                         </span>
                                     }
@@ -420,7 +420,7 @@
                                                         {
                                                             <div class="form-check">
                                                                 <input type="checkbox" class="form-check-input" id="tt_@(ei)_@t"
-                                                                       checked="@emp.TrailerTypes.Contains(t)"
+                                                                       checked="@emp.HasTrailerType(t)"
                                                                        @onchange="e => ToggleTrailerType(emp, t, (bool)e.Value!)"/>
                                                                 <label class="form-check-label" for="tt_@(ei)_@t">@t</label>
                                                             </div>
@@ -741,30 +741,20 @@
         Nav.NavigateTo(destination);
     }
 
-    private void ToggleEndorsement(List<CdlEndorsement> list, CdlEndorsement value, bool add)
+    private void ToggleEndorsement(DriverLicense license, CdlEndorsement value, bool add)
     {
         if (add)
-        {
-            if (!list.Contains(value))
-                list.Add(value);
-        }
+            license.AddEndorsement(value);
         else
-        {
-            list.Remove(value);
-        }
+            license.RemoveEndorsement(value);
     }
 
     private void ToggleTrailerType(DriverEmployment emp, TrailerType type, bool add)
     {
         if (add)
-        {
-            if (!emp.TrailerTypes.Contains(type))
-                emp.TrailerTypes.Add(type);
-        }
+            emp.AddTrailerType(type);
         else
-        {
-            emp.TrailerTypes.Remove(type);
-        }
+            emp.RemoveTrailerType(type);
     }
 
     private void AddEmployment()
@@ -832,7 +822,7 @@
         if (string.IsNullOrWhiteSpace(newSkill) || profile is null)
             return;
 
-        profile.Skills.Add(newSkill.Trim());
+        profile.AddSkill(newSkill);
         newSkill = null;
     }
 
@@ -903,7 +893,7 @@
                     Class = src.License.Class,
                     IssuedDate = src.License.IssuedDate,
                     ExpiryDate = src.License.ExpiryDate,
-                    Endorsements = new List<CdlEndorsement>(src.License.Endorsements),
+                    Endorsements = new List<DriverLicenseEndorsement>(src.License.Endorsements.Select(e => new DriverLicenseEndorsement { Id = e.Id, Endorsement = e.Endorsement })),
                     Restrictions = src.License.Restrictions
                 },
             MedicalCard = src.MedicalCard == null
@@ -917,7 +907,7 @@
                     MedicalExaminerCertNumber = src.MedicalCard.MedicalExaminerCertNumber,
                     SelfCertified = src.MedicalCard.SelfCertified
                 },
-            Skills = new List<string>(src.Skills),
+            Skills = new List<DriverProfileSkill>(src.Skills.Select(s => new DriverProfileSkill { Id = s.Id, Skill = s.Skill })),
             EmploymentHistory = src.EmploymentHistory.Select(e => new DriverEmployment
             {
                 Id = e.Id,
@@ -930,7 +920,7 @@
                 AverageWeeklyMiles = e.AverageWeeklyMiles,
                 ReasonForLeaving = e.ReasonForLeaving,
                 Responsibilities = e.Responsibilities,
-                TrailerTypes = new List<TrailerType>(e.TrailerTypes)
+                TrailerTypes = new List<DriverEmploymentTrailerType>(e.TrailerTypes.Select(t => new DriverEmploymentTrailerType { Id = t.Id, TrailerType = t.TrailerType }))
             }).ToList(),
             EducationHistory = src.EducationHistory.Select(ed => new DriverEducation
             {

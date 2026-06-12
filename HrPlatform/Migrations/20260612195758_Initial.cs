@@ -268,6 +268,8 @@ namespace HrPlatform.Migrations
                     City = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     State = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     ZipCode = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    AvailabilityStatus = table.Column<int>(type: "integer", nullable: false),
+                    AvailableFrom = table.Column<DateOnly>(type: "date", nullable: true),
                     ProfessionalSummary = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
                     YearsOfExperience = table.Column<int>(type: "integer", nullable: false),
                     TotalMilesDriven = table.Column<long>(type: "bigint", nullable: false),
@@ -275,8 +277,7 @@ namespace HrPlatform.Migrations
                     StatesOperated = table.Column<int>(type: "integer", nullable: false),
                     AverageWeeklyMiles = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Skills = table.Column<string>(type: "text", nullable: false)
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -447,7 +448,6 @@ namespace HrPlatform.Migrations
                     EndDate = table.Column<DateOnly>(type: "date", nullable: true),
                     ReasonForLeaving = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     AverageWeeklyMiles = table.Column<int>(type: "integer", nullable: true),
-                    TrailerTypes = table.Column<string>(type: "text", nullable: false),
                     Responsibilities = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true)
                 },
                 constraints: table =>
@@ -471,7 +471,6 @@ namespace HrPlatform.Migrations
                     LicenseNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     IssuingState = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false),
                     Class = table.Column<string>(type: "text", nullable: false),
-                    Endorsements = table.Column<string>(type: "text", nullable: false),
                     Restrictions = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     IssuedDate = table.Column<DateOnly>(type: "date", nullable: false),
                     ExpiryDate = table.Column<DateOnly>(type: "date", nullable: false)
@@ -507,6 +506,66 @@ namespace HrPlatform.Migrations
                         name: "FK_DriverMedicalCards_DriverProfiles_DriverProfileId",
                         column: x => x.DriverProfileId,
                         principalTable: "DriverProfiles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DriverProfileSkills",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    DriverProfileId = table.Column<int>(type: "integer", nullable: false),
+                    Skill = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DriverProfileSkills", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DriverProfileSkills_DriverProfiles_DriverProfileId",
+                        column: x => x.DriverProfileId,
+                        principalTable: "DriverProfiles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DriverEmploymentTrailerTypes",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    DriverEmploymentId = table.Column<int>(type: "integer", nullable: false),
+                    TrailerType = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DriverEmploymentTrailerTypes", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DriverEmploymentTrailerTypes_DriverEmployments_DriverEmploy~",
+                        column: x => x.DriverEmploymentId,
+                        principalTable: "DriverEmployments",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DriverLicenseEndorsements",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    DriverLicenseId = table.Column<int>(type: "integer", nullable: false),
+                    Endorsement = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DriverLicenseEndorsements", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DriverLicenseEndorsements_DriverLicenses_DriverLicenseId",
+                        column: x => x.DriverLicenseId,
+                        principalTable: "DriverLicenses",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -579,6 +638,26 @@ namespace HrPlatform.Migrations
                 column: "DriverProfileId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_DriverEmploymentTrailerTypes_DriverEmploymentId",
+                table: "DriverEmploymentTrailerTypes",
+                column: "DriverEmploymentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DriverEmploymentTrailerTypes_TrailerType",
+                table: "DriverEmploymentTrailerTypes",
+                column: "TrailerType");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DriverLicenseEndorsements_DriverLicenseId",
+                table: "DriverLicenseEndorsements",
+                column: "DriverLicenseId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DriverLicenseEndorsements_Endorsement",
+                table: "DriverLicenseEndorsements",
+                column: "Endorsement");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_DriverLicenses_DriverProfileId",
                 table: "DriverLicenses",
                 column: "DriverProfileId",
@@ -601,6 +680,16 @@ namespace HrPlatform.Migrations
                 table: "DriverProfiles",
                 column: "UserId",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DriverProfileSkills_DriverProfileId",
+                table: "DriverProfileSkills",
+                column: "DriverProfileId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DriverProfileSkills_Skill",
+                table: "DriverProfileSkills",
+                column: "Skill");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Invitations_CompanyId",
@@ -684,13 +773,16 @@ namespace HrPlatform.Migrations
                 name: "DriverEducations");
 
             migrationBuilder.DropTable(
-                name: "DriverEmployments");
+                name: "DriverEmploymentTrailerTypes");
 
             migrationBuilder.DropTable(
-                name: "DriverLicenses");
+                name: "DriverLicenseEndorsements");
 
             migrationBuilder.DropTable(
                 name: "DriverMedicalCards");
+
+            migrationBuilder.DropTable(
+                name: "DriverProfileSkills");
 
             migrationBuilder.DropTable(
                 name: "Invitations");
@@ -705,10 +797,16 @@ namespace HrPlatform.Migrations
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
-                name: "DriverProfiles");
+                name: "DriverEmployments");
+
+            migrationBuilder.DropTable(
+                name: "DriverLicenses");
 
             migrationBuilder.DropTable(
                 name: "Jobs");
+
+            migrationBuilder.DropTable(
+                name: "DriverProfiles");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

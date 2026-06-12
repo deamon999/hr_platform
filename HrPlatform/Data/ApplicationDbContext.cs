@@ -15,6 +15,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<DriverEmployment> DriverEmployments => Set<DriverEmployment>();
     public DbSet<DriverEducation> DriverEducations => Set<DriverEducation>();
     public DbSet<DriverCertification> DriverCertifications => Set<DriverCertification>();
+    public DbSet<DriverLicenseEndorsement> DriverLicenseEndorsements => Set<DriverLicenseEndorsement>();
+    public DbSet<DriverEmploymentTrailerType> DriverEmploymentTrailerTypes => Set<DriverEmploymentTrailerType>();
+    public DbSet<DriverProfileSkill> DriverProfileSkills => Set<DriverProfileSkill>();
     public DbSet<Job> Jobs => Set<Job>();
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<JobApplication> JobApplications => Set<JobApplication>();
@@ -45,13 +48,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         b.Entity<DriverProfile>(e =>
         {
             e.Ignore(p => p.AllTrailerTypes);
-
-            e.Property(p => p.Skills).HasConversion(
-                v => string.Join(',', v),
-                v => v.Length == 0
-                    ? new List<string>()
-                    : v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList()
-            );
         });
 
         b.Entity<DriverLicense>(e =>
@@ -63,14 +59,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
             e.HasIndex(l => l.LicenseNumber).IsUnique();
             e.Property(l => l.Class).HasConversion<string>();
-            e.Property(l => l.Endorsements).HasConversion(
-                v => string.Join(',', v.Select(e => e.ToString())),
-                v => v.Length == 0
-                    ? new List<CdlEndorsement>()
-                    : v.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                        .Select(Enum.Parse<CdlEndorsement>)
-                        .ToList()
-            );
         });
 
         b.Entity<DriverMedicalCard>(e =>
@@ -87,16 +75,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .WithMany(p => p.EmploymentHistory)
                 .HasForeignKey(em => em.DriverProfileId)
                 .OnDelete(DeleteBehavior.Cascade);
-
-            // Trailer types stored as "DryVan,Flatbed,Reefer" — no junction table
-            e.Property(em => em.TrailerTypes).HasConversion(
-                v => string.Join(',', v.Select(t => t.ToString())),
-                v => v.Length == 0
-                    ? new List<TrailerType>()
-                    : v.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                        .Select(Enum.Parse<TrailerType>)
-                        .ToList()
-            );
         });
 
         b.Entity<DriverEducation>(e =>
@@ -117,6 +95,43 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        //**** Junction Tables ****
+
+        b.Entity<DriverLicenseEndorsement>(dle =>
+        {
+            dle.HasKey(x => x.Id);
+            dle.HasOne(x => x.DriverLicense)
+                .WithMany(l => l.Endorsements)
+                .HasForeignKey(x => x.DriverLicenseId)
+                .OnDelete(DeleteBehavior.Cascade);
+            dle.Property(x => x.Endorsement).HasConversion<string>();
+            // Index for faster queries by endorsement type
+            dle.HasIndex(x => x.Endorsement);
+        });
+
+        b.Entity<DriverEmploymentTrailerType>(dett =>
+        {
+            dett.HasKey(x => x.Id);
+            dett.HasOne(x => x.DriverEmployment)
+                .WithMany(em => em.TrailerTypes)
+                .HasForeignKey(x => x.DriverEmploymentId)
+                .OnDelete(DeleteBehavior.Cascade);
+            dett.Property(x => x.TrailerType).HasConversion<string>();
+            // Index for faster queries by trailer type
+            dett.HasIndex(x => x.TrailerType);
+        });
+
+        b.Entity<DriverProfileSkill>(dps =>
+        {
+            dps.HasKey(x => x.Id);
+            dps.HasOne(x => x.DriverProfile)
+                .WithMany(p => p.Skills)
+                .HasForeignKey(x => x.DriverProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+            // Index for faster skill lookups
+            dps.HasIndex(x => x.Skill);
+        });
+
         //*******************************************
 
         b.Entity<Job>(e =>
@@ -126,7 +141,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             e.Property(j => j.EmploymentType).HasConversion<string>();
             e.Property(j => j.RequiredTrailerType).HasConversion<string>();
             e.Property(j => j.RequiredEndorsements).HasConversion(
-                v => string.Join(',', v.Select(e => e.ToString())),
+                v => string.Join(',', v.Select(x => x.ToString())),
                 v => v.Length == 0
                     ? new List<CdlEndorsement>()
                     : v.Split(',', StringSplitOptions.RemoveEmptyEntries)

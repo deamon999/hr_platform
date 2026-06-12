@@ -8,20 +8,55 @@ namespace HrPlatform.Services;
 
 public class DriverProfileService(ApplicationDbContext db) : IDriverProfileService
 {
-    private IQueryable<DriverProfile> GetBaseQuery() =>
-        db.DriverProfiles
+    private IOrderedQueryable<DriverProfile> GetBaseQuery(ProfileSearch profileSearch)
+    {
+        IQueryable<DriverProfile> q = db.DriverProfiles
             .Include(p => p.License)
+            .ThenInclude(l => l.Endorsements)
             .Include(p => p.User)
-            .OrderBy(p => p.LastName).ThenBy(p => p.FirstName);
+            .ThenInclude(u => u.Applications);
+
+        // Availability status
+        if (profileSearch.Availability.HasValue)
+        {
+            q = q.Where(p => p.AvailabilityStatus == profileSearch.Availability.Value);
+        }
+
+        // Name search
+        if (!string.IsNullOrWhiteSpace(profileSearch.Name))
+            q = q.Where(p =>
+                p.FirstName.Contains(profileSearch.Name) ||
+                p.LastName.Contains(profileSearch.Name) ||
+                (p.FirstName + " " + p.LastName).Contains(profileSearch.Name));
+
+        // CDL class filter
+        if (profileSearch.CdlClass.HasValue)
+            q = q.Where(p => p.License != null &&
+                             p.License.Class == profileSearch.CdlClass.Value);
+
+        // CDL endorsement filter
+        if (profileSearch.RequiredEndorsement.HasValue)
+            q = q.Where(p => p.License != null &&
+                             p.License.Endorsements.Any(e => e.Endorsement == profileSearch.RequiredEndorsement.Value));
+
+        // Minimum years experience
+        if (profileSearch.MinYears.HasValue)
+            q = q.Where(p => p.YearsOfExperience >= profileSearch.MinYears.Value);
+
+        return q.OrderBy(p => p.LastName).ThenBy(p => p.FirstName);
+    }
 
     public async Task<DriverProfile?> GetByUserIdAsync(string userId)
     {
         return await db.DriverProfiles
             .Include(p => p.License)
+            .ThenInclude(l => l.Endorsements)
             .Include(p => p.MedicalCard)
             .Include(p => p.EmploymentHistory)
+            .ThenInclude(e => e.TrailerTypes)
             .Include(p => p.EducationHistory)
             .Include(p => p.Certifications)
+            .Include(p => p.Skills)
             .FirstOrDefaultAsync(p => p.UserId == userId);
     }
 
@@ -29,61 +64,26 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
     {
         return await db.DriverProfiles
             .Include(p => p.License)
+            .ThenInclude(l => l.Endorsements)
             .Include(p => p.MedicalCard)
             .Include(p => p.EmploymentHistory)
+            .ThenInclude(e => e.TrailerTypes)
             .Include(p => p.EducationHistory)
             .Include(p => p.Certifications)
+            .Include(p => p.Skills)
             .FirstOrDefaultAsync(p => p.Id == id);
     }
 
-    public async Task<List<DriverProfile>> GetAllAsync(AvailabilityStatus? status)
+    public async Task<PaginationResult<DriverProfile>> GetAllPagedAsync(ProfileSearch profileSearch, int pageNumber = 1, int pageSize = 10)
     {
-        IQueryable<DriverProfile> queryable = GetBaseQuery();
-        if (status != null)
-        {
-            queryable = queryable.Where(p => p.AvailabilityStatus == status);
-        }
-
-        return await queryable.ToListAsync();
+        return await GetBaseQuery(profileSearch).PaginateAsync(pageNumber, pageSize);
     }
 
-    public async Task<PaginationResult<DriverProfile>> GetAllPagedAsync(AvailabilityStatus? status, int pageNumber = 1, int pageSize = 10)
-    {
-        IQueryable<DriverProfile> queryable = GetBaseQuery();
-        if (status != null)
-        {
-            queryable = queryable.Where(p => p.AvailabilityStatus == status);
-        }
-
-        return await queryable.PaginateAsync(pageNumber, pageSize);
-    }
-
-    public async Task<List<DriverProfile>> GetByCompanyAsync(int companyId, AvailabilityStatus? status)
-    {
-        IQueryable<DriverProfile> queryable = GetBaseQuery();
-        if (status != null)
-        {
-            queryable = queryable.Where(p => p.AvailabilityStatus == status);
-        }
-
-        return await queryable
-            .Include(p => p.License)
-            .Include(p => p.User)
-            .Where(p => p.User.Applications.Any(a => a.Job.CompanyId == companyId))
-            .OrderBy(p => p.LastName).ThenBy(p => p.FirstName)
-            .ToListAsync();
-    }
-
-    public async Task<PaginationResult<DriverProfile>> GetByCompanyPagedAsync(AvailabilityStatus? status, int companyId, int pageNumber = 1,
+    public async Task<PaginationResult<DriverProfile>> GetByCompanyPagedAsync(ProfileSearch profileSearch, int companyId, int pageNumber = 1,
         int pageSize = 10)
     {
-        IQueryable<DriverProfile> queryable = GetBaseQuery();
-        if (status != null)
-        {
-            queryable = queryable.Where(p => p.AvailabilityStatus == status);
-        }
-
-        queryable.Where(p => p.User.Applications.Any(a => a.Job.CompanyId == companyId));
+        IQueryable<DriverProfile> queryable = GetBaseQuery(profileSearch);
+        queryable = queryable.Where(p => p.User.Applications.Any(a => a.Job.CompanyId == companyId));
         return await queryable.PaginateAsync(pageNumber, pageSize);
     }
 
