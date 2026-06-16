@@ -1,7 +1,6 @@
 ﻿@page "/invitations"
-@rendermode InteractiveServer
-
 @using HrPlatform.Data.Entities
+@rendermode InteractiveServer
 @attribute [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.Manager}")]
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthStateProvider
@@ -91,7 +90,13 @@ else
                         }
                         else if (inv.ExpiresAt < DateTime.UtcNow)
                         {
-                            <span class="badge bg-secondary">Expired</span>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-secondary">Expired</span>
+                                <button class="btn btn-sm btn-outline-primary py-0"
+                                        @onclick="() => ResendInvitationAsync(inv)">
+                                    Resend
+                                </button>
+                            </div>
                         }
                         else
                         {
@@ -133,7 +138,13 @@ else
                             }
                             else if (inv.ExpiresAt < DateTime.UtcNow)
                             {
-                                <span class="badge bg-secondary">Expired</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-secondary">Expired</span>
+                                    <button class="btn btn-sm btn-outline-primary py-0"
+                                            @onclick="() => ResendInvitationAsync(inv)">
+                                        Resend
+                                    </button>
+                                </div>
                             }
                             else
                             {
@@ -178,7 +189,7 @@ else
                     <button class="page-link" @onclick="() => ChangePage(currentPage - 1)" tabindex="-1">Previous</button>
                 </li>
 
-                @for (int i = 1; i <= totalPages; i++)
+                @for (var i = 1; i <= totalPages; i++)
                 {
                     var pageIndex = i;
                     <li class="page-item @(currentPage == pageIndex ? "active" : "")">
@@ -196,14 +207,14 @@ else
 
 @code {
     private List<Invitation> pagedInvitations = new();
-    
+
     // UI State
     private string _searchTerm = string.Empty;
     private string? _statusMessage;
     private string _statusClass = "alert-success";
     private bool isLoading = true;
     private List<Company> _companies = new();
-    
+
     // Pagination State
     private int currentPage = 1;
     private const int PageSize = 10;
@@ -228,7 +239,7 @@ else
         try
         {
             // Fetch a larger pool of data so pagination has content to work with
-            var allInvitations = await InvitationService.GetRecentInvitationsAsync(500); 
+            var allInvitations = await InvitationService.GetRecentInvitationsAsync(500);
             var user = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
 
             // 1. Role-based filtering
@@ -266,12 +277,15 @@ else
         }
     }
 
-    private static string RoleBadgeClass(string role) => role switch
+    private static string RoleBadgeClass(string role)
     {
-        "Manager" => "bg-primary",
-        "Driver" => "bg-info text-dark",
-        _ => "bg-secondary"
-    };
+        return role switch
+        {
+            "Manager" => "bg-primary",
+            "Driver" => "bg-info text-dark",
+            _ => "bg-secondary"
+        };
+    }
 
     private async Task HandleSearchInput(ChangeEventArgs e)
     {
@@ -291,4 +305,18 @@ else
     {
         Nav.NavigateTo("/users/invite");
     }
+
+    private async Task ResendInvitationAsync(Invitation inv)
+    {
+        var baseUri = new Uri(Nav.BaseUri);
+        var result = await InvitationService.ResendAsync(inv.Id, baseUri);
+
+        _statusMessage = result.Success
+            ? "Invitation resent successfully."
+            : result.Error ?? "Failed to resend invitation.";
+        _statusClass = result.Success ? "alert-success" : "alert-danger";
+
+        await LoadAsync(_searchTerm);
+    }
+
 }

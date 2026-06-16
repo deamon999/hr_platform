@@ -142,6 +142,39 @@ public class InvitationService : IInvitationService
         }
     }
 
+    public async Task<InviteResult> ResendAsync(int invitationId, Uri baseUri)
+    {
+        var original = await _db.Invitations.FindAsync(invitationId);
+        if (original is null)
+            return InviteResult.Fail("Invitation not found.");
+
+        // Mark original as used so it won't show as pending
+        original.IsUsed = true;
+        await _db.SaveChangesAsync();
+
+        // Create a fresh invitation with new token + 7-day expiry
+        var fresh = new Invitation
+        {
+            ContactMethod = original.ContactMethod,
+            Email = original.Email,
+            Phone = original.Phone,
+            Role = original.Role,
+            CompanyId = original.CompanyId,
+            JobId = original.JobId
+            // Token and ExpiresAt are set by the entity defaults
+        };
+
+        var link = new Uri(baseUri,
+            $"/Account/Register?token={fresh.Token}");
+
+        var result = await InviteAsync(fresh, link);
+
+        if (result.Success)
+            await CreateAsync(fresh);
+
+        return result;
+    }
+
     private static string BuildRegistrationInviteEmail(Uri link, DateTime expiresAt) => $"""
                                                                                          <p>Hello,</p>
                                                                                          <p>You have been invited to join the platform.</p>

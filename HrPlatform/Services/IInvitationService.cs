@@ -35,4 +35,6 @@ public interface IInvitationService
     /// Sends appropriate email in both cases.
     /// </summary>
     Task<InviteResult> InviteAsync(Invitation invitation, Uri link);
+
+    Task<InviteResult> ResendAsync(int invitationId, Uri baseUri);
 }
