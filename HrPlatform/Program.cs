@@ -63,6 +63,7 @@ public class Program
         builder.Services.AddScoped<IAdminUserService, AdminUserService>();
         builder.Services.AddScoped<IInvitationService, InvitationService>();
         builder.Services.AddScoped<IJobInvitationService, JobInvitationService>();
+        builder.Services.AddScoped<IDashboardService, DashboardService>();
         // Background worker
         builder.Services.AddHostedService<CredentialExpiryService>();
         var app = builder.Build();

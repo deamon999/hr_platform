@@ -1,0 +1,32 @@
+@page "/"
+@using HrPlatform
+@rendermode InteractiveServer
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
+
+@code {
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
+
+        if (!user.Identity?.IsAuthenticated ?? true)
+        {
+            Nav.NavigateTo("/jobs", replace: true);
+        }
+        else if (user.IsInRole(RoleConstants.Admin) || user.IsInRole(RoleConstants.Manager))
+        {
+            Nav.NavigateTo("/dashboard", replace: true);
+        }
+        else if (user.IsInRole(RoleConstants.Driver))
+        {
+            Nav.NavigateTo("/jobs", replace: true);
+        }
+        else
+        {
+            Nav.NavigateTo("/jobs", replace: true);
+        }
+    }
+
+}
