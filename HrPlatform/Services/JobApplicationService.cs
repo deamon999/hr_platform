@@ -86,6 +86,74 @@ public class JobApplicationService(
         await NotifyDriverAsync(app, status, notes);
     }
 
+    public async Task WithdrawAsync(int id)
+    {
+        var app = await db.JobApplications.FindAsync(id)
+                  ?? throw new KeyNotFoundException($"Application {id} not found");
+
+        db.JobApplications.Remove(app);
+        await db.SaveChangesAsync();
+    }
+
+    public async Task<List<JobApplication>> GetAllFilteredAsync(
+        string? userId,
+        bool isManager,
+        bool isDriver,
+        int? companyId,
+        string? sortBy = null)
+    {
+        var q = db.JobApplications
+            .Include(a => a.User)
+            .ThenInclude(u => u.DriverProfile)
+            .ThenInclude(p => p.License)
+            .Include(a => a.User)
+            .ThenInclude(u => u.DriverProfile)
+            .ThenInclude(p => p.EmploymentHistory)
+            .Include(a => a.Job)
+            .ThenInclude(j => j.Company)
+            .AsQueryable();
+
+        // 1. Filter for Manager
+        if (isManager)
+        {
+            if (companyId.HasValue)
+                // Let EF handle the join automatically!
+                q = q.Where(a => a.Job.CompanyId == companyId.Value);
+            else
+                // Safety catch: If manager has no company, return empty list
+                return new List<JobApplication>();
+        }
+        // 2. Filter for Driver
+        else if (isDriver)
+        {
+            if (!string.IsNullOrEmpty(userId)) q = q.Where(a => a.UserId == userId);
+        }
+
+        // Note: If the user is an Admin (neither Driver nor Manager), 
+        // no filters are applied, and they see everything.
+
+        return sortBy switch
+        {
+            "status" => await q.OrderBy(a => a.Status).ThenByDescending(a => a.AppliedAt).ToListAsync(),
+            "driver" => await q.OrderBy(a => a.User.LastName).ThenBy(a => a.User.FirstName).ToListAsync(),
+            "job" => await q.OrderBy(a => a.Job.Title).ThenByDescending(a => a.AppliedAt).ToListAsync(),
+            _ => await q.OrderByDescending(a => a.AppliedAt).ToListAsync()
+        };
+    }
+
+    public async Task<PaginationResult<JobApplication>> GetAllFilteredPagedAsync(
+        string? userId,
+        bool isManager,
+        bool isDriver,
+        int? companyId,
+        int pageNumber = 1,
+        int pageSize = 10,
+        string? sortBy = null)
+    {
+        var apps = await GetAllFilteredAsync(userId, isManager, isDriver, companyId, sortBy);
+        return apps.Paginate(pageNumber, pageSize);
+    }
+
     private async Task NotifyDriverAsync(
         JobApplication app, ApplicationStatus status, string? notes)
     {
@@ -117,7 +185,7 @@ public class JobApplicationService(
         }
 
         // SMS fallback / supplement
-        if (!string.IsNullOrWhiteSpace(driver.PhoneNumber))
+        else if (!string.IsNullOrWhiteSpace(driver.PhoneNumber))
         {
             var smsText = status switch
             {
@@ -131,92 +199,25 @@ public class JobApplicationService(
                      " has been updated. Log in to check your status."
             };
             await smsService.SendDriverInviteAsync(
-                driver.PhoneNumber, driverName, null, "/applications");
+                driver.PhoneNumber, driverName, null, smsText);
         }
     }
 
     private static string BuildStatusEmail(
         string job, string company,
-        ApplicationStatus status, string? notes) => $"""
-                                                     <p>Hello,</p>
-                                                     <p>Your application for <strong>{job}</strong>
-                                                     at <strong>{company}</strong> has been updated.</p>
-                                                     <p><strong>New status:</strong> {status}</p>
-                                                     {(!string.IsNullOrEmpty(notes)
-                                                         ? $"<p><em>Note from recruiter: {notes}</em></p>"
-                                                         : "")}
-                                                     <p><a href=\"#\" style=\"background:#0d6efd;color:#fff;
-                                                        padding:10px 20px;text-decoration:none;
-                                                        border-radius:4px;\">View My Applications</a></p>
-                                                     """;
-
-    public async Task WithdrawAsync(int id)
+        ApplicationStatus status, string? notes)
     {
-        var app = await db.JobApplications.FindAsync(id)
-                  ?? throw new KeyNotFoundException($"Application {id} not found");
-
-        db.JobApplications.Remove(app);
-        await db.SaveChangesAsync();
-    }
-
-    public async Task<List<JobApplication>> GetAllFilteredAsync(
-        string? userId,
-        bool isManager,
-        bool isDriver,
-        int? companyId,
-        string? sortBy = null)
-    {
-        var q = db.JobApplications
-            .Include(a => a.User)
-            .Include(a => a.Job)
-            .ThenInclude(j => j.Company) // Included to ensure company name renders in UI
-            .AsQueryable();
-
-        // 1. Filter for Manager
-        if (isManager)
-        {
-            if (companyId.HasValue)
-            {
-                // Let EF handle the join automatically!
-                q = q.Where(a => a.Job.CompanyId == companyId.Value);
-            }
-            else
-            {
-                // Safety catch: If manager has no company, return empty list
-                return new List<JobApplication>();
-            }
-        }
-        // 2. Filter for Driver
-        else if (isDriver)
-        {
-            if (!string.IsNullOrEmpty(userId))
-            {
-                q = q.Where(a => a.UserId == userId);
-            }
-        }
-
-        // Note: If the user is an Admin (neither Driver nor Manager), 
-        // no filters are applied, and they see everything.
-
-        return sortBy switch
-        {
-            "status" => await q.OrderBy(a => a.Status).ThenByDescending(a => a.AppliedAt).ToListAsync(),
-            "driver" => await q.OrderBy(a => a.User.LastName).ThenBy(a => a.User.FirstName).ToListAsync(),
-            "job" => await q.OrderBy(a => a.Job.Title).ThenByDescending(a => a.AppliedAt).ToListAsync(),
-            _ => await q.OrderByDescending(a => a.AppliedAt).ToListAsync()
-        };
-    }
-
-    public async Task<PaginationResult<JobApplication>> GetAllFilteredPagedAsync(
-        string? userId,
-        bool isManager,
-        bool isDriver,
-        int? companyId,
-        int pageNumber = 1,
-        int pageSize = 10,
-        string? sortBy = null)
-    {
-        var apps = await GetAllFilteredAsync(userId, isManager, isDriver, companyId, sortBy);
-        return apps.Paginate(pageNumber, pageSize);
+        return $"""
+                <p>Hello,</p>
+                <p>Your application for <strong>{job}</strong>
+                at <strong>{company}</strong> has been updated.</p>
+                <p><strong>New status:</strong> {status}</p>
+                {(!string.IsNullOrEmpty(notes)
+                    ? $"<p><em>Note from recruiter: {notes}</em></p>"
+                    : "")}
+                <p><a href=\"#\" style=\"background:#0d6efd;color:#fff;
+                   padding:10px 20px;text-decoration:none;
+                   border-radius:4px;\">View My Applications</a></p>
+                """;
     }
 }

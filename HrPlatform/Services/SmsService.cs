@@ -14,12 +14,12 @@ public class SmsService : ISmsService
         brevo_csharp.Client.Configuration.Default.ApiKey["api-key"] = _apiKey;
     }
 
-    public async Task SendDriverInviteAsync(string phoneNumber, string FirstName, string LastName, string inviteLink)
+    public async Task SendDriverInviteAsync(string phoneNumber, string FirstName, string LastName, string content)
     {
         var smsApi = new TransactionalSMSApi();
         var sms = new SendTransacSms(sender: "CDL Pool",
             recipient: phoneNumber,
-            content: $"You are invited to join CDL Pool, please use link to register {inviteLink}",
+            content: content,
             type: SendTransacSms.TypeEnum.Transactional);
         try
         {
@@ -29,7 +29,6 @@ public class SmsService : ISmsService
         catch (Exception e)
         {
             Console.WriteLine(e);
-            throw;
         }
     }
 }

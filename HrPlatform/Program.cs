@@ -54,6 +54,7 @@ public class Program
         builder.Services.AddSingleton<ISmsService, SmsService>();
         builder.Services.AddSingleton<IEmailService, EmailService>();
         builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+        builder.Services.AddSingleton<IJobMatchService, JobMatchService>();
 
         builder.Services.AddScoped<IUserClaimsPrincipalFactory<ApplicationUser>, AppUserClaimsPrincipalFactory>();
         builder.Services.AddScoped<IJobService, JobService>();

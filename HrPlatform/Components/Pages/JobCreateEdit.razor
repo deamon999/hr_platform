@@ -127,7 +127,7 @@ else
                             <input type="checkbox" class="form-check-input" id="end_@end"
                                    checked="@job.RequiredEndorsements.Contains(end)"
                                    @onchange="e => ToggleEndorsement(end, (bool)e.Value!)"/>
-                            <label class="form-check-label" for="end_@end">@end</label>
+                            <label class="form-check-label" for="end_@end">@end.GetDescriptionValue()</label>
                         </div>
                     }
                 </div>

@@ -1,8 +1,10 @@
 ﻿@page "/applications"
+@using System.Security.Claims
 @rendermode InteractiveServer
 
 @attribute [Authorize(Roles = $"{RoleConstants.Driver},{RoleConstants.Manager}")]
 @inject IJobApplicationService AppSvc
+@inject IJobMatchService JobMatchService
 @inject AuthenticationStateProvider AuthState
 
 <PageTitle>Applications</PageTitle>
@@ -43,6 +45,7 @@ else
                     <th>Applied</th>
                     <th>Status</th>
                     <th>Reviewed</th>
+                    <th>Match Score</th>
                     <th>Actions</th>
                 </tr>
                 </thead>
@@ -66,6 +69,20 @@ else
                             @(app.ReviewedAt.HasValue
                                 ? app.ReviewedAt.Value.ToLocalTime().ToString("MM/dd/yyyy")
                                 : "—")
+                        </td>
+                        <td>
+                            @{
+                                var profile = app.User?.DriverProfile;
+                                if (profile != null)
+                                {
+                                    // Ensure License + EmploymentHistory are loaded
+                                    var s = JobMatchService.ComputeScore(profile, app.Job);
+                                    <span class="badge @JobMatchService.ScoreBadgeClass(s)"
+                                          title="@JobMatchService.ScoreLabel(s)">
+                                        @s%
+                                    </span>
+                                }
+                            }
                         </td>
                         <td>
                             <div class="d-flex gap-1 flex-wrap">
@@ -134,9 +151,24 @@ else
                                 <strong>Applied:</strong><br/>
                                 @app.AppliedAt.ToLocalTime().ToString("MM/dd/yyyy")
                             </div>
-                            <div class="col-6">
+                            <div class="col-3">
                                 <strong>Reviewed:</strong><br/>
                                 @(app.ReviewedAt.HasValue ? app.ReviewedAt.Value.ToLocalTime().ToString("MM/dd/yyyy") : "—")
+                            </div>
+                            <div class="col-3">
+                                <strong>Match Score:</strong><br/>
+                                @{
+                                    var profile = app.User?.DriverProfile;
+                                    if (profile != null)
+                                    {
+                                        // Ensure License + EmploymentHistory are loaded
+                                        var s = JobMatchService.ComputeScore(profile, app.Job);
+                                        <span class="badge @JobMatchService.ScoreBadgeClass(s)"
+                                              title="@JobMatchService.ScoreLabel(s)">
+                                            @s%
+                                        </span>
+                                    }
+                                }
                             </div>
                         </div>
 
@@ -192,7 +224,7 @@ else
                         <button class="page-link" @onclick="() => ChangePage(currentPage - 1)" tabindex="-1">Previous</button>
                     </li>
 
-                    @for (int i = 1; i <= totalPages; i++)
+                    @for (var i = 1; i <= totalPages; i++)
                     {
                         var pageIndex = i;
                         <li class="page-item @(currentPage == pageIndex ? "active" : "")">
@@ -269,7 +301,7 @@ else
         isDriver = user.IsInRole(RoleConstants.Driver);
 
         // Extract Claims
-        currentUserId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         var companyClaim = user.FindFirst("companyId")?.Value;
         if (int.TryParse(companyClaim, out var parsedCompanyId))
