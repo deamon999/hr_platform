@@ -1,4 +1,4 @@
-﻿@page "/jobs"
+@page "/jobs"
 @using HrPlatform.Models
 @rendermode InteractiveServer
 
@@ -46,8 +46,8 @@ else if (!paginationResult.Items.Any())
 else
 {
     <div class="table-responsive d-none d-lg-block">
-        <table class="table table-hover align-middle">
-            <thead class="table-light">
+        <table class="table  table-hover align-middle">
+            <thead class="">
             <tr>
                 <th>Title</th>
                 <th>Company</th>
@@ -87,7 +87,7 @@ else
                         }
                         else
                         {
-                            <span class="badge bg-secondary">Inactive</span>
+                            <span class="badge ">Inactive</span>
                         }
                     </td>
                     <td>@rowJob.Applications.Count</td>
@@ -125,7 +125,7 @@ else
     <div class="d-block d-lg-none">
         @foreach (var rowJob in paginationResult.Items)
         {
-            <div class="card mb-3 shadow-sm border-0">
+            <div class="card mb-3  border-0">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <h5 class="card-title mb-0 fw-bold">@rowJob.Title</h5>
@@ -136,7 +136,7 @@ else
                             }
                             else
                             {
-                                <span class="badge bg-secondary">Inactive</span>
+                                <span class="badge ">Inactive</span>
                             }
                         </div>
                     </div>
@@ -146,14 +146,14 @@ else
                         {
                             <div class="fw-bold text-primary">@rowJob.Company.Name</div>
                         }
-                        <div class="text-muted small">
+                        <div class=" small">
                             @(rowJob.City != null ? $"{rowJob.City}, {rowJob.State}" : rowJob.State)
                         </div>
                     </div>
 
                     <div class="card-text">
                         <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
-                            <span class="text-muted">Pay:</span>
+                            <span class="">Pay:</span>
                             <span class="fw-medium">
                                 @if (rowJob.PayRate.HasValue)
                                 {
@@ -163,7 +163,7 @@ else
                         </div>
 
                         <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
-                            <span class="text-muted">CDL Required:</span>
+                            <span class="">CDL Required:</span>
                             <span>
                                 @if (rowJob.RequiredCdlClass.HasValue)
                                 {
@@ -173,13 +173,13 @@ else
                         </div>
 
                         <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
-                            <span class="text-muted">Posted:</span>
-                            <span>@rowJob.PostedAt.ToLocalTime().ToString("MM/dd/yyyy")</span>
+                            <span class="">Posted:</span>
+                            <span class="">@rowJob.PostedAt.ToLocalTime().ToString("MM/dd/yyyy")</span>
                         </div>
 
                         <div class="d-flex justify-content-between pb-2">
-                            <span class="text-muted">Applications:</span>
-                            <span class="badge bg-light text-dark border">@rowJob.Applications.Count</span>
+                            <span class="">Applications:</span>
+                            <span class="badge border">@rowJob.Applications.Count</span>
                         </div>
                     </div>
 
@@ -351,3 +351,5 @@ else
     }
 
 }
+
+

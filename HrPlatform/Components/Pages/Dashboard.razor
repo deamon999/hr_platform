@@ -1,4 +1,4 @@
-﻿@page "/dashboard"
+@page "/dashboard"
 @using HrPlatform.Models
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.Manager}")]
@@ -6,7 +6,10 @@
 @inject AuthenticationStateProvider AuthState
 
 <PageTitle>Dashboard</PageTitle>
-<h2 class="mb-4">Dashboard</h2>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold mb-0">Dashboard</h3>
+</div>
 
 @if (stats is null)
 {
@@ -14,7 +17,7 @@
 }
 else
 {
-    <div class="row g-3 mb-4">
+    <div class="row g-4 mb-4">
         @KpiCard("Active Jobs", stats.OpenJobs, "bi-briefcase", "primary")
         @KpiCard("Applications (7d)", stats.ApplicationsThisWeek, "bi-send", "info")
         @KpiCard("Pending review", stats.PendingApplications, "bi-hourglass", "warning")
@@ -23,15 +26,21 @@ else
         @KpiCard("Pending invites", stats.InvitationsPending, "bi-envelope", "secondary")
     </div>
 
-    <h5 class="mb-3">Applications by status</h5>
-    <div class="d-flex gap-3 flex-wrap">
-        @foreach (var kv in stats.ApplicationsByStatus)
-        {
-            <div class="border rounded p-3 text-center" style="min-width:120px">
-                <div class="fs-3 fw-bold">@kv.Value</div>
-                <div class="text-muted small">@kv.Key</div>
+    <div class="card mb-4 border-0">
+        <div class="card-body p-4">
+            <h4 class="fw-bold mb-4 border-bottom border-secondary pb-3">Applications by status</h4>
+            <div class="d-flex gap-3 flex-wrap">
+                @foreach (var kv in stats.ApplicationsByStatus)
+                {
+                    <div class="card" style="min-width:140px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color);">
+                        <div class="card-body text-center p-3">
+                            <div class="fs-3 fw-bold text-white">@kv.Value</div>
+                            <div class="text-white-50 small text-uppercase mt-1" style="letter-spacing: 0.05em;">@kv.Key</div>
+                        </div>
+                    </div>
+                }
             </div>
-        }
+        </div>
     </div>
 }
 
@@ -57,15 +66,27 @@ else
         string label, int value,
         string icon, string color) => __builder =>
     {
-        <div class="col-6 col-md-4 col-lg-2">
-            <div class="card text-center h-100 border-0 shadow-sm">
-                <div class="card-body">
-                    <i class="bi @icon fs-2 text-@color"></i>
-                    <div class="fs-2 fw-bold mt-1">@value</div>
-                    <div class="text-muted small">@label</div>
+        var gradient = color switch
+        {
+            "success" => "var(--success-gradient)",
+            "primary" => "var(--primary-gradient)",
+            "info" => "var(--info-gradient)",
+            "warning" => "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+            "danger" => "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+            _ => "rgba(30, 41, 59, 0.7)"
+        };
+
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card h-100 border-0" style="background: @gradient;">
+                <div class="card-body d-flex flex-column justify-content-center">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="card-title text-white fw-bold mb-0">@label</h5>
+                        <i class="bi @icon fs-4 text-white"></i>
+                    </div>
+                    <h2 class="mb-0 text-white">@value</h2>
                 </div>
             </div>
         </div>
     };
-
 }
+

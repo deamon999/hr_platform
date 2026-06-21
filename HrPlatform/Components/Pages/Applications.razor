@@ -1,4 +1,4 @@
-ï»¿@page "/applications"
+@page "/applications"
 @using System.Security.Claims
 @rendermode InteractiveServer
 
@@ -37,8 +37,8 @@ else
 {
     <div>
         <div class="table-responsive d-none d-md-block">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
+            <table class="table  table-hover align-middle">
+                <thead class="">
                 <tr>
                     <th>Job</th>
                     <th>Driver</th>
@@ -55,11 +55,11 @@ else
                     <tr>
                         <td>
                             <strong>@app.Job.Title</strong><br/>
-                            <small class="text-muted">@(app.Job.Company?.Name ?? "")</small>
+                            <small class="">@(app.Job.Company?.Name ?? "")</small>
                         </td>
                         <td>
                             @app.User.FirstName @app.User.LastName<br/>
-                            <small class="text-muted">@app.User.Email</small>
+                            <small class="">@app.User.Email</small>
                         </td>
                         <td class="text-nowrap">@app.AppliedAt.ToLocalTime().ToString("MM/dd/yyyy")</td>
                         <td>
@@ -68,7 +68,7 @@ else
                         <td class="text-nowrap">
                             @(app.ReviewedAt.HasValue
                                 ? app.ReviewedAt.Value.ToLocalTime().ToString("MM/dd/yyyy")
-                                : "â€”")
+                                : "—")
                         </td>
                         <td>
                             @{
@@ -110,7 +110,7 @@ else
                                                placeholder="Notes (optional)"
                                                @bind="reviewNotes" style="width:160px"/>
                                         <button class="btn btn-sm btn-primary" @onclick="SaveReviewAsync">Save</button>
-                                        <button class="btn btn-sm btn-secondary" @onclick="() => reviewing = null">Ã—</button>
+                                        <button class="btn btn-sm btn-secondary" @onclick="() => reviewing = null">×</button>
                                     }
                                 }
 
@@ -133,15 +133,15 @@ else
         <div class="d-block d-md-none">
             @foreach (var app in pagedApps)
             {
-                <div class="card mb-3 shadow-sm">
+                <div class="card mb-3 ">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-1">
                             <h5 class="card-title mb-0"><strong>@app.Job.Title</strong></h5>
                             <span class="badge @StatusBadge(app.Status)">@app.Status</span>
                         </div>
-                        <div class="text-muted small mb-3">@(app.Job.Company?.Name ?? "")</div>
+                        <div class=" small mb-3">@(app.Job.Company?.Name ?? "")</div>
 
-                        <div class="row mb-3 text-muted">
+                        <div class="row mb-3">
                             <div class="col-12 mb-2">
                                 <strong>Driver:</strong> <br/>
                                 @app.User.FirstName @app.User.LastName <br/>
@@ -153,7 +153,7 @@ else
                             </div>
                             <div class="col-3">
                                 <strong>Reviewed:</strong><br/>
-                                @(app.ReviewedAt.HasValue ? app.ReviewedAt.Value.ToLocalTime().ToString("MM/dd/yyyy") : "â€”")
+                                @(app.ReviewedAt.HasValue ? app.ReviewedAt.Value.ToLocalTime().ToString("MM/dd/yyyy") : "—")
                             </div>
                             <div class="col-3">
                                 <strong>Match Score:</strong><br/>
@@ -187,7 +187,7 @@ else
                                 }
                                 else
                                 {
-                                    <div class="p-2 border rounded bg-light d-flex flex-column gap-2 mt-2">
+                                    <div class="p-2 border rounded  d-flex flex-column gap-2 mt-2">
                                         <label class="small fw-bold mb-0">Update Status</label>
                                         <select class="form-select form-select-sm" @bind="reviewStatus">
                                             @foreach (var s in Enum.GetValues<ApplicationStatus>())
@@ -255,7 +255,7 @@ else
                         Are you sure you want to withdraw your application for
                         <strong>@withdrawTarget.Job.Title</strong>?
                     </p>
-                    <p class="text-muted small mb-0">
+                    <p class=" small mb-0">
                         This will permanently remove this application.
                     </p>
                 </div>
@@ -357,11 +357,11 @@ else
     {
         return s switch
         {
-            ApplicationStatus.Pending => "bg-warning text-dark",
-            ApplicationStatus.UnderReview => "bg-info text-dark",
+            ApplicationStatus.Pending => "bg-warning ",
+            ApplicationStatus.UnderReview => "bg-info ",
             ApplicationStatus.Accepted => "bg-success",
             ApplicationStatus.Rejected => "bg-danger",
-            _ => "bg-secondary"
+            _ => ""
         };
     }
 
@@ -406,3 +406,5 @@ else
     }
 
 }
+
+

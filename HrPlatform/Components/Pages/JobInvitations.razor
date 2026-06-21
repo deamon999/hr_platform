@@ -1,4 +1,4 @@
-﻿@page "/driver/invitations"
+@page "/driver/invitations"
 @attribute [Authorize(Roles = "Driver")]
 @rendermode InteractiveServer
 
@@ -16,14 +16,14 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="mb-0">Job Invitations</h3>
-    <span class="badge bg-secondary">@(_paginationResult?.TotalCount ?? 0) invitation(s)</span>
+    <span class="badge ">@(_paginationResult?.TotalCount ?? 0) invitation(s)</span>
 </div>
 
 @if (_loading || _paginationResult is null)
 {
     <div class="d-flex align-items-center gap-2 text-muted">
         <div class="spinner-border spinner-border-sm"></div>
-        Loading…
+        Loading�
     </div>
 }
 else if (!_paginationResult.Items.Any())
@@ -46,8 +46,8 @@ else
 
     <div>
         <div class="table-responsive d-none d-md-block">
-            <table class="table table-hover align-middle shadow-sm">
-                <thead class="table-light">
+            <table class="table  table-hover align-middle">
+                <thead class="">
                 <tr>
                     <th>Job</th>
                     <th>Company</th>
@@ -62,10 +62,10 @@ else
                 {
                     <tr>
                         <td><strong>@inv.Job.Title</strong></td>
-                        <td><span class="text-muted">@(inv.Job.Company?.Name ?? "—")</span></td>
+                        <td><span class="text-muted">@(inv.Job.Company?.Name ?? "�")</span></td>
                         <td class="text-nowrap">@inv.CreatedAt.ToString("MMM dd, yyyy")</td>
                         <td class="text-nowrap">
-                            @(inv.ReviewedAt.HasValue ? inv.ReviewedAt.Value.ToString("MMM dd, yyyy") : "—")
+                            @(inv.ReviewedAt.HasValue ? inv.ReviewedAt.Value.ToString("MMM dd, yyyy") : "�")
                         </td>
                         <td>
                             <span class="badge @(StatusBadgeClass(inv.Status))">@inv.Status</span>
@@ -76,11 +76,11 @@ else
                                 <div class="d-flex gap-1">
                                     <button class="btn btn-success btn-sm"
                                             @onclick="@(() => Respond(inv, JobInvitationStatus.Accepted))">
-                                        ✓ Accept
+                                        ? Accept
                                     </button>
                                     <button class="btn btn-outline-danger btn-sm"
                                             @onclick="@(() => Respond(inv, JobInvitationStatus.Declined))">
-                                        ✗ Decline
+                                        ? Decline
                                     </button>
                                 </div>
                             }
@@ -88,7 +88,7 @@ else
                             {
                                 <button class="btn btn-primary btn-sm"
                                         @onclick="@(() => GoToJobApply(inv.JobId))">
-                                    Apply for This Job →
+                                    Apply for This Job ?
                                 </button>
                             }
                             else
@@ -106,7 +106,7 @@ else
             <div class="d-flex flex-column gap-3">
                 @foreach (var inv in _paginationResult.Items)
                 {
-                    <div class="card shadow-sm @(CardBorderClass(inv.Status))">
+                    <div class="card  @(CardBorderClass(inv.Status))">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <span class="fw-semibold text-truncate me-2">@inv.Job.Title</span>
                             <span class="badge @(StatusBadgeClass(inv.Status)) flex-shrink-0">
@@ -115,7 +115,7 @@ else
                         </div>
                         <div class="card-body">
                             <p class="mb-1 text-muted small">
-                                <strong>Company:</strong> @(inv.Job.Company?.Name ?? "—")
+                                <strong>Company:</strong> @(inv.Job.Company?.Name ?? "�")
                             </p>
                             <p class="mb-1 text-muted small">
                                 <strong>Invited:</strong> @inv.CreatedAt.ToString("MMM dd, yyyy")
@@ -134,11 +134,11 @@ else
                                 <div class="d-flex gap-2">
                                     <button class="btn btn-success btn-sm flex-fill"
                                             @onclick="@(() => Respond(inv, JobInvitationStatus.Accepted))">
-                                        ✓ Accept
+                                        ? Accept
                                     </button>
                                     <button class="btn btn-outline-danger btn-sm flex-fill"
                                             @onclick="@(() => Respond(inv, JobInvitationStatus.Declined))">
-                                        ✗ Decline
+                                        ? Decline
                                     </button>
                                 </div>
                             }
@@ -146,7 +146,7 @@ else
                             {
                                 <button class="btn btn-primary btn-sm w-100"
                                         @onclick="@(() => GoToJobApply(inv.JobId))">
-                                    Apply for This Job →
+                                    Apply for This Job ?
                                 </button>
                             }
                             else
@@ -251,10 +251,10 @@ else
     {
         return s switch
         {
-            JobInvitationStatus.Pending => "bg-warning text-dark",
+            JobInvitationStatus.Pending => "bg-warning ",
             JobInvitationStatus.Accepted => "bg-success",
-            JobInvitationStatus.Declined => "bg-secondary",
-            _ => "bg-light text-dark"
+            JobInvitationStatus.Declined => "",
+            _ => " "
         };
     }
 
@@ -269,3 +269,4 @@ else
     }
 
 }
+

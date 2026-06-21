@@ -1,4 +1,3 @@
-﻿@page "/invitations"
 @using HrPlatform.Data.Entities
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.Manager}")]
@@ -7,16 +6,13 @@
 @inject IInvitationService InvitationService
 @inject ICompanyService CompanyService
 
-<PageTitle>Invitations</PageTitle>
-
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0">Invitations</h2>
     <button type="button" class="btn btn-primary btn-sm" @onclick="GoToInvite">+ Invite User</button>
 </div>
 
 @if (isLoading)
 {
-    <div class="d-flex align-items-center gap-2 text-muted">
+    <div class="d-flex align-items-center gap-2">
         <div class="spinner-border spinner-border-sm" role="status"></div>
         Loading invitations…
     </div>
@@ -44,8 +40,8 @@ else
     }
 
     <div class="table-responsive d-none d-md-block">
-        <table class="table table-hover align-middle">
-            <thead class="table-light">
+        <table class="table  table-hover align-middle">
+            <thead class="">
             <tr>
                 <th>Contact</th>
                 <th>Role</th>
@@ -71,7 +67,7 @@ else
                         @if (!string.IsNullOrWhiteSpace(inv.Phone) && !string.IsNullOrWhiteSpace(inv.Email))
                         {
                             <br/>
-                            <small class="text-muted">@inv.Phone</small>
+                            <small class="">@inv.Phone</small>
                         }
                     </td>
                     <td>
@@ -91,7 +87,7 @@ else
                         else if (inv.ExpiresAt < DateTime.UtcNow)
                         {
                             <div class="d-flex align-items-center gap-2">
-                                <span class="badge bg-secondary">Expired</span>
+                                <span class="badge ">Expired</span>
                                 <button class="btn btn-sm btn-outline-primary py-0"
                                         @onclick="() => ResendInvitationAsync(inv)">
                                     Resend
@@ -100,7 +96,7 @@ else
                         }
                         else
                         {
-                            <span class="badge bg-warning text-dark">Pending</span>
+                            <span class="badge bg-warning ">Pending</span>
                         }
                     </td>
                 </tr>
@@ -112,7 +108,7 @@ else
     <div class="d-block d-md-none">
         @foreach (var inv in pagedInvitations)
         {
-            <div class="card mb-3 shadow-sm border-0">
+            <div class="card mb-3  border-0">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div>
@@ -128,7 +124,7 @@ else
                             </h6>
                             @if (!string.IsNullOrWhiteSpace(inv.Phone) && !string.IsNullOrWhiteSpace(inv.Email))
                             {
-                                <small class="text-muted">@inv.Phone</small>
+                                <small class="">@inv.Phone</small>
                             }
                         </div>
                         <div>
@@ -139,7 +135,7 @@ else
                             else if (inv.ExpiresAt < DateTime.UtcNow)
                             {
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="badge bg-secondary">Expired</span>
+                                    <span class="badge ">Expired</span>
                                     <button class="btn btn-sm btn-outline-primary py-0"
                                             @onclick="() => ResendInvitationAsync(inv)">
                                         Resend
@@ -148,24 +144,24 @@ else
                             }
                             else
                             {
-                                <span class="badge bg-warning text-dark">Pending</span>
+                                <span class="badge bg-warning ">Pending</span>
                             }
                         </div>
                     </div>
 
                     <div class="card-text">
                         <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
-                            <span class="text-muted">Role:</span>
+                            <span class="">Role:</span>
                             <span class="badge @RoleBadgeClass(inv.Role)">@inv.Role</span>
                         </div>
 
                         <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
-                            <span class="text-muted">Company:</span>
+                            <span class="">Company:</span>
                             <span class="text-end text-break ms-2">@GetCompanyName(inv.CompanyId)</span>
                         </div>
 
                         <div class="d-flex justify-content-between pt-1">
-                            <span class="text-muted">Expires:</span>
+                            <span class="">Expires:</span>
                             <span class="@(inv.ExpiresAt < DateTime.UtcNow ? "text-danger fw-bold" : "")">
                             @inv.ExpiresAt.ToString("MMM dd, yyyy")
                         </span>
@@ -282,8 +278,8 @@ else
         return role switch
         {
             "Manager" => "bg-primary",
-            "Driver" => "bg-info text-dark",
-            _ => "bg-secondary"
+            "Driver" => "bg-info ",
+            _ => ""
         };
     }
 
@@ -320,3 +316,5 @@ else
     }
 
 }
+
+

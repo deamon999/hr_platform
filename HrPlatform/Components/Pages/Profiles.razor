@@ -1,4 +1,4 @@
-ï»¿@page "/profiles"
+@page "/profiles"
 @using System.Security.Claims
 @using HrPlatform.Models
 @using HrPlatform.Utils
@@ -16,11 +16,11 @@
     <h2 class="mb-0">Driver Profiles</h2>
     @if (isAdmin)
     {
-        <span class="badge bg-danger">Platform Admin â€” all profiles</span>
+        <span class="badge bg-danger">Platform Admin — all profiles</span>
     }
     else
     {
-        <span class="badge bg-primary">@companyName â€” applicants only</span>
+        <span class="badge bg-primary">@companyName — applicants only</span>
     }
 </div>
 
@@ -77,8 +77,8 @@ else
 {
     <div>
         <div class="table-responsive d-none d-md-block">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
+            <table class="table  table-hover align-middle">
+                <thead class="">
                 <tr>
                     <th>Name</th>
                     <th>Contact</th>
@@ -110,8 +110,8 @@ else
                                 var (badge, bg) = p.AvailabilityStatus switch
                                 {
                                     AvailabilityStatus.ActivelyLooking => ("Actively looking", "bg-success"),
-                                    AvailabilityStatus.OpenToOpportunities => ("Open", "bg-info text-dark"),
-                                    _ => ("Not available", "bg-secondary")
+                                    AvailabilityStatus.OpenToOpportunities => ("Open", "bg-info "),
+                                    _ => ("Not available", "")
                                 };
                             }
                             <span class="badge @bg">@badge</span>
@@ -137,7 +137,7 @@ else
         <div class="d-block d-md-none">
             @foreach (var p in pagedProfiles.Items)
             {
-                <div class="card mb-3 shadow-sm">
+                <div class="card mb-3 ">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <h5 class="card-title mb-0"><strong>@p.LastName, @p.FirstName</strong></h5>
@@ -162,8 +162,8 @@ else
                                     var (badge, bg) = p.AvailabilityStatus switch
                                     {
                                         AvailabilityStatus.ActivelyLooking => ("Actively looking", "bg-success"),
-                                        AvailabilityStatus.OpenToOpportunities => ("Open", "bg-info text-dark"),
-                                        _ => ("Not available", "bg-secondary")
+                                        AvailabilityStatus.OpenToOpportunities => ("Open", "bg-info "),
+                                        _ => ("Not available", "")
                                     };
                                 }
                                 <span class="badge @bg">@badge</span></div>
@@ -313,3 +313,4 @@ else
     }
 
 }
+

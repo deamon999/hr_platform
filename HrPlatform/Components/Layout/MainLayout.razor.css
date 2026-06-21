@@ -9,16 +9,16 @@ main {
 }
 
 .sidebar {
-    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+    background: rgba(15, 23, 42, 0.4);
+    border-right: 1px solid var(--border-color);
 }
 
 .top-row {
-    background-color: #f7f7f7;
-    border-bottom: 1px solid #d6d5d5;
-    justify-content: flex-end;
     height: 3.5rem;
     display: flex;
     align-items: center;
+    background: linear-gradient(90deg, rgb(5, 39, 103) 0%, #3a0647 100%);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
 .top-row ::deep a, .top-row ::deep .btn-link {
@@ -53,7 +53,7 @@ main {
 
     .sidebar {
         width: 250px;
-        height: 100vh;
+        min-height: 100vh;
         position: sticky;
         top: 0;
     }
@@ -78,7 +78,7 @@ main {
 
 #blazor-error-ui {
     color-scheme: light only;
-    background: lightyellow;
+    background: #ef4444;
     bottom: 0;
     box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
     box-sizing: border-box;

@@ -1,4 +1,4 @@
-@page "/users/{Id}"
+﻿@page "/users/{Id}"
 @page "/users/edit/{Id}"
 @using HrPlatform.Models
 @rendermode InteractiveServer
@@ -55,7 +55,7 @@ else
             <div class="mb-3">
                 <label class="form-label">Company</label>
                 <InputSelect class="form-select" @bind-Value="model.CompanyId" disabled="@IsViewMode">
-                    <option value="">— none —</option>
+                    <option value="">â€” none â€”</option>
                     @foreach (var c in companies)
                     {
                         <option value="@c.Id">@c.Name</option>

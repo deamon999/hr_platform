@@ -1,4 +1,4 @@
-ï»¿@page "/profiles/{Id:int}"
+@page "/profiles/{Id:int}"
 @page "/my-profile"
 @using System.Security.Claims
 @using HrPlatform.Utils
@@ -104,7 +104,7 @@
             </div>
 
             <div class="col-lg-9">
-                <div class="card shadow-sm">
+                <div class="card ">
                     <div class="card-header bg-white">
                         <h4 class="mb-0">@tabs[activeTab]</h4>
                     </div>
@@ -224,7 +224,7 @@
                                 <div class="d-flex flex-wrap gap-2">
                                     @foreach (var t in trailerTypes)
                                     {
-                                        <span class="badge bg-secondary">@t</span>
+                                        <span class="badge ">@t</span>
                                     }
                                 </div>
                             }
@@ -341,7 +341,7 @@
                                 {
                                     @foreach (var skill in profile.Skills)
                                     {
-                                        <span class="badge bg-info text-dark">@skill.Skill</span>
+                                        <span class="badge bg-info ">@skill.Skill</span>
                                     }
                                 }
                                 else
@@ -681,11 +681,12 @@
     private static string GetCompletenessHint(DriverProfile p)
     {
         if (p.License == null) return "Add your CDL license to unlock more job matches.";
-        if (p.MedicalCard == null) return "Add your DOT medical card â€” required by most carriers.";
+        if (p.MedicalCard == null) return "Add your DOT medical card — required by most carriers.";
         if (!p.EmploymentHistory.Any()) return "Add at least one previous employer.";
-        if (p.YearsOfExperience == 0) return "Fill in your driving stats â€” years experience and total miles.";
+        if (p.YearsOfExperience == 0) return "Fill in your driving stats — years experience and total miles.";
         if (string.IsNullOrEmpty(p.ProfessionalSummary)) return "Add a short professional summary.";
         return "Add certifications or skills to stand out.";
     }
 
 }
+

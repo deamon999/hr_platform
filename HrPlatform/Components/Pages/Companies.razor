@@ -25,8 +25,8 @@ else
 {
     <div class="d-none d-lg-block">
         <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
+            <table class="table  table-hover align-middle">
+                <thead class="">
                 <tr>
                     <th>Name</th>
                     <th>Reg #</th>
@@ -61,14 +61,14 @@ else
         @foreach (var c in paginationResult.Items)
         {
             var company = c;
-            <div class="card mb-3 shadow-sm border-0">
+            <div class="card mb-3  border-0">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <h5 class="card-title mb-0 fw-bold">@company.Name</h5>
                         <div></div>
                     </div>
 
-                    <div class="mb-3 text-muted small">
+                    <div class="mb-3 small">
                         <strong>Reg #:</strong> @company.RegistrationNumber<br/>
                         <strong>Registered:</strong> @((company.DateRegistered?.ToString("d") ?? "—"))
                     </div>
@@ -194,3 +194,5 @@ else
         }
     }
 }
+
+
