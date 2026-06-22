@@ -1,4 +1,4 @@
-@page "/user-management"
+@page "/users"
 @rendermode InteractiveServer
 @using HrPlatform.Models
 @attribute [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.Manager}")]
@@ -44,11 +44,15 @@
 
     private string activeTab = "users";
 
-    protected override void OnInitialized()
+    protected override void OnParametersSet()
     {
-        if (Tab == "invitations")
+        if (string.Equals(Tab, "invitations", StringComparison.OrdinalIgnoreCase))
         {
             activeTab = "invitations";
+        }
+        else
+        {
+            activeTab = "users";
         }
     }
 }

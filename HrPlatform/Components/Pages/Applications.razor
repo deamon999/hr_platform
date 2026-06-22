@@ -1,4 +1,4 @@
-@page "/applications"
+ï»¿@page "/applications"
 @using System.Security.Claims
 @rendermode InteractiveServer
 
@@ -6,6 +6,7 @@
 @inject IJobApplicationService AppSvc
 @inject IJobMatchService JobMatchService
 @inject AuthenticationStateProvider AuthState
+@inject IApplicationMessageService MessageService
 
 <PageTitle>Applications</PageTitle>
 
@@ -68,7 +69,7 @@ else
                         <td class="text-nowrap">
                             @(app.ReviewedAt.HasValue
                                 ? app.ReviewedAt.Value.ToLocalTime().ToString("MM/dd/yyyy")
-                                : "—")
+                                : "â€”")
                         </td>
                         <td>
                             @{
@@ -86,6 +87,16 @@ else
                         </td>
                         <td>
                             <div class="d-flex gap-1 flex-wrap">
+                                <a href="/applications/@app.Id/chat" class="btn btn-sm btn-outline-primary position-relative">
+                                    <i class="bi bi-chat-dots"></i> Messages
+                                    @if (unreadCounts.TryGetValue(app.Id, out var count) && count > 0)
+                                    {
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                            @count
+                                        </span>
+                                    }
+                                </a>
+
                                 @if (isManager)
                                 {
                                     <a href="/profiles/@app.User.DriverProfile.Id"
@@ -110,7 +121,7 @@ else
                                                placeholder="Notes (optional)"
                                                @bind="reviewNotes" style="width:160px"/>
                                         <button class="btn btn-sm btn-primary" @onclick="SaveReviewAsync">Save</button>
-                                        <button class="btn btn-sm btn-secondary" @onclick="() => reviewing = null">×</button>
+                                        <button class="btn btn-sm btn-secondary" @onclick="() => reviewing = null">Ã—</button>
                                     }
                                 }
 
@@ -153,7 +164,7 @@ else
                             </div>
                             <div class="col-3">
                                 <strong>Reviewed:</strong><br/>
-                                @(app.ReviewedAt.HasValue ? app.ReviewedAt.Value.ToLocalTime().ToString("MM/dd/yyyy") : "—")
+                                @(app.ReviewedAt.HasValue ? app.ReviewedAt.Value.ToLocalTime().ToString("MM/dd/yyyy") : "â€”")
                             </div>
                             <div class="col-3">
                                 <strong>Match Score:</strong><br/>
@@ -173,6 +184,16 @@ else
                         </div>
 
                         <div class="d-flex flex-column gap-2 pt-3 border-top">
+                            <a href="/applications/@app.Id/chat" class="btn btn-sm btn-outline-primary w-100 position-relative">
+                                <i class="bi bi-chat-dots"></i> Messages
+                                @if (unreadCounts.TryGetValue(app.Id, out var count2) && count2 > 0)
+                                {
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                        @count2
+                                    </span>
+                                }
+                            </a>
+
                             @if (isManager)
                             {
                                 <a href="/profiles/@app.User.DriverProfile.Id" class="btn btn-sm btn-outline-secondary w-100">
@@ -275,6 +296,7 @@ else
 
 @code {
     private List<JobApplication>? pagedApps;
+    private Dictionary<int, int> unreadCounts = new();
     private string sortBy = "date";
     private int? reviewing;
     private ApplicationStatus reviewStatus = ApplicationStatus.UnderReview;
@@ -344,6 +366,15 @@ else
             .Skip((currentPage - 1) * PageSize)
             .Take(PageSize)
             .ToList();
+
+        unreadCounts.Clear();
+        if (currentUserId != null && pagedApps.Any())
+        {
+            foreach (var app in pagedApps)
+            {
+                unreadCounts[app.Id] = await MessageService.GetUnreadCountAsync(app.Id, currentUserId);
+            }
+        }
     }
 
     private async Task ChangePage(int page)
@@ -406,5 +437,10 @@ else
     }
 
 }
+
+
+
+
+
 
 

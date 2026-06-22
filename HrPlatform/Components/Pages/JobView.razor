@@ -188,78 +188,42 @@ else
                     </div>
 
                     <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <label class="form-label">First Name</label>
-                                <input class="form-control" value="@Display(driverProfile.FirstName)" disabled/>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">Last Name</label>
-                                <input class="form-control" value="@Display(driverProfile.LastName)" disabled/>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">Email</label>
-                                <input class="form-control" value="@Display(driverProfile.Email)" disabled/>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">Phone</label>
-                                <input class="form-control" value="@Display(driverProfile.PhoneNumber)" disabled/>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">City</label>
-                                <input class="form-control" value="@Display(driverProfile.City)" disabled/>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">State</label>
-                                <input class="form-control" value="@Display(driverProfile.State)" disabled/>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">CDL Class</label>
-                                <input class="form-control" value="@(driverProfile.License is not null ? $"CDL-{driverProfile.License.Class}" : "")"
-                                       disabled/>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">License Number</label>
-                                <input class="form-control" value="@(driverProfile.License?.LicenseNumber ?? "")" disabled/>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">License Expiration</label>
-                                <input class="form-control" type="date" value="@FormatDate(driverProfile.License?.ExpiryDate)" disabled/>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">Years of Experience</label>
-                                <input class="form-control" type="number" value="@driverProfile.YearsOfExperience" disabled/>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">Total Miles Driven</label>
-                                <input class="form-control" type="number" value="@driverProfile.TotalMilesDriven" disabled/>
-                            </div>
-
-                            <div class="col-12">
-                                @{
-                                    var trailerTypes = driverProfile.AllTrailerTypes.ToList();
-                                }
-
-                                @if (trailerTypes.Any())
-                                {
-                                    <label class="form-label">Trailer Types</label>
-                                    <div class="d-flex flex-wrap gap-2">
-                                        @foreach (var t in trailerTypes)
-                                        {
-                                            <span class="badge ">@t</span>
-                                        }
+                        <div class="accordion" id="profileAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingPersonal">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePersonal" aria-expanded="true" aria-controls="collapsePersonal">
+                                        Personal Information
+                                    </button>
+                                </h2>
+                                <div id="collapsePersonal" class="accordion-collapse collapse show" aria-labelledby="headingPersonal" data-bs-parent="#profileAccordion">
+                                    <div class="accordion-body">
+                                        <HrPlatform.Components.Pages.ProfileShared.ProfilePersonalForm Profile="driverProfile" IsReadOnly="true" />
                                     </div>
-                                }
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingLicense">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLicense" aria-expanded="false" aria-controls="collapseLicense">
+                                        License & Medical
+                                    </button>
+                                </h2>
+                                <div id="collapseLicense" class="accordion-collapse collapse" aria-labelledby="headingLicense" data-bs-parent="#profileAccordion">
+                                    <div class="accordion-body">
+                                        <HrPlatform.Components.Pages.ProfileShared.ProfileLicenseForm Profile="driverProfile" IsReadOnly="true" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingStats">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseStats" aria-expanded="false" aria-controls="collapseStats">
+                                        Driving Stats
+                                    </button>
+                                </h2>
+                                <div id="collapseStats" class="accordion-collapse collapse" aria-labelledby="headingStats" data-bs-parent="#profileAccordion">
+                                    <div class="accordion-body">
+                                        <HrPlatform.Components.Pages.ProfileShared.ProfileDrivingStatsForm Profile="driverProfile" IsReadOnly="true" />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -1,0 +1,157 @@
+@page "/applications/{ApplicationId:int}/chat"
+@using HrPlatform.Data.Entities
+@using HrPlatform.Data.Models
+@using HrPlatform.Services
+@using System.Security.Claims
+@rendermode InteractiveServer
+
+@attribute [Authorize(Roles = $"{RoleConstants.Driver},{RoleConstants.Manager}")]
+@inject IApplicationMessageService MessageService
+@inject IJobApplicationService AppService
+@inject AuthenticationStateProvider AuthState
+@inject NavigationManager Nav
+
+<PageTitle>Application Chat</PageTitle>
+
+@if (_isLoading)
+{
+    <p>Loading chat...</p>
+}
+else if (_application == null)
+{
+    <div class="alert alert-danger">Application not found or access denied.</div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Chat: @_application.Job.Title</h2>
+        <button class="btn btn-outline-secondary" @onclick="GoBack">Back to Applications</button>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                @if (_isManager)
+                {
+                    <text>Candidate: @_application.User.FirstName @_application.User.LastName</text>
+                }
+                else
+                {
+                    <text>Manager: @(_application.Job.Company?.Name ?? "Company")</text>
+                }
+            </h5>
+        </div>
+        <div class="card-body" style="height: 400px; overflow-y: auto;" id="chat-container">
+            @if (!_messages.Any())
+            {
+                <p class="text-muted text-center mt-5">No messages yet. Start the conversation!</p>
+            }
+            else
+            {
+                @foreach (var msg in _messages)
+                {
+                    var isMine = msg.SenderId == _currentUserId;
+                    <div class="d-flex flex-column mb-3 @(isMine ? "align-items-end" : "align-items-start")">
+                        <div class="p-2 rounded @(isMine ? "bg-primary text-white" : "bg-light text-dark")" style="max-width: 75%;">
+                            @msg.Content
+                        </div>
+                        <small class="text-muted mt-1" style="font-size: 0.75rem;">
+                            @msg.SentAt.ToLocalTime().ToString("g")
+                            @if (!isMine && msg.IsRead) { <text> (Read)</text> }
+                        </small>
+                    </div>
+                }
+            }
+        </div>
+        <div class="card-footer bg-transparent border-top border-secondary">
+            <div class="input-group">
+                <input type="text" class="form-control bg-dark text-white border-secondary" placeholder="Type your message..." @bind="_newMessage" @bind:event="oninput" @onkeyup="HandleKeyUp" />
+                <button class="btn btn-primary" type="button" @onclick="SendMessageAsync" disabled="@string.IsNullOrWhiteSpace(_newMessage)">Send</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int ApplicationId { get; set; }
+
+    private JobApplication? _application;
+    private List<ApplicationMessage> _messages = new();
+    private string _newMessage = "";
+    private string? _currentUserId;
+    private bool _isManager;
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        var user = auth.User;
+        _currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        _isManager = user.IsInRole(RoleConstants.Manager) || user.IsInRole(RoleConstants.Admin);
+
+        _application = await AppService.GetAsync(ApplicationId);
+
+        if (_application == null)
+        {
+            _isLoading = false;
+            return;
+        }
+
+        // Validate access
+        if (_isManager)
+        {
+            var companyIdStr = user.FindFirst("companyId")?.Value;
+            if (int.TryParse(companyIdStr, out var companyId))
+            {
+                if (_application.Job.CompanyId != companyId)
+                {
+                    _application = null; // Deny access
+                }
+            }
+        }
+        else if (_application.UserId != _currentUserId)
+        {
+            _application = null; // Deny access
+        }
+
+        if (_application != null)
+        {
+            await LoadMessagesAsync();
+        }
+
+        _isLoading = false;
+    }
+
+    private async Task LoadMessagesAsync()
+    {
+        _messages = await MessageService.GetMessagesForApplicationAsync(ApplicationId);
+        
+        if (_currentUserId != null)
+        {
+            await MessageService.MarkMessagesAsReadAsync(ApplicationId, _currentUserId);
+        }
+    }
+
+    private async Task SendMessageAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_newMessage) || _currentUserId == null) return;
+
+        var msg = await MessageService.SendMessageAsync(ApplicationId, _currentUserId, _newMessage);
+        _messages.Add(msg);
+        _newMessage = "";
+    }
+
+    private async Task HandleKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SendMessageAsync();
+        }
+    }
+
+    private void GoBack()
+    {
+        Nav.NavigateTo("/applications");
+    }
+}

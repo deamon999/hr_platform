@@ -1,0 +1,257 @@
+﻿@using HrPlatform.Data.Models
+@using HrPlatform.Data.Enums
+@using HrPlatform.Utils
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <label class="form-label">Job Title *</label>
+        @if (IsReadOnly)
+        {
+            <input class="form-control" value="@Job.Title" disabled />
+        }
+        else
+        {
+            <InputText class="form-control" @bind-Value="Job.Title" placeholder="e.g. OTR Long Haul CDL-A Driver" />
+            <ValidationMessage For="() => Job.Title" />
+        }
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Company</label>
+        @if (IsReadOnly)
+        {
+            <input class="form-control" value="@Job.Company?.Name" disabled />
+        }
+        else
+        {
+            <InputSelect class="form-select" @bind-Value="Job.CompanyId" disabled="@IsCompanySelectionDisabled">
+                <option value="">â€” select â€”</option>
+                @if (Companies != null)
+                {
+                    @foreach (var c in Companies)
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                }
+            </InputSelect>
+        }
+    </div>
+
+    <div class="col-md-5">
+        <label class="form-label">City</label>
+        @if (IsReadOnly)
+        {
+            <input class="form-control" value="@Job.City" disabled />
+        }
+        else
+        {
+            <InputText class="form-control" @bind-Value="Job.City" />
+        }
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">State</label>
+        @if (IsReadOnly)
+        {
+            <input class="form-control" value="@Job.State" disabled />
+        }
+        else
+        {
+            <InputText class="form-control" @bind-Value="Job.State" />
+        }
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Zip Code</label>
+        @if (IsReadOnly)
+        {
+            <input class="form-control" value="@Job.ZipCode" disabled />
+        }
+        else
+        {
+            <InputText class="form-control" @bind-Value="Job.ZipCode" />
+        }
+    </div>
+
+    <div class="col-12">
+        <label class="form-label">Job Description</label>
+        @if (IsReadOnly)
+        {
+            <textarea class="form-control" rows="8" disabled>@Job.Description</textarea>
+        }
+        else
+        {
+            <InputTextArea class="form-control" rows="8" @bind-Value="Job.Description" placeholder="Describe responsibilities, benefits, home time, routes..." />
+        }
+    </div>
+
+    <div class="col-md-3">
+        <label class="form-label">Pay Rate</label>
+        @if (IsReadOnly)
+        {
+            <input class="form-control" value="@(Job.PayRate.HasValue ? "$" : "None")" disabled />
+        }
+        else
+        {
+            <InputNumber TValue="decimal?" class="form-control" @bind-Value="Job.PayRate" />
+        }
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Pay Period</label>
+        @if (IsReadOnly)
+        {
+            <input class="form-control" value="@(Job.PayPeriod.HasValue ? "per " + Job.PayPeriod.ToString()!.ToLower() : "None")" disabled />
+        }
+        else
+        {
+            <InputSelect TValue="PayPeriod?" class="form-select" @bind-Value="Job.PayPeriod">
+                <option value="">â€” select â€”</option>
+                @foreach (var p in Enum.GetValues<PayPeriod>())
+                {
+                    <option value="@p">per @p.ToString().ToLower()</option>
+                }
+            </InputSelect>
+        }
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Pay Notes</label>
+        @if (IsReadOnly)
+        {
+            <input class="form-control" value="@Job.PayNotes" disabled />
+        }
+        else
+        {
+            <InputText class="form-control" @bind-Value="Job.PayNotes" placeholder="e.g. + sign-on bonus, full benefits" />
+        }
+    </div>
+
+    <div class="col-md-3">
+        <label class="form-label">Required CDL Class</label>
+        @if (IsReadOnly)
+        {
+            <input class="form-control" value="@(Job.RequiredCdlClass.HasValue ? "CDL-" + Job.RequiredCdlClass : "Any")" disabled />
+        }
+        else
+        {
+            <InputSelect TValue="CdlClass?" class="form-select" @bind-Value="Job.RequiredCdlClass">
+                <option value="">Any</option>
+                @foreach (var c in Enum.GetValues<CdlClass>())
+                {
+                    <option value="@c">CDL-@c</option>
+                }
+            </InputSelect>
+        }
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Required Trailer Type</label>
+        @if (IsReadOnly)
+        {
+            <input class="form-control" value="@(Job.RequiredTrailerType?.ToString() ?? "Any")" disabled />
+        }
+        else
+        {
+            <InputSelect TValue="TrailerType?" class="form-select" @bind-Value="Job.RequiredTrailerType">
+                <option value="">Any</option>
+                @foreach (var t in Enum.GetValues<TrailerType>())
+                {
+                    <option value="@t">@t</option>
+                }
+            </InputSelect>
+        }
+    </div>
+
+    <div class="col-md-3">
+        <label class="form-label">Min. Years Experience</label>
+        @if (IsReadOnly)
+        {
+            <input class="form-control" value="@(Job.MinYearsExperience > 0 ? Job.MinYearsExperience.ToString() : "None")" disabled />
+        }
+        else
+        {
+            <InputNumber class="form-control" @bind-Value="Job.MinYearsExperience" />
+        }
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Employment Type</label>
+        @if (IsReadOnly)
+        {
+            <input class="form-control" value="@(Job.EmploymentType.HasValue ? Job.EmploymentType.Value.GetDescriptionValue() : "Any")" disabled />
+        }
+        else
+        {
+            <InputSelect TValue="EmploymentType?" class="form-select" @bind-Value="Job.EmploymentType">
+                <option value="">Any</option>
+                @foreach (var t in Enum.GetValues<EmploymentType>())
+                {
+                    <option value="@t">@t.GetDescriptionValue()</option>
+                }
+            </InputSelect>
+        }
+    </div>
+
+    <div class="col-12">
+        <label class="form-label d-block">Required Endorsements</label>
+        <div class="d-flex flex-wrap gap-3">
+            @foreach (var end in Enum.GetValues<CdlEndorsement>())
+            {
+                <div class="form-check">
+                    @if (IsReadOnly)
+                    {
+                        <input type="checkbox" class="form-check-input" id="end_@end" checked="@Job.RequiredEndorsements.Contains(end)" disabled />
+                    }
+                    else
+                    {
+                        <input type="checkbox" class="form-check-input" id="end_@end" checked="@Job.RequiredEndorsements.Contains(end)" @onchange="e => ToggleEndorsement(end, (bool)e.Value!)" />
+                    }
+                    <label class="form-check-label" for="end_@end">@end.GetDescriptionValue()</label>
+                </div>
+            }
+        </div>
+    </div>
+    
+    @if (IsReadOnly)
+    {
+        <div class="col-md-6">
+            <label class="form-label">Posted</label>
+            <input class="form-control" value="@Job.PostedAt.ToLocalTime().ToString("MM/dd/yyyy")" disabled />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Updated</label>
+            <input class="form-control" value="@Job.UpdatedAt.ToLocalTime().ToString("MM/dd/yyyy")" disabled />
+        </div>
+    }
+    else
+    {
+        <div class="col-12">
+            <div class="form-check">
+                <InputCheckbox class="form-check-input" @bind-Value="Job.IsActive" id="isActive" />
+                <label class="form-check-label" for="isActive">Active (visible to applicants)</label>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public required Job Job { get; set; }
+
+    [Parameter]
+    public bool IsReadOnly { get; set; }
+
+    [Parameter]
+    public IEnumerable<Company>? Companies { get; set; }
+
+    [Parameter]
+    public bool IsCompanySelectionDisabled { get; set; }
+
+    private void ToggleEndorsement(CdlEndorsement endorsement, bool add)
+    {
+        if (add)
+        {
+            if (!Job.RequiredEndorsements.Contains(endorsement))
+                Job.RequiredEndorsements.Add(endorsement);
+        }
+        else
+        {
+            Job.RequiredEndorsements.Remove(endorsement);
+        }
+    }
+}

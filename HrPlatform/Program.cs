@@ -61,6 +61,7 @@ public class Program
         builder.Services.AddScoped<IJobApplicationService, JobApplicationService>();
         builder.Services.AddScoped<IDriverProfileService, DriverProfileService>();
         builder.Services.AddScoped<ICompanyService, CompanyService>();
+builder.Services.AddScoped<IApplicationMessageService, ApplicationMessageService>();
         builder.Services.AddScoped<IAdminUserService, AdminUserService>();
         builder.Services.AddScoped<IInvitationService, InvitationService>();
         builder.Services.AddScoped<IJobInvitationService, JobInvitationService>();

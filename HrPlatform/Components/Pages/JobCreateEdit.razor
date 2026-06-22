@@ -1,4 +1,4 @@
-﻿@page "/jobs/new"
+@page "/jobs/new"
 @page "/jobs/edit/{Id:int}"
 @using HrPlatform.Utils
 @rendermode InteractiveServer
@@ -24,122 +24,7 @@ else
         <DataAnnotationsValidator/>
         <ValidationSummary class="text-danger"/>
 
-        <div class="row g-3">
-            <div class="col-md-6">
-                <label class="form-label">Job Title *</label>
-                <InputText class="form-control" @bind-Value="job.Title"
-                           placeholder="e.g. OTR Long Haul CDL-A Driver"/>
-                <ValidationMessage For="() => job.Title"/>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Company</label>
-                <InputSelect class="form-select" @bind-Value="job.CompanyId" disabled="@isCompanySelectionDisabled">
-                    <option value="">— select —</option>
-                    @foreach (var c in companies)
-                    {
-                        <option value="@c.Id">@c.Name</option>
-                    }
-                </InputSelect>
-            </div>
-
-            <div class="col-md-5">
-                <label class="form-label">City</label>
-                <InputText class="form-control" @bind-Value="job.City"/>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">State</label>
-                <InputText class="form-control" @bind-Value="job.State"/>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Zip Code</label>
-                <InputText class="form-control" @bind-Value="job.ZipCode"/>
-            </div>
-
-            <div class="col-12">
-                <label class="form-label">Job Description</label>
-                <InputTextArea class="form-control" rows="8" @bind-Value="job.Description"
-                               placeholder="Describe responsibilities, benefits, home time, routes..."/>
-            </div>
-
-            <div class="col-md-3">
-                <label class="form-label">Pay Rate</label>
-                <InputNumber TValue="decimal?" class="form-control" @bind-Value="job.PayRate"/>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Pay Period</label>
-                <InputSelect TValue="PayPeriod?" class="form-select" @bind-Value="job.PayPeriod">
-                    <option value="">— select —</option>
-                    @foreach (var p in Enum.GetValues<PayPeriod>())
-                    {
-                        <option value="@p">per @p.ToString().ToLower()</option>
-                    }
-                </InputSelect>
-            </div>
-
-            <div class="col-md-6">
-                <label class="form-label">Pay Notes</label>
-                <InputText class="form-control" @bind-Value="job.PayNotes"
-                           placeholder="e.g. + sign-on bonus, full benefits"/>
-            </div>
-
-            <div class="col-md-3">
-                <label class="form-label">Required CDL Class</label>
-                <InputSelect TValue="CdlClass?" class="form-select" @bind-Value="job.RequiredCdlClass">
-                    <option value="">Any</option>
-                    @foreach (var c in Enum.GetValues<CdlClass>())
-                    {
-                        <option value="@c">CDL-@c</option>
-                    }
-                </InputSelect>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Required Trailer Type</label>
-                <InputSelect TValue="TrailerType?" class="form-select" @bind-Value="job.RequiredTrailerType">
-                    <option value="">Any</option>
-                    @foreach (var t in Enum.GetValues<TrailerType>())
-                    {
-                        <option value="@t">@t</option>
-                    }
-                </InputSelect>
-            </div>
-
-            <div class="col-md-3">
-                <label class="form-label">Min. Years Experience</label>
-                <InputNumber class="form-control" @bind-Value="job.MinYearsExperience"/>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Employment Type</label>
-                <InputSelect TValue="EmploymentType?" class="form-select" @bind-Value="job.EmploymentType">
-                    <option value="">Any</option>
-                    @foreach (var t in Enum.GetValues<EmploymentType>())
-                    {
-                        <option value="@t">@t.GetDescriptionValue()</option>
-                    }
-                </InputSelect>
-            </div>
-
-            <div class="col-12">
-                <label class="form-label d-block">Required Endorsements</label>
-                <div class="d-flex flex-wrap gap-3">
-                    @foreach (var end in Enum.GetValues<CdlEndorsement>())
-                    {
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="end_@end"
-                                   checked="@job.RequiredEndorsements.Contains(end)"
-                                   @onchange="e => ToggleEndorsement(end, (bool)e.Value!)"/>
-                            <label class="form-check-label" for="end_@end">@end.GetDescriptionValue()</label>
-                        </div>
-                    }
-                </div>
-            </div>
-
-            <div class="col-12">
-                <div class="form-check">
-                    <InputCheckbox class="form-check-input" @bind-Value="job.IsActive" id="isActive"/>
-                    <label class="form-check-label" for="isActive">Active (visible to applicants)</label>
-                </div>
-            </div>
-        </div>
+        <HrPlatform.Components.Pages.JobShared.JobForm Job="job" IsReadOnly="false" Companies="companies" IsCompanySelectionDisabled="isCompanySelectionDisabled" />
 
         <div class="mt-4 d-flex gap-2">
             <button type="submit" class="btn btn-primary">@(Id == 0 ? "Post Job" : "Save Changes")</button>
@@ -190,21 +75,6 @@ else
         }
     }
 
-    private void ToggleEndorsement(CdlEndorsement endorsement, bool add)
-    {
-        if (job is null) return;
-        if (add)
-        {
-            if (!job.RequiredEndorsements.Contains(endorsement))
-                job.RequiredEndorsements.Add(endorsement);
-        }
-        else
-        {
-            job.RequiredEndorsements.Remove(endorsement);
-        }
-
-        StateHasChanged();
-    }
 
 }
 

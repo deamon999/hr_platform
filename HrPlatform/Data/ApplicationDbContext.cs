@@ -23,6 +23,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<JobApplication> JobApplications => Set<JobApplication>();
     public DbSet<Invitation> Invitations { get; set; }
     public DbSet<JobInvitation> JobInvitations { get; set; }
+    public DbSet<ApplicationMessage> ApplicationMessages => Set<ApplicationMessage>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -171,6 +172,19 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasForeignKey(a => a.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
             e.Property(a => a.Status).HasConversion<string>();
+        });
+
+        b.Entity<ApplicationMessage>(e =>
+        {
+            e.HasKey(m => m.Id);
+            e.HasOne(m => m.JobApplication)
+                .WithMany()
+                .HasForeignKey(m => m.JobApplicationId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(m => m.Sender)
+                .WithMany()
+                .HasForeignKey(m => m.SenderId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         b.Entity<Invitation>(entity =>
