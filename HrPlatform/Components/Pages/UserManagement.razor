@@ -39,5 +39,16 @@
 </div>
 
 @code {
+    [SupplyParameterFromQuery]
+    public string? Tab { get; set; }
+
     private string activeTab = "users";
+
+    protected override void OnInitialized()
+    {
+        if (Tab == "invitations")
+        {
+            activeTab = "invitations";
+        }
+    }
 }

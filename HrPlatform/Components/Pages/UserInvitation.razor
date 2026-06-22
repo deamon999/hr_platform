@@ -1,4 +1,4 @@
-﻿@page "/users/invite"
+@page "/users/invite"
 @page "/jobs/invite/{Id:int}"
 @rendermode InteractiveServer
 
@@ -245,7 +245,7 @@
 
     private void GoToInvitations()
     {
-        Nav.NavigateTo("/invitations");
+        Nav.NavigateTo("/user-management?Tab=invitations");
     }
 
 }

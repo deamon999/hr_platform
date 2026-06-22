@@ -1,4 +1,4 @@
-﻿@page "/users/{Id}"
+@page "/users/{Id}"
 @page "/users/edit/{Id}"
 @using HrPlatform.Models
 @rendermode InteractiveServer
@@ -140,7 +140,7 @@ else
 
     private void GoToUsers()
     {
-        Nav.NavigateTo("/users"); // Assuming /users is a list view if implemented elsewhere
+        Nav.NavigateTo("/user-management");
     }
 
     private async Task UpdateAsync()
