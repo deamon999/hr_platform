@@ -1,0 +1,107 @@
+@using HrPlatform.Data.Models
+@using HrPlatform.Data.Enums
+@using HrPlatform.Utils
+
+<div>
+    @if (!Profile.EmploymentHistory.Any())
+    {
+        <div class="text-muted">No employment history available.</div>
+    }
+    else
+    {
+        @foreach (var (emp, i) in Profile.EmploymentHistory.Select((e, i) => (e, i)))
+        {
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>@(string.IsNullOrEmpty(emp.CompanyName) ? $"Employer #{i + 1}" : emp.CompanyName)</span>
+                    @if(!IsReadOnly) {
+                        <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => Profile.EmploymentHistory.Remove(emp)">Remove</button>
+                    }
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Company Name *</label>
+                            <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="emp.CompanyName"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Job Title *</label>
+                            <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="emp.JobTitle"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">City</label>
+                            <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="emp.City"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">State</label>
+                            <InputText disabled="@IsReadOnly" class="form-control" maxlength="2" @bind-Value="emp.State"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Start Date *</label>
+                            <InputDate disabled="@IsReadOnly" class="form-control" @bind-Value="emp.StartDate"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">End Date</label>
+                            <InputDate disabled="@IsReadOnly" class="form-control" @bind-Value="emp.EndDate"/>
+                            <div class="form-text">Leave blank if current employer</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Avg Weekly Miles</label>
+                            <InputNumber disabled="@IsReadOnly" class="form-control" @bind-Value="emp.AverageWeeklyMiles"/>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label class="form-label d-block">Trailer Types Pulled</label>
+                            <div class="d-flex flex-wrap gap-3">
+                                @foreach (var type in Enum.GetValues<TrailerType>())
+                                {
+                                    <div class="form-check">
+                                        <input type="checkbox" disabled="@IsReadOnly" class="form-check-input" id="emp_@(i)_tt_@type" 
+                                               checked="@emp.HasTrailerType(type)" 
+                                               @onchange="e => ToggleTrailerType(emp, type, (bool)e.Value!)" />
+                                        <label class="form-check-label" for="emp_@(i)_tt_@type">@type</label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label class="form-label">Responsibilities / Routes</label>
+                            <InputTextArea disabled="@IsReadOnly" class="form-control" rows="2" @bind-Value="emp.Responsibilities"/>
+                        </div>
+                        
+                        @if (emp.EndDate.HasValue)
+                        {
+                            <div class="col-12">
+                                <label class="form-label">Reason for Leaving</label>
+                                <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="emp.ReasonForLeaving"/>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    
+    @if(!IsReadOnly) {
+        <button type="button" class="btn btn-outline-primary mt-3" @onclick="AddEmployment">+ Add Employment</button>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public DriverProfile Profile { get; set; } = default!;
+    [Parameter] public bool IsReadOnly { get; set; }
+    
+    private void AddEmployment()
+    {
+        Profile.EmploymentHistory.Add(new DriverEmployment { StartDate = DateOnly.FromDateTime(DateTime.Today) });
+    }
+    
+    private void ToggleTrailerType(DriverEmployment emp, TrailerType type, bool add)
+    {
+        if (add)
+            emp.AddTrailerType(type);
+        else
+            emp.RemoveTrailerType(type);
+    }
+}

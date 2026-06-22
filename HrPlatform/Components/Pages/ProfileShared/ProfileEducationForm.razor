@@ -1,0 +1,76 @@
+@using HrPlatform.Data.Models
+@using HrPlatform.Data.Enums
+
+<div>
+    @if (!Profile.EducationHistory.Any())
+    {
+        <div class="text-muted">No education history available.</div>
+    }
+    else
+    {
+        @foreach (var (edu, i) in Profile.EducationHistory.Select((e, i) => (e, i)))
+        {
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>@(string.IsNullOrEmpty(edu.InstitutionName) ? $"Institution #{i + 1}" : edu.InstitutionName)</span>
+                    @if(!IsReadOnly) {
+                        <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => Profile.EducationHistory.Remove(edu)">Remove</button>
+                    }
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Institution Name *</label>
+                            <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="edu.InstitutionName"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Education Level *</label>
+                            <InputSelect disabled="@IsReadOnly" class="form-select" @bind-Value="edu.Level">
+                                @foreach (var level in Enum.GetValues<EducationLevel>())
+                                {
+                                    <option value="@level">@level</option>
+                                }
+                            </InputSelect>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Field of Study</label>
+                            <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="edu.FieldOfStudy"/>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">City</label>
+                            <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="edu.City"/>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">State</label>
+                            <InputText disabled="@IsReadOnly" class="form-control" maxlength="2" @bind-Value="edu.State"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Graduation Date</label>
+                            <InputDate disabled="@IsReadOnly" class="form-control" @bind-Value="edu.GraduationDate"/>
+                        </div>
+                        <div class="col-md-8 d-flex align-items-end">
+                            <div class="form-check mb-2">
+                                <input type="checkbox" disabled="@IsReadOnly" class="form-check-input" id="grad_@i" @bind="edu.Graduated"/>
+                                <label class="form-check-label" for="grad_@i">Graduated</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    
+    @if(!IsReadOnly) {
+        <button type="button" class="btn btn-outline-primary mt-3" @onclick="AddEducation">+ Add Education</button>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public DriverProfile Profile { get; set; } = default!;
+    [Parameter] public bool IsReadOnly { get; set; }
+    
+    private void AddEducation()
+    {
+        Profile.EducationHistory.Add(new DriverEducation());
+    }
+}

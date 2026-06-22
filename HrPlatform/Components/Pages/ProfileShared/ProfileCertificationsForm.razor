@@ -1,0 +1,61 @@
+@using HrPlatform.Data.Models
+
+<div>
+    @if (!Profile.Certifications.Any())
+    {
+        <div class="text-muted">No certifications available.</div>
+    }
+    else
+    {
+        @foreach (var (cert, i) in Profile.Certifications.Select((c, i) => (c, i)))
+        {
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>@(string.IsNullOrEmpty(cert.Name) ? $"Certification #{i + 1}" : cert.Name)</span>
+                    @if(!IsReadOnly) {
+                        <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => Profile.Certifications.Remove(cert)">Remove</button>
+                    }
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Certification Name *</label>
+                            <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="cert.Name"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Issuing Authority</label>
+                            <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="cert.IssuingAuthority"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Certification Number</label>
+                            <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="cert.CertificationNumber"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Issued Date</label>
+                            <InputDate disabled="@IsReadOnly" class="form-control" @bind-Value="cert.IssuedDate"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Expiration Date</label>
+                            <InputDate disabled="@IsReadOnly" class="form-control" @bind-Value="cert.ExpiryDate"/>
+                            <div class="form-text">Leave blank if it doesn't expire</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    
+    @if(!IsReadOnly) {
+        <button type="button" class="btn btn-outline-primary mt-3" @onclick="AddCertification">+ Add Certification</button>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public DriverProfile Profile { get; set; } = default!;
+    [Parameter] public bool IsReadOnly { get; set; }
+    
+    private void AddCertification()
+    {
+        Profile.Certifications.Add(new DriverCertification());
+    }
+}

@@ -1,0 +1,31 @@
+@using HrPlatform.Data.Models
+@using HrPlatform.Data.Enums
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <label class="form-label">Years of Experience *</label>
+        <InputNumber disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.YearsOfExperience"/>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Total Miles Driven</label>
+        <InputNumber disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.TotalMilesDriven"/>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Accident-Free Miles</label>
+        <InputNumber disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.AccidentFreeMiles"/>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">States Operated In</label>
+        <InputNumber disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.StatesOperated"/>
+        <div class="form-text">Number of US states you've driven commercially in</div>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Average Weekly Miles</label>
+        <InputNumber disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.AverageWeeklyMiles"/>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public DriverProfile Profile { get; set; } = default!;
+    [Parameter] public bool IsReadOnly { get; set; }
+}

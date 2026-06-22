@@ -104,7 +104,7 @@ strong, b, h1, h2, h3, h4, h5, h6, .card-title, .form-label {
     color: var(--text-primary);
 }
 
-.form-control:disabled, .form-control[readonly] {
+.form-control:disabled, .form-control[readonly], .form-select:disabled, .form-select[readonly] {
     background-color: rgba(15, 23, 42, 0.3);
     color: var(--text-secondary);
     opacity: 0.8;
@@ -189,4 +189,24 @@ strong, b, h1, h2, h3, h4, h5, h6, .card-title, .form-label {
     background-color: transparent;
     color: var(--text-primary);
     border-bottom-color: var(--border-color);
+}
+
+/* Modal Styling */
+.modal-content {
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+.modal-header {
+    border-bottom-color: var(--border-color);
+}
+.modal-footer {
+    border-top-color: var(--border-color);
+}
+
+/* Invert Bootstrap Close Button for Dark Theme */
+.btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
 }

@@ -1,0 +1,80 @@
+@using HrPlatform.Data.Models
+@using HrPlatform.Data.Enums
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <label class="form-label">First Name *</label>
+        <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.FirstName"/>
+        <ValidationMessage For="() => Profile.FirstName"/>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Middle Name</label>
+        <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.MiddleName"/>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Last Name *</label>
+        <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.LastName"/>
+        <ValidationMessage For="() => Profile.LastName"/>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Date of Birth *</label>
+        <InputDate disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.DateOfBirth"/>
+        <ValidationMessage For="() => Profile.DateOfBirth"/>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Phone *</label>
+        <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.PhoneNumber"/>
+        <ValidationMessage For="() => Profile.PhoneNumber"/>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Alternate Phone</label>
+        <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.AlternatePhone"/>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Email Address *</label>
+        <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.Email"/>
+        <ValidationMessage For="() => Profile.Email"/>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">LinkedIn Profile URL</label>
+        <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.LinkedInUrl"/>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Street Address</label>
+        <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.StreetAddress"/>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">City</label>
+        <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.City"/>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">State</label>
+        <InputText disabled="@IsReadOnly" class="form-control" maxlength="2" @bind-Value="Profile.State"/>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">Zip Code</label>
+        <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.ZipCode"/>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Availability</label>
+        <InputSelect disabled="@IsReadOnly" class="form-select" @bind-Value="Profile.AvailabilityStatus">
+            @foreach (var status in Enum.GetValues<AvailabilityStatus>())
+            {
+                <option value="@status">@status</option>
+            }
+        </InputSelect>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Available From</label>
+        <InputDate disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.AvailableFrom"/>
+    </div>
+    <div class="col-12">
+        <label class="form-label">Professional Summary</label>
+        <InputTextArea disabled="@IsReadOnly" class="form-control" rows="4" @bind-Value="Profile.ProfessionalSummary" placeholder="Tell carriers about your experience and what you're looking for..."/>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public DriverProfile Profile { get; set; } = default!;
+    [Parameter] public bool IsReadOnly { get; set; }
+}

@@ -83,11 +83,11 @@
                     <ValidationSummary class="text-danger"/>
 
                     <div class="card ">
-                        <div class="card-header bg-white">
+                        <div class="card-header">
                             <h4 class="mb-0">@tabs[activeTab]</h4>
                         </div>
 
-                                                <div class="card-body">
+                                                                        <div class="card-body">
                             <div class="@(activeTab == 0 ? "" : "d-none")">
                                 <HrPlatform.Components.Pages.ProfileShared.ProfilePersonalForm Profile="profile" IsReadOnly="false" />
                             </div>
@@ -525,13 +525,14 @@
     private static string GetCompletenessHint(DriverProfile p)
     {
         if (p.License == null) return "Add your CDL license to unlock more job matches.";
-        if (p.MedicalCard == null) return "Add your DOT medical card — required by most carriers.";
+        if (p.MedicalCard == null) return "Add your DOT medical card â€” required by most carriers.";
         if (!p.EmploymentHistory.Any()) return "Add at least one previous employer.";
-        if (p.YearsOfExperience == 0) return "Fill in your driving stats — years experience and total miles.";
+        if (p.YearsOfExperience == 0) return "Fill in your driving stats â€” years experience and total miles.";
         if (string.IsNullOrEmpty(p.ProfessionalSummary)) return "Add a short professional summary.";
         return "Add certifications or skills to stand out.";
     }
 
 }
+
 
 

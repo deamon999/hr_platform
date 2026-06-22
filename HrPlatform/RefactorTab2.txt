@@ -1,0 +1,3 @@
+
+                                <HrPlatform.Components.Pages.ProfileShared.ProfileLicenseForm Profile="profile" IsReadOnly="false" />
+                            

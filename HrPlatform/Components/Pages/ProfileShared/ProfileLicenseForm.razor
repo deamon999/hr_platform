@@ -1,0 +1,117 @@
+@using HrPlatform.Data.Models
+@using HrPlatform.Data.Enums
+@using HrPlatform.Utils
+
+<div>
+    <h5 class="mb-3 border-bottom pb-2">Driver License</h5>
+    
+    @if (Profile.License == null)
+    {
+        if(!IsReadOnly) {
+            <button type="button" class="btn btn-outline-primary" @onclick="() => Profile.License = new DriverLicense()">Add License</button>
+        } else {
+            <div class="text-muted">No license information provided.</div>
+        }
+    }
+    else
+    {
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">License Number *</label>
+                <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.License.LicenseNumber"/>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Issuing State *</label>
+                <InputText disabled="@IsReadOnly" class="form-control" maxlength="2" @bind-Value="Profile.License.IssuingState"/>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">CDL Class *</label>
+                <InputSelect disabled="@IsReadOnly" class="form-select" @bind-Value="Profile.License.Class">
+                    @foreach (var c in Enum.GetValues<CdlClass>())
+                    {
+                        <option value="@c">Class @c</option>
+                    }
+                </InputSelect>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Issued Date *</label>
+                <InputDate disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.License.IssuedDate"/>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Expiration Date *</label>
+                <InputDate disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.License.ExpiryDate"/>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Restrictions</label>
+                <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.License.Restrictions"/>
+            </div>
+            <div class="col-12">
+                <label class="form-label d-block">Endorsements</label>
+                <div class="d-flex flex-wrap gap-3">
+                    @foreach (var end in Enum.GetValues<CdlEndorsement>())
+                    {
+                        <div class="form-check">
+                            <input type="checkbox" disabled="@IsReadOnly" class="form-check-input" id="end_@end" 
+                                   checked="@Profile.License.HasEndorsement(end)" 
+                                   @onchange="e => ToggleEndorsement(end, (bool)e.Value!)" />
+                            <label class="form-check-label" for="end_@end">@end.GetDescriptionValue()</label>
+                        </div>
+                    }
+                </div>
+            </div>
+            
+            @if(!IsReadOnly) {
+                <div class="col-12 mt-3 text-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => Profile.License = null">Remove License</button>
+                </div>
+            }
+        </div>
+    }
+
+    <h5 class="mb-3 border-bottom pb-2 mt-5">DOT Medical Card</h5>
+    
+    @if (Profile.MedicalCard == null)
+    {
+        if(!IsReadOnly) {
+            <button type="button" class="btn btn-outline-primary" @onclick="() => Profile.MedicalCard = new DriverMedicalCard()">Add Medical Card</button>
+        } else {
+            <div class="text-muted">No medical card provided.</div>
+        }
+    }
+    else
+    {
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Examiner Name *</label>
+                <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.MedicalCard.MedicalExaminerName"/>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Registry Number</label>
+                <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.MedicalCard.MedicalExaminerCertNumber"/>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Expiration Date *</label>
+                <InputDate disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.MedicalCard.ExpiryDate"/>
+            </div>
+            
+            @if(!IsReadOnly) {
+                <div class="col-12 mt-3 text-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => Profile.MedicalCard = null">Remove Medical Card</button>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public DriverProfile Profile { get; set; } = default!;
+    [Parameter] public bool IsReadOnly { get; set; }
+    
+    private void ToggleEndorsement(CdlEndorsement endorsement, bool add)
+    {
+        if (add)
+            Profile.License?.AddEndorsement(endorsement);
+        else
+            Profile.License?.RemoveEndorsement(endorsement);
+    }
+}

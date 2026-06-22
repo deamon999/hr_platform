@@ -1,0 +1,3 @@
+
+                                <HrPlatform.Components.Pages.ProfileShared.ProfileEmploymentForm Profile="profile" IsReadOnly="false" />
+                            
