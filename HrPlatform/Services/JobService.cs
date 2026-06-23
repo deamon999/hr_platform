@@ -1,4 +1,4 @@
-﻿using HrPlatform.Data;
+using HrPlatform.Data;
 using HrPlatform.Data.Models;
 using HrPlatform.Models;
 using Microsoft.EntityFrameworkCore;
@@ -20,14 +20,21 @@ public class JobService(ApplicationDbContext db) : IJobService
         return await GetBaseQuery().ToListAsync();
     }
 
-    public async Task<PaginationResult<Job>> GetPagedAsync(int pageNumber = 1, int pageSize = 10, string filter = "all", string sortBy = "date")
+    public async Task<PaginationResult<Job>> GetPagedAsync(
+        int pageNumber = 1, int pageSize = 10,
+        string filter = "all", string sortBy = "date",
+        HrPlatform.Data.Enums.CdlClass? cdlClass = null,
+        decimal? minPay = null,
+        HrPlatform.Data.Enums.TrailerType? trailerType = null,
+        bool matchProfileOnly = false,
+        DriverProfile? driverProfile = null)
     {
         var query = db.Jobs
             .Include(j => j.Applications)
             .Include(j => j.Company)
             .AsQueryable();
 
-        // 1. Apply Filter
+        // Existing active/inactive filter
         query = filter switch
         {
             "active" => query.Where(j => j.IsActive),
@@ -35,15 +42,40 @@ public class JobService(ApplicationDbContext db) : IJobService
             _ => query
         };
 
-        // 2. Apply Sort (EF Core safely translates navigation property null checks)
+        // NEW: CDL class — show if job has no requirement OR matches driver
+        if (cdlClass.HasValue)
+            query = query.Where(j =>
+                j.RequiredCdlClass == null ||
+                j.RequiredCdlClass == cdlClass.Value);
+
+        // NEW: Minimum pay
+        if (minPay.HasValue)
+            query = query.Where(j =>
+                j.PayRate == null || j.PayRate >= minPay.Value);
+
+        // NEW: Trailer type
+        if (trailerType.HasValue)
+            query = query.Where(j =>
+                j.RequiredTrailerType == null ||
+                j.RequiredTrailerType == trailerType.Value);
+
+        // NEW: 'Jobs for me' — filter by driver's own profile
+        if (matchProfileOnly && driverProfile != null)
+        {
+            var driverClass = driverProfile.License?.Class;
+
+            query = query.Where(j =>
+                (j.RequiredCdlClass == null || j.RequiredCdlClass == driverClass) &&
+                (j.MinYearsExperience == 0 ||
+                    j.MinYearsExperience <= driverProfile.YearsOfExperience));
+        }
+
         query = sortBy switch
         {
-            "title" => query.OrderBy(j => j.Title),
-            "company" => query.OrderBy(j => j.Company.Name),
+            "pay" => query.OrderByDescending(j => j.PayRate),
             _ => query.OrderByDescending(j => j.PostedAt)
         };
 
-        // Execute query and paginate
         var jobs = await query.ToListAsync();
         return jobs.Paginate(pageNumber, pageSize);
     }
