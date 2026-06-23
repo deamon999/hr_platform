@@ -1,4 +1,4 @@
-﻿@page "/applications"
+@page "/applications"
 @using System.Security.Claims
 @rendermode InteractiveServer
 
@@ -12,6 +12,16 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">Applications</h2>
+    <div class="btn-group btn-group-sm" role="group">
+        <button class="btn @(viewMode == "table" ? "btn-primary" : "btn-outline-secondary")"
+                @onclick="@(() => SetView("table"))">
+            <i class="bi bi-table"></i> Table
+        </button>
+        <button class="btn @(viewMode == "kanban" ? "btn-primary" : "btn-outline-secondary")"
+                @onclick="@(() => SetView("kanban"))">
+            <i class="bi bi-kanban"></i> Board
+        </button>
+    </div>
 </div>
 
 <div class="d-flex flex-wrap gap-3 mb-3 align-items-center">
@@ -37,6 +47,8 @@ else if (!pagedApps.Any())
 else
 {
     <div>
+        @if (viewMode == "table")
+        {
         <div class="table-responsive d-none d-md-block">
             <table class="table  table-hover align-middle">
                 <thead class="">
@@ -259,6 +271,63 @@ else
                 </ul>
             </nav>
         }
+        }
+        else if (viewMode == "kanban" && pagedApps is not null)
+        {
+            var columns = Enum.GetValues<ApplicationStatus>();
+            <div class="row g-3">
+                @foreach (var col in columns)
+                {
+                    var colApps = pagedApps.Where(a => a.Status == col).ToList();
+                    <div class="col-md-3">
+                        <div class="card h-100 border-0 bg-light">
+                            <div class="card-header d-flex justify-content-between bg-transparent border-0 pb-0">
+                                <span class="badge @StatusBadge(col) w-100 text-start py-2 fs-6 shadow-sm">
+                                    @col (@colApps.Count)
+                                </span>
+                            </div>
+                            <div class="card-body p-2 overflow-auto" style="max-height:70vh">
+                                @foreach (var app in colApps)
+                                {
+                                    <div class="card mb-2 shadow-sm border-0"
+                                         draggable="true"
+                                         @ondragstart="() => StartDrag(app.Id)">
+                                        <div class="card-body p-3">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <strong class="text-dark">
+                                                    @app.User.FirstName @app.User.LastName
+                                                </strong>
+                                                <div class="text-muted" style="font-size:.75rem">
+                                                    @app.AppliedAt.ToLocalTime().ToString("MMM dd")
+                                                </div>
+                                            </div>
+                                            <div class="text-secondary mb-2" style="font-size:.85rem">
+                                                <i class="bi bi-briefcase me-1"></i> @app.Job.Title
+                                            </div>
+                                            @if (isManager && app.User.DriverProfile != null)
+                                            {
+                                                <a href="/profiles/@app.User.DriverProfile.Id"
+                                                   class="btn btn-outline-secondary btn-sm py-1 px-2"
+                                                   style="font-size:.75rem">Profile</a>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                            @if (isManager)
+                            {
+                                <div class="card-footer p-2 bg-transparent border-0 text-center"
+                                     style="border: 2px dashed #dee2e6 !important; border-radius: 6px; margin: 0.5rem;"
+                                     @ondragover:preventDefault
+                                     @ondrop="() => DropOnColumn(col)">
+                                    <small class="text-muted"><i class="bi bi-arrow-down-circle me-1"></i>Drop here</small>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
     </div>
 }
 
@@ -301,6 +370,10 @@ else
     private int? reviewing;
     private ApplicationStatus reviewStatus = ApplicationStatus.UnderReview;
     private string? reviewNotes;
+
+    // Kanban State
+    private string viewMode = "table";
+    private int? draggingAppId;
 
     private bool isManager;
     private bool isDriver;
@@ -436,6 +509,17 @@ else
         }
     }
 
+    private void SetView(string mode) { viewMode = mode; }
+
+    private void StartDrag(int appId) { draggingAppId = appId; }
+
+    private async Task DropOnColumn(ApplicationStatus newStatus)
+    {
+        if (draggingAppId is null) return;
+        await AppSvc.ReviewAsync(draggingAppId.Value, newStatus, null);
+        draggingAppId = null;
+        await LoadAsync();
+    }
 }
 
 
