@@ -1,4 +1,4 @@
-﻿@page "/companies/new"
+@page "/companies/new"
 @page "/companies/{Id:int}"
 @page "/companies/edit/{Id:int}"
 @page "/my-company"
@@ -41,6 +41,60 @@ else
         <div class="mb-3">
             <label class="form-label">Address</label>
             <InputText class="form-control" @bind-Value="company.Address" disabled="@isView"/>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Description</label>
+            <InputTextArea class="form-control" @bind-Value="company.Description" disabled="@isView" rows="3"/>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Website URL</label>
+            <InputText class="form-control" @bind-Value="company.WebsiteUrl" disabled="@isView"/>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Fleet Size</label>
+                <InputNumber class="form-control" @bind-Value="company.FleetSize" disabled="@isView"/>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Home Time Frequency</label>
+                <InputSelect class="form-select" @bind-Value="company.HomeTime" disabled="@isView">
+                    <option value="">-- Select --</option>
+                    @foreach (var ht in Enum.GetValues<HrPlatform.Data.Enums.HomeTimeFrequency>())
+                    {
+                        <option value="@ht">@ht</option>
+                    }
+                </InputSelect>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <div class="form-check">
+                    <InputCheckbox class="form-check-input" @bind-Value="company.PaidCdlTraining" disabled="@isView" id="paidTraining" />
+                    <label class="form-check-label" for="paidTraining">Paid CDL Training</label>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-check">
+                    <InputCheckbox class="form-check-input" @bind-Value="company.SignOnBonus" disabled="@isView" id="signOnBonus" />
+                    <label class="form-check-label" for="signOnBonus">Sign-On Bonus</label>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-check">
+                    <InputCheckbox class="form-check-input" @bind-Value="company.BenefitsOffered" disabled="@isView" id="benefits" />
+                    <label class="form-check-label" for="benefits">Benefits Offered</label>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-check">
+                    <InputCheckbox class="form-check-input" @bind-Value="company.HiringNewGrads" disabled="@isView" id="newGrads" />
+                    <label class="form-check-label" for="newGrads">Hiring New Grads</label>
+                </div>
+            </div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Benefits Summary</label>
+            <InputTextArea class="form-control" @bind-Value="company.BenefitsSummary" disabled="@isView" rows="2"/>
         </div>
 
         <div class="d-flex gap-2">

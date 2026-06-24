@@ -131,6 +131,53 @@ else
 
     <AuthorizeView Roles="Driver">
         <Authorized>
+            @if (job.Company != null)
+            {
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header">
+                        <h5 class="mb-0">About @job.Company.Name</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (!string.IsNullOrEmpty(job.Company.Description))
+                        {
+                            <p>@job.Company.Description</p>
+                        }
+                        <div class="row g-2 mt-1">
+                            @if (job.Company.FleetSize.HasValue)
+                            {
+                                <div class="col-auto">
+                                    <span class="badge bg-light text-dark border">
+                                        @job.Company.FleetSize trucks
+                                    </span>
+                                </div>
+                            }
+                            @if (job.Company.HomeTime.HasValue)
+                            {
+                                <div class="col-auto">
+                                    <span class="badge bg-info text-dark">
+                                        Home: @job.Company.HomeTime
+                                    </span>
+                                </div>
+                            }
+                            @if (job.Company.PaidCdlTraining)
+                            { <div class="col-auto"><span class="badge bg-success">Paid training</span></div> }
+                            @if (job.Company.SignOnBonus)
+                            { <div class="col-auto"><span class="badge bg-warning text-dark">Sign-on bonus</span></div> }
+                            @if (job.Company.BenefitsOffered)
+                            { <div class="col-auto"><span class="badge bg-primary">Benefits</span></div> }
+                            @if (job.Company.HiringNewGrads)
+                            { <div class="col-auto"><span class="badge bg-secondary">New grads OK</span></div> }
+                        </div>
+                        @if (!string.IsNullOrEmpty(job.Company.WebsiteUrl))
+                        {
+                            <a href="@job.Company.WebsiteUrl" target="_blank"
+                               class="btn btn-sm btn-outline-secondary mt-3">
+                                Company website &rarr;
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
             @if (applied)
             {
                 <div class="alert alert-success">
