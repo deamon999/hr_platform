@@ -31,17 +31,12 @@ else
             <a href="/jobs" class="btn btn-outline-secondary">Cancel</a>
         </div>
 
-        @if (!string.IsNullOrEmpty(successMsg))
-        {
-            <div class="alert alert-success mt-3">@successMsg</div>
-        }
     </EditForm>
 }
 
 @code {
     [Parameter] public int Id { get; set; }
     private Job? job;
-    private string? successMsg;
     private List<Company> companies = new();
     private bool isCompanySelectionDisabled = false;
 

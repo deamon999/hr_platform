@@ -1,4 +1,4 @@
-﻿@page "/profiles"
+@page "/profiles"
 @using System.Security.Claims
 @using HrPlatform.Models
 @using HrPlatform.Utils
@@ -215,7 +215,7 @@ else
 @code {
     private PaginationResult<DriverProfile>? pagedProfiles;
     private bool isAdmin;
-    private string? companyName;
+    private string? companyName = string.Empty;
     private string? currentUserId;
 
     // Filter by Status
@@ -272,7 +272,11 @@ else
             {
                 var user = await UserManager.FindByIdAsync(currentUserId);
                 var companyId = user?.CompanyId;
-
+                if (user?.Company != null)
+                {
+                    companyName = user.Company.Name;
+                }
+                
                 pagedProfiles = companyId.HasValue
                     ? await ProfileSvc.GetByCompanyPagedAsync(profileSearch, companyId.Value, currentPage, PageSize)
                     : new PaginationResult<DriverProfile>

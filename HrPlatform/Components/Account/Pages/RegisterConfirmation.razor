@@ -1,4 +1,4 @@
-﻿@page "/Account/RegisterConfirmation"
+@page "/Account/RegisterConfirmation"
 @using System.Text
 @using Microsoft.AspNetCore.WebUtilities
 
@@ -27,7 +27,7 @@ else
 }
 
 @code {
-    private string? emailConfirmationLink;
+    private string? emailConfirmationLink = null;
     private string? statusMessage;
 
     [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;

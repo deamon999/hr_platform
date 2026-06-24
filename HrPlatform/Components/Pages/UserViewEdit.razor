@@ -92,7 +92,6 @@ else
     private List<string?> roles = new();
 
     private UserViewModel model = new();
-    private string? successMessage;
     private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
@@ -197,7 +196,7 @@ else
             return;
         }
 
-        successMessage = "User updated successfully.";
+
         GoToUsers();
     }
 

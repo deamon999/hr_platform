@@ -1,4 +1,4 @@
-﻿using HrPlatform.Data;
+using HrPlatform.Data;
 using HrPlatform.Data.Enums;
 using HrPlatform.Data.Models;
 using HrPlatform.Models;
@@ -104,13 +104,13 @@ public class JobApplicationService(
     {
         var q = db.JobApplications
             .Include(a => a.User)
-            .ThenInclude(u => u.DriverProfile)
-            .ThenInclude(p => p.License)
+            .ThenInclude(u => u!.DriverProfile)
+            .ThenInclude(p => p!.License)
             .Include(a => a.User)
-            .ThenInclude(u => u.DriverProfile)
-            .ThenInclude(p => p.EmploymentHistory)
+            .ThenInclude(u => u!.DriverProfile)
+            .ThenInclude(p => p!.EmploymentHistory)
             .Include(a => a.Job)
-            .ThenInclude(j => j.Company)
+            .ThenInclude(j => j!.Company)
             .AsQueryable();
 
         // 1. Filter for Manager
@@ -199,7 +199,7 @@ public class JobApplicationService(
                      " has been updated. Log in to check your status."
             };
             await smsService.SendDriverInviteAsync(
-                driver.PhoneNumber, driverName, null, smsText);
+                driver.PhoneNumber, driverName, string.Empty, smsText);
         }
     }
 
