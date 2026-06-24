@@ -1,4 +1,10 @@
 @using HrPlatform.Data.Models
+@using HrPlatform.Services
+@using System.Security.Claims
+
+@inject IDocumentStorageService StorageSvc
+@inject IDriverProfileService ProfileService
+@inject AuthenticationStateProvider AuthState
 
 <div>
     @if (!Profile.Certifications.Any())
@@ -39,6 +45,29 @@
                             <InputDate disabled="@IsReadOnly" class="form-control" @bind-Value="cert.ExpiryDate"/>
                             <div class="form-text">Leave blank if it doesn't expire</div>
                         </div>
+                        <div class="col-12 mt-3">
+                            <label class="form-label fw-bold">Certification Document</label>
+                            @if (cert.HasDocument)
+                            {
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="text-success"><i class="bi bi-check-circle"></i> Document uploaded</span>
+                                    <a class="btn btn-sm btn-outline-primary" href="@(certUrls.GetValueOrDefault(cert.Id))" target="_blank">View</a>
+                                    @if (!IsReadOnly)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => DeleteDocumentAsync(cert)">Remove</button>
+                                    }
+                                </div>
+                            }
+                            else if (!IsReadOnly)
+                            {
+                                <InputFile class="form-control" accept=".pdf,.jpg,.jpeg,.png" OnChange="@(e => UploadDocumentAsync(e, cert))"/>
+                                <small class="text-muted">PDF, JPG, or PNG. Max 5 MB.</small>
+                            }
+                            else
+                            {
+                                <div class="text-muted small">No document uploaded.</div>
+                            }
+                        </div>
                     </div>
                 </div>
             </div>
@@ -54,8 +83,55 @@
     [Parameter, EditorRequired] public DriverProfile Profile { get; set; } = default!;
     [Parameter] public bool IsReadOnly { get; set; }
     
+    private Dictionary<int, string> certUrls = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        foreach (var cert in Profile.Certifications.Where(c => c.HasDocument))
+        {
+            if (!certUrls.ContainsKey(cert.Id))
+            {
+                certUrls[cert.Id] = await StorageSvc.GetSignedUrlAsync(cert.DocumentBlobPath!);
+            }
+        }
+    }
+
     private void AddCertification()
     {
         Profile.Certifications.Add(new DriverCertification());
+    }
+
+    private async Task UploadDocumentAsync(InputFileChangeEventArgs e, DriverCertification cert)
+    {
+        var file = e.File;
+        if (file.Size > 5 * 1024 * 1024) return;
+
+        await using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+        var folder = $"certifications/{Profile.UserId}";
+        cert.DocumentBlobPath = await StorageSvc.UploadAsync(stream, file.Name, file.ContentType, folder);
+        cert.DocumentUploadedAt = DateTime.UtcNow;
+        
+        await SaveProfileAsync();
+        certUrls[cert.Id] = await StorageSvc.GetSignedUrlAsync(cert.DocumentBlobPath);
+    }
+
+    private async Task DeleteDocumentAsync(DriverCertification cert)
+    {
+        if (cert.DocumentBlobPath is null) return;
+        await StorageSvc.DeleteAsync(cert.DocumentBlobPath);
+        cert.DocumentBlobPath = null;
+        cert.DocumentUploadedAt = null;
+        certUrls.Remove(cert.Id);
+        await SaveProfileAsync();
+    }
+
+    private async Task SaveProfileAsync()
+    {
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        var currentUserId = auth.User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        if (Profile.Id > 0) 
+        {
+            await ProfileService.UpdateAsync(Profile, currentUserId);
+        }
     }
 }

@@ -25,6 +25,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<JobInvitation> JobInvitations { get; set; }
     public DbSet<ApplicationMessage> ApplicationMessages => Set<ApplicationMessage>();
     public DbSet<DriverViolation> DriverViolations => Set<DriverViolation>();
+    public DbSet<DocumentFile> DocumentFiles { get; set; }
+
     protected override void OnModelCreating(ModelBuilder b)
     {
         base.OnModelCreating(b);
@@ -41,7 +43,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
             // ADD THIS: Deletes the user if their associated Company is deleted
             e.HasOne(u => u.Company)
-                .WithMany()
+                .WithMany(c => c.Users)
                 .HasForeignKey(u => u.CompanyId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
@@ -149,6 +151,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             e.Property(j => j.RequiredCdlClass).HasConversion<string>();
             e.Property(j => j.EmploymentType).HasConversion<string>();
             e.Property(j => j.RequiredTrailerType).HasConversion<string>();
+            var endorsementComparer = new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<List<CdlEndorsement>>(
+                (c1, c2) => c1!.SequenceEqual(c2!),
+                c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                c => c.ToList());
+
             e.Property(j => j.RequiredEndorsements).HasConversion(
                 v => string.Join(',', v.Select(x => x.ToString())),
                 v => v.Length == 0
@@ -156,7 +163,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                     : v.Split(',', StringSplitOptions.RemoveEmptyEntries)
                         .Select(Enum.Parse<CdlEndorsement>)
                         .ToList()
-            );
+            ).Metadata.SetValueComparer(endorsementComparer);
         });
 
         b.Entity<Company>(e =>

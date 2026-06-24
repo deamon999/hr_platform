@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace HrPlatform.Data.Models;
 
@@ -16,4 +16,12 @@ public class DriverCertification
 
     public DateOnly? IssuedDate { get; set; }
     public DateOnly? ExpiryDate { get; set; }
+
+    [MaxLength(500)]
+    public string? DocumentBlobPath { get; set; }
+
+    public DateTime? DocumentUploadedAt { get; set; }
+
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public bool HasDocument => !string.IsNullOrEmpty(DocumentBlobPath);
 }

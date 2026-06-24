@@ -1,6 +1,13 @@
 @using HrPlatform.Data.Models
 @using HrPlatform.Data.Enums
 @using HrPlatform.Utils
+@using HrPlatform.Services
+@using System.Security.Claims
+
+@inject IDocumentStorageService StorageSvc
+@inject IDriverProfileService ProfileService
+@inject AuthenticationStateProvider AuthState
+@inject NavigationManager Nav
 
 <div>
     <h5 class="mb-3 border-bottom pb-2">Driver License</h5>
@@ -60,6 +67,30 @@
                 </div>
             </div>
             
+            <div class="col-12 mt-3">
+                <label class="form-label fw-bold">CDL Document</label>
+                @if (Profile.License.HasDocument)
+                {
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="text-success"><i class="bi bi-check-circle"></i> Document uploaded</span>
+                        <a class="btn btn-sm btn-outline-primary" href="@licenseUrl" target="_blank">View</a>
+                        @if (!IsReadOnly)
+                        {
+                            <button type="button" class="btn btn-sm btn-outline-danger" @onclick="DeleteLicenseDocumentAsync">Remove</button>
+                        }
+                    </div>
+                }
+                else if (!IsReadOnly)
+                {
+                    <InputFile class="form-control" accept=".pdf,.jpg,.jpeg,.png" OnChange="UploadLicenseDocumentAsync"/>
+                    <small class="text-muted">PDF, JPG, or PNG. Max 5 MB.</small>
+                }
+                else
+                {
+                    <div class="text-muted small">No document uploaded.</div>
+                }
+            </div>
+            
             @if(!IsReadOnly) {
                 <div class="col-12 mt-3 text-end">
                     <button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => Profile.License = null">Remove License</button>
@@ -93,6 +124,30 @@
                 <label class="form-label">Expiration Date *</label>
                 <InputDate disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.MedicalCard.ExpiryDate"/>
             </div>
+
+            <div class="col-12 mt-3">
+                <label class="form-label fw-bold">DOT Medical Card Document</label>
+                @if (Profile.MedicalCard.HasDocument)
+                {
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="text-success"><i class="bi bi-check-circle"></i> Document uploaded</span>
+                        <a class="btn btn-sm btn-outline-primary" href="@medicalCardUrl" target="_blank">View</a>
+                        @if (!IsReadOnly)
+                        {
+                            <button type="button" class="btn btn-sm btn-outline-danger" @onclick="DeleteMedicalCardDocumentAsync">Remove</button>
+                        }
+                    </div>
+                }
+                else if (!IsReadOnly)
+                {
+                    <InputFile class="form-control" accept=".pdf,.jpg,.jpeg,.png" OnChange="UploadMedicalCardDocumentAsync"/>
+                    <small class="text-muted">PDF, JPG, or PNG. Max 5 MB.</small>
+                }
+                else
+                {
+                    <div class="text-muted small">No document uploaded.</div>
+                }
+            </div>
             
             @if(!IsReadOnly) {
                 <div class="col-12 mt-3 text-end">
@@ -107,11 +162,81 @@
     [Parameter, EditorRequired] public DriverProfile Profile { get; set; } = default!;
     [Parameter] public bool IsReadOnly { get; set; }
     
+    private string? licenseUrl;
+    private string? medicalCardUrl;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Profile.License?.HasDocument == true)
+            licenseUrl = await StorageSvc.GetSignedUrlAsync(Profile.License.DocumentBlobPath!);
+            
+        if (Profile.MedicalCard?.HasDocument == true)
+            medicalCardUrl = await StorageSvc.GetSignedUrlAsync(Profile.MedicalCard.DocumentBlobPath!);
+    }
+
     private void ToggleEndorsement(CdlEndorsement endorsement, bool add)
     {
         if (add)
             Profile.License?.AddEndorsement(endorsement);
         else
             Profile.License?.RemoveEndorsement(endorsement);
+    }
+
+    private async Task UploadLicenseDocumentAsync(InputFileChangeEventArgs e)
+    {
+        if (Profile?.License is null) return;
+        var file = e.File;
+        if (file.Size > 5 * 1024 * 1024) return;
+
+        await using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+        var folder = $"licenses/{Profile.UserId}";
+        Profile.License.DocumentBlobPath = await StorageSvc.UploadAsync(stream, file.Name, file.ContentType, folder);
+        Profile.License.DocumentUploadedAt = DateTime.UtcNow;
+        await SaveProfileAsync();
+        licenseUrl = await StorageSvc.GetSignedUrlAsync(Profile.License.DocumentBlobPath);
+    }
+
+    private async Task DeleteLicenseDocumentAsync()
+    {
+        if (Profile?.License?.DocumentBlobPath is null) return;
+        await StorageSvc.DeleteAsync(Profile.License.DocumentBlobPath);
+        Profile.License.DocumentBlobPath = null;
+        Profile.License.DocumentUploadedAt = null;
+        licenseUrl = null;
+        await SaveProfileAsync();
+    }
+
+    private async Task UploadMedicalCardDocumentAsync(InputFileChangeEventArgs e)
+    {
+        if (Profile?.MedicalCard is null) return;
+        var file = e.File;
+        if (file.Size > 5 * 1024 * 1024) return;
+
+        await using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+        var folder = $"medical/{Profile.UserId}";
+        Profile.MedicalCard.DocumentBlobPath = await StorageSvc.UploadAsync(stream, file.Name, file.ContentType, folder);
+        Profile.MedicalCard.DocumentUploadedAt = DateTime.UtcNow;
+        await SaveProfileAsync();
+        medicalCardUrl = await StorageSvc.GetSignedUrlAsync(Profile.MedicalCard.DocumentBlobPath);
+    }
+
+    private async Task DeleteMedicalCardDocumentAsync()
+    {
+        if (Profile?.MedicalCard?.DocumentBlobPath is null) return;
+        await StorageSvc.DeleteAsync(Profile.MedicalCard.DocumentBlobPath);
+        Profile.MedicalCard.DocumentBlobPath = null;
+        Profile.MedicalCard.DocumentUploadedAt = null;
+        medicalCardUrl = null;
+        await SaveProfileAsync();
+    }
+
+    private async Task SaveProfileAsync()
+    {
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        var currentUserId = auth.User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        if (Profile.Id > 0) 
+        {
+            await ProfileService.UpdateAsync(Profile, currentUserId);
+        }
     }
 }

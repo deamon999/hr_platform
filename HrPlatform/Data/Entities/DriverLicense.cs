@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using HrPlatform.Data.Enums;
 
 namespace HrPlatform.Data.Models;
@@ -23,6 +23,14 @@ public class DriverLicense
     [Required] public DateOnly IssuedDate { get; set; }
 
     [Required] public DateOnly ExpiryDate { get; set; }
+
+    [MaxLength(500)]
+    public string? DocumentBlobPath { get; set; }
+
+    public DateTime? DocumentUploadedAt { get; set; }
+
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public bool HasDocument => !string.IsNullOrEmpty(DocumentBlobPath);
 
     // Helper methods for managing endorsements
     public bool HasEndorsement(CdlEndorsement endorsement) =>

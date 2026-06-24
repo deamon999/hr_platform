@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace HrPlatform.Data.Models;
 
@@ -17,4 +17,12 @@ public class DriverMedicalCard
     [MaxLength(50)] public string? MedicalExaminerCertNumber { get; set; }
 
     public bool SelfCertified { get; set; }
+
+    [MaxLength(500)]
+    public string? DocumentBlobPath { get; set; }
+
+    public DateTime? DocumentUploadedAt { get; set; }
+
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public bool HasDocument => !string.IsNullOrEmpty(DocumentBlobPath);
 }

@@ -66,6 +66,9 @@ builder.Services.AddScoped<IApplicationMessageService, ApplicationMessageService
         builder.Services.AddScoped<IInvitationService, InvitationService>();
         builder.Services.AddScoped<IJobInvitationService, JobInvitationService>();
         builder.Services.AddScoped<IDashboardService, DashboardService>();
+        
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddScoped<IDocumentStorageService, DatabaseDocumentStorageService>();
         // Background worker
         builder.Services.AddHostedService<CredentialExpiryService>();
         var app = builder.Build();
@@ -106,6 +109,13 @@ builder.Services.AddScoped<IApplicationMessageService, ApplicationMessageService
 
         // Add additional endpoints required by the Identity /Account Razor components.
         app.MapAdditionalIdentityEndpoints();
+
+        app.MapGet("/api/documents/{id}", async (string id, HrPlatform.Data.ApplicationDbContext db) =>
+        {
+            var doc = await db.DocumentFiles.FindAsync(id);
+            if (doc == null) return Microsoft.AspNetCore.Http.Results.NotFound();
+            return Microsoft.AspNetCore.Http.Results.File(doc.Data, doc.ContentType, doc.FileName);
+        }).RequireAuthorization();
 
         app.Run();
     }
