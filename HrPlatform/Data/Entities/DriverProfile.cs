@@ -1,5 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using HrPlatform.Data.Enums;
+using HrPlatform.Data.Entities;
 
 namespace HrPlatform.Data.Models;
 
@@ -67,6 +69,8 @@ public class DriverProfile
 
     [ValidateComplexType] public ICollection<DriverCertification> Certifications { get; set; } = [];
 
+    [ValidateComplexType] public ICollection<DriverViolation> ViolationHistory { get; set; } = [];
+
     public IEnumerable<TrailerType> AllTrailerTypes =>
         EmploymentHistory.SelectMany(e => e.TrailerTypes.Select(t => t.TrailerType)).Distinct();
 
@@ -120,6 +124,37 @@ public class DriverProfile
         >= 40 => "bg-warning text-dark",
         _ => "bg-danger"
     };
+
+    [NotMapped]
+    public List<string> MissingFields
+    {
+        get
+        {
+            var missing = new List<string>();
+            if (string.IsNullOrWhiteSpace(FirstName) || string.IsNullOrWhiteSpace(LastName) || string.IsNullOrWhiteSpace(PhoneNumber))
+                missing.Add("Basic Contact Info");
+            
+            if (License == null || License.ExpiryDate <= DateOnly.FromDateTime(DateTime.Today))
+                missing.Add("Valid CDL License");
+
+            if (MedicalCard == null || MedicalCard.ExpiryDate <= DateOnly.FromDateTime(DateTime.Today))
+                missing.Add("Valid DOT Medical Card");
+
+            if (!EmploymentHistory.Any())
+                missing.Add("Employment History");
+
+            if (YearsOfExperience <= 0 || TotalMilesDriven <= 0)
+                missing.Add("Driving Experience (Years & Miles)");
+
+            if (string.IsNullOrWhiteSpace(ProfessionalSummary))
+                missing.Add("Professional Summary");
+
+            if (!Certifications.Any() && !Skills.Any())
+                missing.Add("Skills or Certifications");
+
+            return missing;
+        }
+    }
 
     // Helper methods for managing skills
     public bool HasSkill(string skill) =>

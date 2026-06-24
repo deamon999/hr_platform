@@ -2,6 +2,8 @@
 @page "/profiles/edit/{Id:int}"
 @using System.Security.Claims
 @using HrPlatform.Utils
+@using HrPlatform.Data.Entities
+@using HrPlatform.Data.Enums
 @rendermode InteractiveServer
 
 @attribute [Authorize(Roles = $"{RoleConstants.Driver}")]
@@ -24,25 +26,7 @@
     }
     else
     {
-        <div class="mb-3">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-                <h4 class="text-muted">Profile completeness</h4>
-                <span class="badge @profile.CompletenessBadgeClass">
-                    @profile.CompletenessLabel (@profile.CompletenessScore%)
-                </span>
-            </div>
-            <div class="progress" style="height:6px">
-                <div class="progress-bar @profile.CompletenessBadgeClass"
-                     style="width:@(profile.CompletenessScore)%">
-                </div>
-            </div>
-            @if (profile.CompletenessScore < 85)
-            {
-                <small class="text-muted">
-                    @GetCompletenessHint(profile)
-                </small>
-            }
-        </div>
+
         <hr/>
         <div class="row">
             <div class="col-lg-3 mb-4 mb-lg-0">
@@ -108,6 +92,62 @@
                             </div>
                             <div class="@(activeTab == 6 ? "" : "d-none")">
                                 <HrPlatform.Components.Pages.ProfileShared.ProfileCertificationsForm Profile="profile" IsReadOnly="false" />
+                            </div>
+                            <div class="@(activeTab == 7 ? "" : "d-none")">
+                                <div class="alert bg-dark text-info border-info">
+                                    <strong>DOT disclosure:</strong> List all moving violations,
+                                    accidents, and DUI convictions in the past 3 years.
+                                </div>
+
+                                @foreach (var (viol, vi) in profile.ViolationHistory.Select((v,i)=>(v,i)))
+                                {
+                                    <div class="card mb-3">
+                                        <div class="card-header d-flex justify-content-between">
+                                            <span>Incident #@(vi + 1)</span>
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    @onclick="() => profile.ViolationHistory.Remove(viol)">
+                                                Remove
+                                            </button>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row g-3">
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Type *</label>
+                                                    <InputSelect class="form-select" @bind-Value="viol.Type">
+                                                        @foreach (var vt in Enum.GetValues<ViolationType>())
+                                                        { <option value="@vt">@vt</option> }
+                                                    </InputSelect>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Date *</label>
+                                                    <InputDate class="form-control" @bind-Value="viol.OccurredDate"/>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">At fault?</label>
+                                                    <div class="form-check mt-2">
+                                                        <InputCheckbox class="form-check-input"
+                                                                      @bind-Value="viol.AtFault"/>
+                                                        <label class="form-check-label">Yes, I was at fault</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12">
+                                                    <label class="form-label">Description</label>
+                                                    <InputTextArea class="form-control" rows="2"
+                                                                   @bind-Value="viol.Description"/>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Resolution</label>
+                                                    <InputText class="form-control" @bind-Value="viol.Resolution"
+                                                               placeholder="e.g. Fine paid, license suspended 30 days"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                <button type="button" class="btn btn-outline-primary"
+                                        @onclick="AddViolation">
+                                    + Add incident
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -193,7 +233,7 @@
     private static DateOnly Today => DateOnly.FromDateTime(DateTime.Today);
 
     private static readonly string[] tabs =
-        ["Personal", "Driving Stats", "License & Medical", "Skills", "Employment", "Education", "Certifications"];
+        ["Personal", "Driving Stats", "License & Medical", "Skills", "Employment", "Education", "Certifications", "Safety Record"];
 
     protected override async Task OnInitializedAsync()
     {
@@ -368,6 +408,14 @@
         });
     }
 
+    private void AddViolation()
+    {
+        profile?.ViolationHistory.Add(new DriverViolation {
+            DriverProfileId = profile.Id,
+            OccurredDate = DateOnly.FromDateTime(DateTime.Today)
+        });
+    }
+
     private void AddSkill()
     {
         if (string.IsNullOrWhiteSpace(newSkill) || profile is null)
@@ -492,6 +540,17 @@
                 CertificationNumber = c.CertificationNumber,
                 IssuedDate = c.IssuedDate,
                 ExpiryDate = c.ExpiryDate
+            }).ToList(),
+            ViolationHistory = src.ViolationHistory.Select(v => new DriverViolation
+            {
+                Id = v.Id,
+                DriverProfileId = v.DriverProfileId,
+                Type = v.Type,
+                OccurredDate = v.OccurredDate,
+                Description = v.Description,
+                AtFault = v.AtFault,
+                Reportable = v.Reportable,
+                Resolution = v.Resolution
             }).ToList()
         };
     }
@@ -518,19 +577,12 @@
         if (a.EmploymentHistory.Count != b.EmploymentHistory.Count) return false;
         if (a.EducationHistory.Count != b.EducationHistory.Count) return false;
         if (a.Certifications.Count != b.Certifications.Count) return false;
+        if (a.ViolationHistory.Count != b.ViolationHistory.Count) return false;
 
         return true;
     }
 
-    private static string GetCompletenessHint(DriverProfile p)
-    {
-        if (p.License == null) return "Add your CDL license to unlock more job matches.";
-        if (p.MedicalCard == null) return "Add your DOT medical card — required by most carriers.";
-        if (!p.EmploymentHistory.Any()) return "Add at least one previous employer.";
-        if (p.YearsOfExperience == 0) return "Fill in your driving stats — years experience and total miles.";
-        if (string.IsNullOrEmpty(p.ProfessionalSummary)) return "Add a short professional summary.";
-        return "Add certifications or skills to stand out.";
-    }
+
 
 }
 

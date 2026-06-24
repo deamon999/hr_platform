@@ -24,7 +24,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Invitation> Invitations { get; set; }
     public DbSet<JobInvitation> JobInvitations { get; set; }
     public DbSet<ApplicationMessage> ApplicationMessages => Set<ApplicationMessage>();
-
+    public DbSet<DriverViolation> DriverViolations => Set<DriverViolation>();
     protected override void OnModelCreating(ModelBuilder b)
     {
         base.OnModelCreating(b);
@@ -94,6 +94,14 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .WithMany(p => p.Certifications)
                 .HasForeignKey(c => c.DriverProfileId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        b.Entity<DriverViolation>(e => {
+            e.HasOne(v => v.DriverProfile)
+                .WithMany(p => p.ViolationHistory)
+                .HasForeignKey(v => v.DriverProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.Property(v => v.Type).HasConversion<string>();
         });
 
         //**** Junction Tables ****
