@@ -23,14 +23,16 @@ else if (_application == null)
 }
 else
 {
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">Chat: @_application.Job.Title</h2>
-        <button class="btn btn-outline-secondary" @onclick="GoBack">Back to Applications</button>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0 text-dark">Chat: @_application.Job.Title</h2>
+        <button class="btn btn-outline-secondary rounded-pill px-4" @onclick="GoBack">
+            <i class="bi bi-arrow-left me-1"></i> Back to Applications
+        </button>
     </div>
 
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">
+    <div class="card shadow-sm border-0 app-card mb-4">
+        <div class="card-header bg-white border-bottom py-3">
+            <h5 class="mb-0 fw-bold text-dark">
                 @if (_isManager)
                 {
                     <text>Candidate: @_application.User.FirstName @_application.User.LastName</text>
@@ -41,7 +43,7 @@ else
                 }
             </h5>
         </div>
-        <div class="card-body" style="height: 400px; overflow-y: auto;" id="chat-container">
+        <div class="card-body bg-light" style="height: 400px; overflow-y: auto;" id="chat-container">
             @if (!_messages.Any())
             {
                 <p class="text-muted text-center mt-5">No messages yet. Start the conversation!</p>
@@ -63,14 +65,22 @@ else
                 }
             }
         </div>
-        <div class="card-footer bg-transparent border-top border-secondary">
-            <div class="input-group">
-                <input type="text" class="form-control bg-dark text-white border-secondary" placeholder="Type your message..." @bind="_newMessage" @bind:event="oninput" @onkeyup="HandleKeyUp" />
-                <button class="btn btn-primary" type="button" @onclick="SendMessageAsync" disabled="@string.IsNullOrWhiteSpace(_newMessage)">Send</button>
+        <div class="card-footer bg-white border-top py-3">
+            <div class="input-group shadow-sm rounded-pill overflow-hidden">
+                <input type="text" class="form-control bg-light border-0 px-4 py-2" placeholder="Type your message..." @bind="_newMessage" @bind:event="oninput" @onkeyup="HandleKeyUp" />
+                <button class="btn btn-primary px-4 fw-bold" type="button" @onclick="SendMessageAsync" disabled="@string.IsNullOrWhiteSpace(_newMessage)">
+                    <i class="bi bi-send-fill me-1"></i> Send
+                </button>
             </div>
         </div>
     </div>
 }
+
+<style>
+    .app-card {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+</style>
 
 @code {
     [Parameter]

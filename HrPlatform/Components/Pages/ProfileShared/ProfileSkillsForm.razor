@@ -1,25 +1,30 @@
 @using HrPlatform.Data.Models
 
 <div>
-    <p class="text-muted">Add skills related to driving, maintenance, or logistics.</p>
-    
-    @if(!IsReadOnly) {
-        <div class="d-flex gap-2 mb-4">
-            <InputText class="form-control" @bind-Value="newSkill" placeholder="e.g. Forklift Certified, Flatbed, HAZMAT Handling" />
-            <button type="button" class="btn btn-primary" @onclick="AddSkill">Add</button>
+    <div class="p-4 bg-light rounded-3 border-0 shadow-sm mb-4">
+        <div class="d-flex gap-3 text-muted align-items-center mb-3">
+            <i class="bi bi-info-circle fs-5"></i> 
+            <p class="mb-0">Add skills related to driving, maintenance, or logistics.</p>
         </div>
-    }
-
-    <div class="d-flex flex-wrap gap-2">
-        @foreach (var skill in Profile.GetSkillValues())
-        {
-            <span class="badge bg-secondary d-flex align-items-center gap-2 p-2">
-                @skill
-                @if(!IsReadOnly) {
-                    <button type="button" class="btn-close btn-close-white" style="font-size: 0.5rem;" @onclick="() => Profile.RemoveSkill(skill)"></button>
-                }
-            </span>
+        
+        @if(!IsReadOnly) {
+            <div class="d-flex gap-2 mb-4">
+                <InputText class="form-control bg-white border-0 shadow-sm rounded-pill px-4" @bind-Value="newSkill" placeholder="e.g. Forklift Certified, Flatbed, HAZMAT Handling" />
+                <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" @onclick="AddSkill">Add</button>
+            </div>
         }
+
+        <div class="d-flex flex-wrap gap-2">
+            @foreach (var skill in Profile.GetSkillValues())
+            {
+                <span class="badge text-bg-primary rounded-pill px-3 py-2 fs-6 shadow-sm d-flex align-items-center gap-2">
+                    @skill
+                    @if(!IsReadOnly) {
+                        <button type="button" class="btn-close btn-close-white" style="font-size: 0.65rem;" @onclick="() => Profile.RemoveSkill(skill)"></button>
+                    }
+                </span>
+            }
+        </div>
     </div>
 </div>
 

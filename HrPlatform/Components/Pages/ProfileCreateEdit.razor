@@ -13,50 +13,57 @@
 
 <PageTitle>@(isNew ? "Create Driver Profile" : "Edit Driver Profile")</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0">@(isNew ? "Create Driver Profile" : "Edit Driver Profile")</h2>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0 text-dark">@(isNew ? "Create Driver Profile" : "Edit Driver Profile")</h2>
 </div>
 
 <div>
-    <hr/>
-
     @if (profile is null)
     {
-        <p>Loading...</p>
+        <div class="d-flex align-items-center gap-2 text-muted">
+            <div class="spinner-border spinner-border-sm"></div>
+            Loading...
+        </div>
     }
     else
     {
-
-        <hr/>
-        <div class="row">
+        <div class="row g-4">
             <div class="col-lg-3 mb-4 mb-lg-0">
-                <ul class="nav nav-pills flex-column">
-                    @foreach (var (label, index) in tabs.Select((l, i) => (l, i)))
-                    {
-                        var locked = isNew && index > maxReachedTab;
-                        var completed = isNew && index < maxReachedTab;
+                <div class="card shadow-sm border-0 app-card">
+                    <div class="card-body p-3">
+                        <ul class="nav nav-pills flex-column gap-2">
+                            @foreach (var (label, index) in tabs.Select((l, i) => (l, i)))
+                            {
+                                var locked = isNew && index > maxReachedTab;
+                                var completed = isNew && index < maxReachedTab;
 
-                        <li class="nav-item">
-                            <button type="button"
-                                    class="nav-link text-start w-100 @(activeTab == index ? "active" : "") @(locked ? "disabled" : "")"
-                                    @onclick="() => ActivateTab(index)"
-                                    disabled="@locked"
-                                    title="@(locked ? "Complete previous sections first" : label)">
-                                @if (completed)
-                                {
-                                    <span class="me-1 text-success">&#10003;</span>
-                                }
-
-                                @label
-                            </button>
-                        </li>
-                    }
-                </ul>
+                                <li class="nav-item">
+                                    <button type="button"
+                                            class="nav-link text-start w-100 rounded-pill @(activeTab == index ? "active fw-semibold shadow-sm" : "text-dark") @(locked ? "disabled opacity-50" : "")"
+                                            @onclick="() => ActivateTab(index)"
+                                            disabled="@locked"
+                                            title="@(locked ? "Complete previous sections first" : label)">
+                                        @if (completed)
+                                        {
+                                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                        }
+                                        else if (locked)
+                                        {
+                                            <i class="bi bi-lock-fill text-muted me-2"></i>
+                                        }
+                                        @label
+                                    </button>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
 
                 @if (isNew)
                 {
-                    <div class="small text-muted mt-3">
-                        Complete each section in order. You can freely navigate between sections after saving your profile.
+                    <div class="alert alert-info mt-4 border-0 shadow-sm rounded-3">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <small>Complete each section in order. You can freely navigate between sections after saving your profile.</small>
                     </div>
                 }
             </div>
@@ -64,14 +71,14 @@
             <div class="col-lg-9">
                 <EditForm Model="profile" OnValidSubmit="SaveAsync">
                     <DataAnnotationsValidator/>
-                    <ValidationSummary class="text-danger"/>
+                    <ValidationSummary class="text-danger mb-4"/>
 
-                    <div class="card ">
-                        <div class="card-header">
-                            <h4 class="mb-0">@tabs[activeTab]</h4>
+                    <div class="card shadow-sm border-0 app-card">
+                        <div class="card-header bg-white border-bottom p-4">
+                            <h4 class="mb-0 fw-bold">@tabs[activeTab]</h4>
                         </div>
 
-                                                                        <div class="card-body">
+                        <div class="card-body p-4">
                             <div class="@(activeTab == 0 ? "" : "d-none")">
                                 <HrPlatform.Components.Pages.ProfileShared.ProfilePersonalForm Profile="profile" IsReadOnly="false" />
                             </div>
@@ -94,120 +101,147 @@
                                 <HrPlatform.Components.Pages.ProfileShared.ProfileCertificationsForm Profile="profile" IsReadOnly="false" />
                             </div>
                             <div class="@(activeTab == 7 ? "" : "d-none")">
-                                <div class="alert bg-dark text-info border-info">
-                                    <strong>DOT disclosure:</strong> List all moving violations,
-                                    accidents, and DUI convictions in the past 3 years.
+                                <div class="alert alert-info border-0 shadow-sm rounded-3 mb-4 d-flex align-items-center">
+                                    <i class="bi bi-info-circle-fill fs-4 me-3"></i>
+                                    <div>
+                                        <strong>DOT disclosure:</strong> List all moving violations, accidents, and DUI convictions in the past 3 years.
+                                    </div>
                                 </div>
 
-                                @foreach (var (viol, vi) in profile.ViolationHistory.Select((v,i)=>(v,i)))
+                                @if (profile.ViolationHistory == null || !profile.ViolationHistory.Any())
                                 {
-                                    <div class="card mb-3">
-                                        <div class="card-header d-flex justify-content-between">
-                                            <span>Incident #@(vi + 1)</span>
-                                            <button type="button" class="btn btn-sm btn-outline-danger"
-                                                    @onclick="() => profile.ViolationHistory.Remove(viol)">
-                                                Remove
-                                            </button>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="row g-3">
-                                                <div class="col-md-4">
-                                                    <label class="form-label">Type *</label>
-                                                    <InputSelect class="form-select" @bind-Value="viol.Type">
-                                                        @foreach (var vt in Enum.GetValues<ViolationType>())
-                                                        { <option value="@vt">@vt</option> }
-                                                    </InputSelect>
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <label class="form-label">Date *</label>
-                                                    <InputDate class="form-control" @bind-Value="viol.OccurredDate"/>
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <label class="form-label">At fault?</label>
-                                                    <div class="form-check mt-2">
-                                                        <InputCheckbox class="form-check-input"
-                                                                      @bind-Value="viol.AtFault"/>
-                                                        <label class="form-check-label">Yes, I was at fault</label>
-                                                    </div>
-                                                </div>
-                                                <div class="col-12">
-                                                    <label class="form-label">Description</label>
-                                                    <InputTextArea class="form-control" rows="2"
-                                                                   @bind-Value="viol.Description"/>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label class="form-label">Resolution</label>
-                                                    <InputText class="form-control" @bind-Value="viol.Resolution"
-                                                               placeholder="e.g. Fine paid, license suspended 30 days"/>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    <div class="text-center text-muted py-5 border rounded-3 bg-light mb-4">
+                                        <i class="bi bi-shield-check fs-1 text-success mb-3 d-block"></i>
+                                        <p class="fs-5 mb-0">No safety records or violations reported.</p>
                                     </div>
                                 }
-                                <button type="button" class="btn btn-outline-primary"
+                                else
+                                {
+                                    <div class="row g-4 mb-4">
+                                        @foreach (var (viol, vi) in profile.ViolationHistory.Select((v,i)=>(v,i)))
+                                        {
+                                            <div class="col-12">
+                                                <div class="card shadow-sm border-0 bg-light">
+                                                    <div class="card-header bg-white border-bottom fw-bold text-dark d-flex justify-content-between align-items-center py-3">
+                                                        <span>Incident #@(vi + 1)</span>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                                                                @onclick="() => profile.ViolationHistory.Remove(viol)">
+                                                            <i class="bi bi-trash me-1"></i> Remove
+                                                        </button>
+                                                    </div>
+                                                    <div class="card-body p-4">
+                                                        <div class="row g-3">
+                                                            <div class="col-md-4">
+                                                                <label class="form-label fw-semibold text-secondary small text-uppercase">Type *</label>
+                                                                <InputSelect class="form-select bg-white border-0 shadow-sm" @bind-Value="viol.Type">
+                                                                    @foreach (var vt in Enum.GetValues<ViolationType>())
+                                                                    { <option value="@vt">@vt</option> }
+                                                                </InputSelect>
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <label class="form-label fw-semibold text-secondary small text-uppercase">Date *</label>
+                                                                <InputDate class="form-control bg-white border-0 shadow-sm" @bind-Value="viol.OccurredDate"/>
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <label class="form-label fw-semibold text-secondary small text-uppercase">At fault?</label>
+                                                                <div class="form-check form-switch mt-2">
+                                                                    <InputCheckbox class="form-check-input" @bind-Value="viol.AtFault" id="@($"fault_{vi}")"/>
+                                                                    <label class="form-check-label fw-medium ms-2" for="@($"fault_{vi}")">Yes, I was at fault</label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-12">
+                                                                <label class="form-label fw-semibold text-secondary small text-uppercase">Description</label>
+                                                                <InputTextArea class="form-control bg-white border-0 shadow-sm" rows="2"
+                                                                               @bind-Value="viol.Description"/>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label class="form-label fw-semibold text-secondary small text-uppercase">Resolution</label>
+                                                                <InputText class="form-control bg-white border-0 shadow-sm" @bind-Value="viol.Resolution"
+                                                                           placeholder="e.g. Fine paid, license suspended 30 days"/>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                <button type="button" class="btn btn-outline-primary rounded-pill px-4 fw-medium shadow-sm"
                                         @onclick="AddViolation">
-                                    + Add incident
+                                    <i class="bi bi-plus-circle me-1"></i> Add incident
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    <div class="mt-4 d-flex gap-2 align-items-center flex-wrap">
-                        <button type="button" class="btn btn-outline-secondary" @onclick="CancelEdit">Cancel</button>
+                    <div class="mt-4 d-flex gap-2 align-items-center flex-wrap pt-2">
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" @onclick="CancelEdit">Cancel</button>
 
                         @if (isNew && activeTab > 0)
                         {
-                            <button type="button" class="btn btn-outline-secondary" @onclick="GoPrevious">
-                                &larr; Previous
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4" @onclick="GoPrevious">
+                                <i class="bi bi-arrow-left me-1"></i> Previous
                             </button>
                         }
 
                         @if (isNew && activeTab < tabs.Length - 1)
                         {
-                            <button type="button" class="btn btn-outline-primary" @onclick="GoNext">
-                                Next &rarr;
+                            <button type="button" class="btn btn-primary rounded-pill px-4" @onclick="GoNext">
+                                Next <i class="bi bi-arrow-right ms-1"></i>
                             </button>
                         }
 
                         @if (!isNew || maxReachedTab == tabs.Length - 1)
                         {
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold">
                                 @(isNew ? "Create Profile" : "Save Changes")
                             </button>
                         }
 
                         @if (isNew && maxReachedTab < tabs.Length - 1)
                         {
-                            <small class="text-muted ms-2">Review all @tabs.Length sections to enable Save.</small>
+                            <small class="text-muted ms-2"><i class="bi bi-exclamation-circle me-1"></i> Review all @tabs.Length sections to enable Save.</small>
                         }
                     </div>
 
                     @if (!string.IsNullOrEmpty(successMessage))
                     {
-                        <div class="alert alert-success mt-3">@successMessage</div>
+                        <div class="alert alert-success mt-4 border-0 shadow-sm rounded-3">
+                            <i class="bi bi-check-circle-fill me-2"></i> @successMessage
+                        </div>
                     }
                 </EditForm>
             </div>
-        </div>
+            </div>
+
+
+        <style>
+            .app-card {
+                transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            }
+            .nav-pills .nav-link:hover:not(.active):not(.disabled) {
+                background-color: #f8f9fa;
+            }
+        </style>
 
         @if (showCancelConfirm)
         {
-            <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Discard changes?</h5>
+            <div class="modal show d-block shadow" tabindex="-1" style="background:rgba(0,0,0,.5); backdrop-filter: blur(2px);">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow-lg">
+                        <div class="modal-header bg-danger text-white border-0">
+                            <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i> Discard changes?</h5>
                         </div>
 
-                        <div class="modal-body">
+                        <div class="modal-body p-4 fs-5">
                             You have unsaved changes. Are you sure you want to discard them?
                         </div>
 
-                        <div class="modal-footer">
-                            <button class="btn btn-secondary" @onclick="() => showCancelConfirm = false">
+                        <div class="modal-footer border-0 bg-light">
+                            <button class="btn btn-secondary rounded-pill px-4" @onclick="() => showCancelConfirm = false">
                                 Continue Editing
                             </button>
-                            <button class="btn btn-danger" @onclick="ConfirmCancel">Discard Changes</button>
+                            <button class="btn btn-danger rounded-pill px-4" @onclick="ConfirmCancel">Discard Changes</button>
                         </div>
                     </div>
                 </div>

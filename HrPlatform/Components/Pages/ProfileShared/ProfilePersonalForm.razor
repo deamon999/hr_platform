@@ -1,63 +1,69 @@
 @using HrPlatform.Data.Models
 @using HrPlatform.Data.Enums
 
-<div class="row g-3">
+<div class="row g-4">
     <div class="col-md-4">
-        <label class="form-label">First Name *</label>
-        <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.FirstName"/>
-        <ValidationMessage For="() => Profile.FirstName"/>
+        <label class="form-label fw-semibold text-secondary small text-uppercase">First Name *</label>
+        <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.FirstName"/>
+        <ValidationMessage For="() => Profile.FirstName" class="text-danger small mt-1"/>
     </div>
     <div class="col-md-4">
-        <label class="form-label">Middle Name</label>
-        <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.MiddleName"/>
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Middle Name</label>
+        <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.MiddleName"/>
     </div>
     <div class="col-md-4">
-        <label class="form-label">Last Name *</label>
-        <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.LastName"/>
-        <ValidationMessage For="() => Profile.LastName"/>
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Last Name *</label>
+        <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.LastName"/>
+        <ValidationMessage For="() => Profile.LastName" class="text-danger small mt-1"/>
     </div>
     <div class="col-md-4">
-        <label class="form-label">Date of Birth *</label>
-        <InputDate disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.DateOfBirth"/>
-        <ValidationMessage For="() => Profile.DateOfBirth"/>
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Date of Birth *</label>
+        <InputDate disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.DateOfBirth"/>
+        <ValidationMessage For="() => Profile.DateOfBirth" class="text-danger small mt-1"/>
     </div>
     <div class="col-md-4">
-        <label class="form-label">Phone *</label>
-        <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.PhoneNumber"/>
-        <ValidationMessage For="() => Profile.PhoneNumber"/>
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Phone *</label>
+        <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.PhoneNumber"/>
+        <ValidationMessage For="() => Profile.PhoneNumber" class="text-danger small mt-1"/>
     </div>
     <div class="col-md-4">
-        <label class="form-label">Alternate Phone</label>
-        <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.AlternatePhone"/>
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Alternate Phone</label>
+        <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.AlternatePhone"/>
     </div>
     <div class="col-md-6">
-        <label class="form-label">Email Address *</label>
-        <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.Email"/>
-        <ValidationMessage For="() => Profile.Email"/>
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Email Address *</label>
+        <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.Email"/>
+        <ValidationMessage For="() => Profile.Email" class="text-danger small mt-1"/>
     </div>
     <div class="col-md-6">
-        <label class="form-label">LinkedIn Profile URL</label>
-        <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.LinkedInUrl"/>
+        <label class="form-label fw-semibold text-secondary small text-uppercase">LinkedIn Profile URL</label>
+        <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.LinkedInUrl"/>
+    </div>
+    
+    <div class="col-12 mt-4"><h6 class="fw-bold border-bottom pb-2">Address Information</h6></div>
+    
+    <div class="col-md-4">
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Street Address</label>
+        <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.StreetAddress"/>
     </div>
     <div class="col-md-4">
-        <label class="form-label">Street Address</label>
-        <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.StreetAddress"/>
-    </div>
-    <div class="col-md-4">
-        <label class="form-label">City</label>
-        <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.City"/>
+        <label class="form-label fw-semibold text-secondary small text-uppercase">City</label>
+        <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.City"/>
     </div>
     <div class="col-md-2">
-        <label class="form-label">State</label>
-        <InputText disabled="@IsReadOnly" class="form-control" maxlength="2" @bind-Value="Profile.State"/>
+        <label class="form-label fw-semibold text-secondary small text-uppercase">State</label>
+        <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" maxlength="2" @bind-Value="Profile.State"/>
     </div>
     <div class="col-md-2">
-        <label class="form-label">Zip Code</label>
-        <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.ZipCode"/>
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Zip Code</label>
+        <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.ZipCode"/>
     </div>
+    
+    <div class="col-12 mt-4"><h6 class="fw-bold border-bottom pb-2">Availability</h6></div>
+
     <div class="col-md-4">
-        <label class="form-label">Availability</label>
-        <InputSelect disabled="@IsReadOnly" class="form-select" @bind-Value="Profile.AvailabilityStatus">
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Availability</label>
+        <InputSelect disabled="@IsReadOnly" class="form-select bg-light border-0 shadow-sm" @bind-Value="Profile.AvailabilityStatus">
             @foreach (var status in Enum.GetValues<AvailabilityStatus>())
             {
                 <option value="@status">@status</option>
@@ -65,12 +71,12 @@
         </InputSelect>
     </div>
     <div class="col-md-4">
-        <label class="form-label">Available From</label>
-        <InputDate disabled="@IsReadOnly" class="form-control" @bind-Value="Profile.AvailableFrom"/>
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Available From</label>
+        <InputDate disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.AvailableFrom"/>
     </div>
     <div class="col-12">
-        <label class="form-label">Professional Summary</label>
-        <InputTextArea disabled="@IsReadOnly" class="form-control" rows="4" @bind-Value="Profile.ProfessionalSummary" placeholder="Tell carriers about your experience and what you're looking for..."/>
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Professional Summary</label>
+        <InputTextArea disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" rows="4" @bind-Value="Profile.ProfessionalSummary" placeholder="Tell carriers about your experience and what you're looking for..."/>
     </div>
 </div>
 

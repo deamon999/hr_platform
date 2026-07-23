@@ -76,116 +76,74 @@ else if (!pagedProfiles.Items.Any())
 else
 {
     <div>
-        <div class="table-responsive d-none d-md-block">
-            <table class="table  table-hover align-middle">
-                <thead class="">
-                <tr>
-                    <th>Name</th>
-                    <th>Contact</th>
-                    <th>CDL</th>
-                    <th>Availability</th>
-                    <th>Experience</th>
-                    <th>Applications</th>
-                    <th></th>
-                </tr>
-                </thead>
-                <tbody>
-                @foreach (var p in pagedProfiles.Items)
-                {
-                    <tr>
-                        <td><strong>@p.LastName, @p.FirstName</strong></td>
-                        <td>
-                            @p.Email<br/>
-                            <small class="text-muted">@p.PhoneNumber</small>
-                        </td>
-                        <td>
-                            @if (p.License is not null)
-                            {
-                                <span class="badge bg-dark">CDL-@p.License.Class</span>
-                                <small class="ms-1">@p.License.LicenseNumber</small>
-                            }
-                        </td>
-                        <td>
-                            @{
-                                var (badge, bg) = p.AvailabilityStatus switch
-                                {
-                                    AvailabilityStatus.ActivelyLooking => ("Actively looking", "bg-success"),
-                                    AvailabilityStatus.OpenToOpportunities => ("Open", "bg-info "),
-                                    _ => ("Not available", "")
-                                };
-                            }
-                            <span class="badge @bg">@badge</span>
-                        </td>
-                        <td>@p.YearsOfExperience yrs</td>
-                        <td>@p.User.Applications.Count</td>
-                        <td>
-                            <div class="d-flex gap-1">
-                                <button class="btn btn-sm btn-outline-primary" @onclick="() => GoToView(p.Id)">View</button>
-                                @if (p.UserId == currentUserId)
-                                {
-                                    <button class="btn btn-sm btn-outline-secondary" @onclick="() => GoToEdit(p.Id)">Edit
-                                    </button>
-                                }
-                            </div>
-                        </td>
-                    </tr>
-                }
-                </tbody>
-            </table>
-        </div>
-
-        <div class="d-block d-md-none">
+        <div class="row g-3">
             @foreach (var p in pagedProfiles.Items)
             {
-                <div class="card mb-3 ">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title mb-0"><strong>@p.LastName, @p.FirstName</strong></h5>
-                            @if (p.License is not null)
-                            {
-                                <span class="badge bg-dark">CDL-@p.License.Class</span>
-                            }
-                        </div>
+                <div class="col-12">
+                    <div class="card shadow-sm border-0 bg-white h-100 app-card">
+                        <div class="card-body p-4">
+                            <div class="row g-3">
+                                <div class="col-md-7">
+                                    <div class="d-flex align-items-center mb-2 gap-2">
+                                        <h4 class="fw-bold mb-0 text-dark">@p.LastName, @p.FirstName</h4>
+                                        @if (p.License is not null)
+                                        {
+                                            <span class="badge bg-dark rounded-pill">CDL-@p.License.Class</span>
+                                        }
+                                    </div>
+                                    
+                                    <div class="mb-3 text-secondary small">
+                                        <div class="d-flex align-items-center gap-3 mb-1">
+                                            <span><i class="bi bi-envelope"></i> @p.Email</span>
+                                            @if (!string.IsNullOrEmpty(p.PhoneNumber))
+                                            {
+                                                <span><i class="bi bi-telephone"></i> @p.PhoneNumber</span>
+                                            }
+                                        </div>
+                                        @if (p.License is not null)
+                                        {
+                                            <div class="text-muted"><i class="bi bi-card-heading"></i> License #: @p.License.LicenseNumber</div>
+                                        }
+                                    </div>
 
-                        <div class="card-text text-muted mb-3">
-                            <div class="mb-2">
-                                <div>@p.Email</div>
-                                <div>@p.PhoneNumber</div>
-                            </div>
-
-                            @if (p.License is not null)
-                            {
-                                <div><strong>License #:</strong> @p.License.LicenseNumber</div>
-                            }
-                            <div><strong>Availability:</strong>
-                                @{
-                                    var (badge, bg) = p.AvailabilityStatus switch
+                                    <div class="d-flex flex-wrap gap-2 text-secondary small">
+                                        @{
+                                            var (badge, bg) = p.AvailabilityStatus switch
+                                            {
+                                                AvailabilityStatus.ActivelyLooking => ("Actively looking", "bg-success"),
+                                                AvailabilityStatus.OpenToOpportunities => ("Open", "bg-info"),
+                                                _ => ("Not available", "bg-secondary")
+                                            };
+                                        }
+                                        <span class="badge @bg rounded-pill px-3 py-2 border">@badge</span>
+                                        <span class="badge bg-light text-dark rounded-pill px-3 py-2 border"><i class="bi bi-briefcase me-1"></i> @p.YearsOfExperience yrs exp</span>
+                                        <span class="badge bg-light text-dark rounded-pill px-3 py-2 border"><i class="bi bi-file-earmark-text me-1"></i> @p.User.Applications.Count Apps</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-5 d-flex gap-2 justify-content-md-end align-items-end flex-wrap mt-3 mt-md-0">
+                                    <button class="btn btn-primary px-4" @onclick="() => GoToView(p.Id)">View Profile</button>
+                                    @if (p.UserId == currentUserId)
                                     {
-                                        AvailabilityStatus.ActivelyLooking => ("Actively looking", "bg-success"),
-                                        AvailabilityStatus.OpenToOpportunities => ("Open", "bg-info "),
-                                        _ => ("Not available", "")
-                                    };
-                                }
-                                <span class="badge @bg">@badge</span></div>
-                            <div><strong>Experience:</strong> @p.YearsOfExperience yrs</div>
-                            <div><strong>Applications:</strong> @p.User.Applications.Count</div>
-                        </div>
-
-                        <div class="d-flex gap-2 pt-3 border-top">
-                            <button class="btn btn-sm btn-outline-primary flex-fill" @onclick="() => GoToView(p.Id)">
-                                View
-                            </button>
-                            @if (p.UserId == currentUserId)
-                            {
-                                <button class="btn btn-sm btn-outline-secondary flex-fill" @onclick="() => GoToEdit(p.Id)">
-                                    Edit
-                                </button>
-                            }
+                                        <button class="btn btn-outline-secondary" @onclick="() => GoToEdit(p.Id)">Edit</button>
+                                    }
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             }
         </div>
+
+        <style>
+            .app-card {
+                transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            }
+            .app-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+            }
+        </style>
 
         @if (totalPages > 1)
         {

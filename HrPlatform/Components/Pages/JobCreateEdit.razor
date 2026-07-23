@@ -10,8 +10,11 @@
 
 <PageTitle>@(Id == 0 ? "Post New Job" : "Edit Job")</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0">@(Id == 0 ? "Post New Job" : "Edit Job")</h2>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0 text-dark">@(Id == 0 ? "Post New Job" : "Edit Job")</h2>
+    <a href="/jobs" class="btn btn-outline-secondary rounded-pill px-4">
+        <i class="bi bi-arrow-left me-1"></i> Back to Jobs
+    </a>
 </div>
 
 @if (job is null)
@@ -20,19 +23,34 @@
 }
 else
 {
-    <EditForm Model="job" OnValidSubmit="SaveAsync">
-        <DataAnnotationsValidator/>
-        <ValidationSummary class="text-danger"/>
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm border-0 app-card">
+                <div class="card-body p-4 p-md-5">
+                    <EditForm Model="job" OnValidSubmit="SaveAsync">
+                        <DataAnnotationsValidator/>
+                        <ValidationSummary class="text-danger small mb-4"/>
 
-        <HrPlatform.Components.Pages.JobShared.JobForm Job="job" IsReadOnly="false" Companies="companies" IsCompanySelectionDisabled="isCompanySelectionDisabled" />
+                        <HrPlatform.Components.Pages.JobShared.JobForm Job="job" IsReadOnly="false" Companies="companies" IsCompanySelectionDisabled="isCompanySelectionDisabled" />
 
-        <div class="mt-4 d-flex gap-2">
-            <button type="submit" class="btn btn-primary">@(Id == 0 ? "Post Job" : "Save Changes")</button>
-            <a href="/jobs" class="btn btn-outline-secondary">Cancel</a>
+                        <div class="d-flex gap-2 mt-5 pt-4 border-top border-secondary border-opacity-25 justify-content-end">
+                            <a href="/jobs" class="btn btn-outline-secondary rounded-pill px-4 py-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm">
+                                <i class="bi @(Id == 0 ? "bi-check-circle" : "bi-save") me-1"></i> @(Id == 0 ? "Post Job" : "Save Changes")
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
         </div>
-
-    </EditForm>
+    </div>
 }
+
+<style>
+    .app-card {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+</style>
 
 @code {
     [Parameter] public int Id { get; set; }

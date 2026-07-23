@@ -1,9 +1,11 @@
-﻿namespace HrPlatform.Data.Enums;
+namespace HrPlatform.Data.Enums;
 
 public enum PayPeriod
 {
     Hour,
     Mile,
     Week,
-    Year
+    Year,
+    Month,
+    PercentageOfLoad
 }

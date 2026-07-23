@@ -11,29 +11,29 @@
 
 <PageTitle>Driver Profile</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-    <h1 class="mb-0">Driver Profile</h1>
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <h1 class="mb-0 fw-bold">Driver Profile</h1>
 
     @if (profile is not null)
     {
         <div class="d-flex gap-2">
             @if (isOwner)
             {
-                <button class="btn btn-outline-primary btn-sm"
+                <button class="btn btn-primary px-4 rounded-pill"
                         @onclick="GoToEditProfile">
-                    Edit
+                    <i class="bi bi-pencil me-1"></i> Edit
                 </button>
             }
 
             @if (canDelete)
             {
-                <button class="btn btn-outline-danger btn-sm" @onclick="ConfirmDelete">
-                    Delete
+                <button class="btn btn-outline-danger px-4 rounded-pill" @onclick="ConfirmDelete">
+                    <i class="bi bi-trash me-1"></i> Delete
                 </button>
             }
 
-            <button class="btn btn-outline-secondary btn-sm" @onclick="GoBack">
-                Back
+            <button class="btn btn-outline-secondary px-4 rounded-pill" @onclick="GoBack">
+                <i class="bi bi-arrow-left me-1"></i> Back
             </button>
         </div>
     }
@@ -90,32 +90,36 @@
             <hr/>
         }
 
-        <div class="row">
+        <div class="row g-4">
             <div class="col-lg-3 mb-4 mb-lg-0">
-                <ul class="nav nav-pills flex-column">
-                    @for (var index = 0; index < tabs.Length; index++)
-                    {
-                        var tabIndex = index;
-                        var label = tabs[tabIndex];
+                <div class="card shadow-sm border-0 app-card">
+                    <div class="card-body p-3">
+                        <ul class="nav nav-pills flex-column gap-2">
+                            @for (var index = 0; index < tabs.Length; index++)
+                            {
+                                var tabIndex = index;
+                                var label = tabs[tabIndex];
 
-                        <li class="nav-item">
-                            <button type="button"
-                                    class="nav-link text-start w-100 @(activeTab == tabIndex ? "active" : "")"
-                                    @onclick="() => ActivateTab(tabIndex)">
-                                @label
-                            </button>
-                        </li>
-                    }
-                </ul>
+                                <li class="nav-item">
+                                    <button type="button"
+                                            class="nav-link text-start w-100 rounded-pill @(activeTab == tabIndex ? "active fw-semibold shadow-sm" : "text-dark")"
+                                            @onclick="() => ActivateTab(tabIndex)">
+                                        @label
+                                    </button>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
             </div>
 
             <div class="col-lg-9">
-                <div class="card ">
-                    <div class="card-header">
-                        <h4 class="mb-0">@tabs[activeTab]</h4>
+                <div class="card shadow-sm border-0 app-card">
+                    <div class="card-header bg-white border-bottom p-4">
+                        <h4 class="mb-0 fw-bold">@tabs[activeTab]</h4>
                     </div>
 
-                                        <div class="card-body">
+                    <div class="card-body p-4">
                         <EditForm Model="profile">
                             <div class="@(activeTab == 0 ? "" : "d-none")">
                                 <HrPlatform.Components.Pages.ProfileShared.ProfilePersonalForm Profile="profile" IsReadOnly="true" />
@@ -141,44 +145,55 @@
                             <div class="@(activeTab == 7 ? "" : "d-none")">
                                 @if (profile.ViolationHistory == null || !profile.ViolationHistory.Any())
                                 {
-                                    <p class="text-muted">No safety records or violations reported.</p>
+                                    <div class="text-center text-muted py-5">
+                                        <i class="bi bi-shield-check fs-1 text-success mb-3 d-block"></i>
+                                        <p class="fs-5 mb-0">No safety records or violations reported.</p>
+                                    </div>
                                 }
                                 else
                                 {
-                                    @foreach (var viol in profile.ViolationHistory)
-                                    {
-                                        <div class="card mb-3">
-                                            <div class="card-header">
-                                                <strong>@viol.Type</strong>
-                                            </div>
-                                            <div class="card-body">
-                                                <div class="row g-3">
-                                                    <div class="col-md-6">
-                                                        <span class="text-muted d-block small">Date</span>
-                                                        <span>@viol.OccurredDate.ToString("yyyy-MM-dd")</span>
+                                    <div class="row g-3">
+                                        @foreach (var viol in profile.ViolationHistory)
+                                        {
+                                            <div class="col-12">
+                                                <div class="card shadow-sm border-0 bg-light">
+                                                    <div class="card-header bg-white border-bottom fw-bold text-dark d-flex justify-content-between align-items-center">
+                                                        <span>@viol.Type</span>
+                                                        @if (viol.AtFault)
+                                                        {
+                                                            <span class="badge bg-danger rounded-pill">At Fault</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="badge bg-success rounded-pill">Not At Fault</span>
+                                                        }
                                                     </div>
-                                                    <div class="col-md-6">
-                                                        <span class="text-muted d-block small">At Fault</span>
-                                                        <span>@(viol.AtFault ? "Yes" : "No")</span>
+                                                    <div class="card-body">
+                                                        <div class="row g-3">
+                                                            <div class="col-md-6">
+                                                                <span class="text-muted d-block small mb-1"><i class="bi bi-calendar-event me-1"></i> Date</span>
+                                                                <span class="fw-medium">@viol.OccurredDate.ToString("MMM dd, yyyy")</span>
+                                                            </div>
+                                                            @if (!string.IsNullOrEmpty(viol.Description))
+                                                            {
+                                                                <div class="col-12">
+                                                                    <span class="text-muted d-block small mb-1"><i class="bi bi-file-text me-1"></i> Description</span>
+                                                                    <span>@viol.Description</span>
+                                                                </div>
+                                                            }
+                                                            @if (!string.IsNullOrEmpty(viol.Resolution))
+                                                            {
+                                                                <div class="col-12">
+                                                                    <span class="text-muted d-block small mb-1"><i class="bi bi-check-circle me-1"></i> Resolution</span>
+                                                                    <span>@viol.Resolution</span>
+                                                                </div>
+                                                            }
+                                                        </div>
                                                     </div>
-                                                    @if (!string.IsNullOrEmpty(viol.Description))
-                                                    {
-                                                        <div class="col-12">
-                                                            <span class="text-muted d-block small">Description</span>
-                                                            <span>@viol.Description</span>
-                                                        </div>
-                                                    }
-                                                    @if (!string.IsNullOrEmpty(viol.Resolution))
-                                                    {
-                                                        <div class="col-12">
-                                                            <span class="text-muted d-block small">Resolution</span>
-                                                            <span>@viol.Resolution</span>
-                                                        </div>
-                                                    }
                                                 </div>
                                             </div>
-                                        </div>
-                                    }
+                                        }
+                                    </div>
                                 }
                             </div>
                         </EditForm>
@@ -186,6 +201,15 @@
                 </div>
             </div>
         </div>
+
+        <style>
+            .app-card {
+                transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            }
+            .nav-pills .nav-link:hover:not(.active) {
+                background-color: #f8f9fa;
+            }
+        </style>
     }
 
     @if (showDeleteConfirm && profile is not null)

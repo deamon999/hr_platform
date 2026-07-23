@@ -39,137 +39,83 @@ else
         </div>
     }
 
-    <div class="table-responsive d-none d-md-block">
-        <table class="table  table-hover align-middle">
-            <thead class="">
-            <tr>
-                <th>Contact</th>
-                <th>Role</th>
-                <th>Company</th>
-                <th>Expires</th>
-                <th>Status</th>
-            </tr>
-            </thead>
-            <tbody>
+    <div>
+        <div class="row g-3">
             @foreach (var inv in pagedInvitations)
             {
-                <tr>
-                    <td>
-                        @if (!string.IsNullOrWhiteSpace(inv.Email))
-                        {
-                            <strong>@inv.Email</strong>
-                        }
-                        else
-                        {
-                            <strong>@inv.Phone</strong>
-                        }
+                <div class="col-12">
+                    <div class="card shadow-sm border-0 bg-white h-100 app-card">
+                        <div class="card-body p-4">
+                            <div class="row g-3">
+                                <div class="col-md-7">
+                                    <div class="d-flex align-items-center mb-2 gap-2">
+                                        <h4 class="fw-bold mb-0 text-dark">
+                                            @if (!string.IsNullOrWhiteSpace(inv.Email))
+                                            {
+                                                @inv.Email
+                                            }
+                                            else
+                                            {
+                                                @inv.Phone
+                                            }
+                                        </h4>
+                                        <span class="badge @RoleBadgeClass(inv.Role) rounded-pill px-3 py-1">@inv.Role</span>
+                                    </div>
+                                    
+                                    <div class="mb-3 text-secondary small">
+                                        @if (!string.IsNullOrWhiteSpace(inv.Phone) && !string.IsNullOrWhiteSpace(inv.Email))
+                                        {
+                                            <div class="mb-1"><i class="bi bi-telephone"></i> @inv.Phone</div>
+                                        }
+                                        <div class="d-flex align-items-center gap-3 mb-1">
+                                            <span><i class="bi bi-building"></i> @GetCompanyName(inv.CompanyId)</span>
+                                        </div>
+                                    </div>
 
-                        @if (!string.IsNullOrWhiteSpace(inv.Phone) && !string.IsNullOrWhiteSpace(inv.Email))
-                        {
-                            <br/>
-                            <small class="">@inv.Phone</small>
-                        }
-                    </td>
-                    <td>
-                        <span class="badge @RoleBadgeClass(inv.Role)">
-                            @inv.Role
-                        </span>
-                    </td>
-                    <td>@GetCompanyName(inv.CompanyId)</td>
-                    <td class="text-nowrap @(inv.ExpiresAt < DateTime.UtcNow ? "text-danger" : "")">
-                        @inv.ExpiresAt.ToString("MMM dd, yyyy")
-                    </td>
-                    <td>
-                        @if (inv.IsUsed)
-                        {
-                            <span class="badge bg-success">Used</span>
-                        }
-                        else if (inv.ExpiresAt < DateTime.UtcNow)
-                        {
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="badge ">Expired</span>
-                                <button class="btn btn-sm btn-outline-primary py-0"
-                                        @onclick="() => ResendInvitationAsync(inv)">
-                                    Resend
-                                </button>
-                            </div>
-                        }
-                        else
-                        {
-                            <span class="badge bg-warning ">Pending</span>
-                        }
-                    </td>
-                </tr>
-            }
-            </tbody>
-        </table>
-    </div>
-
-    <div class="d-block d-md-none">
-        @foreach (var inv in pagedInvitations)
-        {
-            <div class="card mb-3  border-0">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                            <h6 class="card-title mb-0 fw-bold">
-                                @if (!string.IsNullOrWhiteSpace(inv.Email))
-                                {
-                                    @inv.Email
-                                }
-                                else
-                                {
-                                    @inv.Phone
-                                }
-                            </h6>
-                            @if (!string.IsNullOrWhiteSpace(inv.Phone) && !string.IsNullOrWhiteSpace(inv.Email))
-                            {
-                                <small class="">@inv.Phone</small>
-                            }
-                        </div>
-                        <div>
-                            @if (inv.IsUsed)
-                            {
-                                <span class="badge bg-success">Used</span>
-                            }
-                            else if (inv.ExpiresAt < DateTime.UtcNow)
-                            {
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="badge ">Expired</span>
-                                    <button class="btn btn-sm btn-outline-primary py-0"
-                                            @onclick="() => ResendInvitationAsync(inv)">
-                                        Resend
-                                    </button>
+                                    <div class="d-flex flex-wrap gap-2 text-secondary small">
+                                        <span class="badge bg-light @(inv.ExpiresAt < DateTime.UtcNow && !inv.IsUsed ? "text-danger border-danger" : "text-dark") rounded-pill px-3 py-2 border"><i class="bi bi-clock-history me-1"></i> Expires: @inv.ExpiresAt.ToString("MMM dd, yyyy")</span>
+                                    </div>
                                 </div>
-                            }
-                            else
-                            {
-                                <span class="badge bg-warning ">Pending</span>
-                            }
-                        </div>
-                    </div>
-
-                    <div class="card-text">
-                        <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
-                            <span class="">Role:</span>
-                            <span class="badge @RoleBadgeClass(inv.Role)">@inv.Role</span>
-                        </div>
-
-                        <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
-                            <span class="">Company:</span>
-                            <span class="text-end text-break ms-2">@GetCompanyName(inv.CompanyId)</span>
-                        </div>
-
-                        <div class="d-flex justify-content-between pt-1">
-                            <span class="">Expires:</span>
-                            <span class="@(inv.ExpiresAt < DateTime.UtcNow ? "text-danger fw-bold" : "")">
-                            @inv.ExpiresAt.ToString("MMM dd, yyyy")
-                        </span>
+                                
+                                <div class="col-md-5 d-flex flex-column gap-2 justify-content-center align-items-md-end mt-3 mt-md-0">
+                                    <div class="mb-2">
+                                        @if (inv.IsUsed)
+                                        {
+                                            <span class="badge bg-success rounded-pill px-3 py-2"><i class="bi bi-check-circle"></i> Used</span>
+                                        }
+                                        else if (inv.ExpiresAt < DateTime.UtcNow)
+                                        {
+                                            <span class="badge bg-secondary rounded-pill px-3 py-2"><i class="bi bi-exclamation-triangle"></i> Expired</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark rounded-pill px-3 py-2"><i class="bi bi-hourglass-split"></i> Pending</span>
+                                        }
+                                    </div>
+                                    
+                                    @if (!inv.IsUsed && inv.ExpiresAt < DateTime.UtcNow)
+                                    {
+                                        <button class="btn btn-outline-primary" @onclick="() => ResendInvitationAsync(inv)">
+                                            <i class="bi bi-arrow-clockwise"></i> Resend Invitation
+                                        </button>
+                                    }
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        }
+            }
+        </div>
+
+        <style>
+            .app-card {
+                transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            }
+            .app-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+            }
+        </style>
     </div>
 
     @if (pagedInvitations.Count == 0 && !string.IsNullOrEmpty(_searchTerm))

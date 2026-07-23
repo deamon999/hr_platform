@@ -23,66 +23,42 @@ else if (!paginationResult.Items.Any())
 }
 else
 {
-    <div class="d-none d-lg-block">
-        <div class="table-responsive">
-            <table class="table  table-hover align-middle">
-                <thead class="">
-                <tr>
-                    <th>Name</th>
-                    <th>Reg #</th>
-                    <th>Registered</th>
-                    <th>Actions</th>
-                </tr>
-                </thead>
-                <tbody>
-                @foreach (var c in paginationResult.Items)
-                {
-                    <tr>
-                        <td><strong>@c.Name</strong></td>
-                        <td>@c.RegistrationNumber</td>
-                        <td>@((c.DateRegistered?.ToString("d") ?? "—"))</td>
-                        <td>
-                            <div class="d-flex gap-1 flex-nowrap">
-                                <button type="button" class="btn btn-sm btn-primary" @onclick="() => GoToView(c.Id)">View</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => GoToEdit(c.Id)">Edit</button>
-                                <button type="button" class="btn btn-sm btn-outline-danger"
-                                        @onclick="async () => ConfirmDelete(c)">Delete
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                }
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <div class="d-block d-lg-none">
+    <div class="row g-3">
         @foreach (var c in paginationResult.Items)
         {
-            var company = c;
-            <div class="card mb-3  border-0">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <h5 class="card-title mb-0 fw-bold">@company.Name</h5>
-                        <div></div>
-                    </div>
-
-                    <div class="mb-3 small">
-                        <strong>Reg #:</strong> @company.RegistrationNumber<br/>
-                        <strong>Registered:</strong> @((company.DateRegistered?.ToString("d") ?? "—"))
-                    </div>
-
-                    <div class="d-flex flex-wrap gap-2 mt-3 pt-3 border-top">
-                        <button type="button" class="btn btn-sm btn-primary flex-grow-1" @onclick="() => GoToView(company.Id)">View</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary flex-grow-1" @onclick="() => GoToEdit(company.Id)">Edit</button>
-                        <button type="button" class="btn btn-sm btn-outline-danger flex-grow-1" @onclick="async () => ConfirmDelete(company)">Delete
-                        </button>
+            <div class="col-12">
+                <div class="card shadow-sm border-0 bg-white h-100 app-card">
+                    <div class="card-body p-4">
+                        <div class="row g-3 align-items-center">
+                            <div class="col-md-7">
+                                <h4 class="fw-bold mb-2 text-dark">@c.Name</h4>
+                                <div class="text-secondary small">
+                                    <span class="me-3"><i class="bi bi-building"></i> Reg #: @c.RegistrationNumber</span>
+                                    <span><i class="bi bi-calendar3"></i> Registered @((c.DateRegistered?.ToString("MMM dd, yyyy") ?? "—"))</span>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-5 d-flex gap-2 justify-content-md-end flex-wrap">
+                                <button type="button" class="btn btn-primary px-4" @onclick="() => GoToView(c.Id)">View</button>
+                                <button type="button" class="btn btn-outline-secondary" @onclick="() => GoToEdit(c.Id)">Edit</button>
+                                <button type="button" class="btn btn-outline-danger" @onclick="async () => ConfirmDelete(c)"><i class="bi bi-trash"></i></button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         }
     </div>
+
+    <style>
+        .app-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .app-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+        }
+    </style>
 
     @if (paginationResult.TotalPages > 1)
     {

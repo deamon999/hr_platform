@@ -28,102 +28,134 @@ else if (job is null)
 }
 else
 {
-    <div class="card mb-4 ">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h4 class="mb-0">Job Information</h4>
-
-            @if (job.IsActive)
-            {
-                <span class="badge bg-success">Active</span>
-            }
-            else
-            {
-                <span class="badge ">Inactive</span>
-            }
-        </div>
-
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label">Job Title</label>
-                    <input class="form-control" value="@Display(job.Title)" disabled/>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Company</label>
-                    <input class="form-control" value="@Display(job.Company?.Name)" disabled/>
-                </div>
-
-                <div class="col-md-5">
-                    <label class="form-label">City</label>
-                    <input class="form-control" value="@Display(job.City)" disabled/>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">State</label>
-                    <input class="form-control" value="@Display(job.State)" disabled/>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Zip Code</label>
-                    <input class="form-control" value="@Display(job.ZipCode)" disabled/>
-                </div>
-
-                <div class="col-12">
-                    <label class="form-label">Job Description</label>
-                    <textarea class="form-control" rows="8" disabled>@Display(job.Description)</textarea>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label">Pay Rate</label>
-                    <input class="form-control" value="@(job.PayRate.HasValue ? $"${job.PayRate.Value:N2}" : "")" disabled/>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Pay Period</label>
-                    <input class="form-control" value="@(job.PayPeriod.HasValue ? $"per {job.PayPeriod.ToString()!.ToLower()}" : "")" disabled/>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Pay Notes</label>
-                    <input class="form-control" value="@Display(job.PayNotes)" disabled/>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label">Required CDL Class</label>
-                    <input class="form-control" value="@(job.RequiredCdlClass.HasValue ? $"CDL-{job.RequiredCdlClass}" : "Any")" disabled/>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Required Trailer Type</label>
-                    <input class="form-control" value="@(job.RequiredTrailerType?.ToString() ?? "Any")" disabled/>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Min. Years Experience</label>
-                    <input class="form-control" value="@(job.MinYearsExperience > 0 ? job.MinYearsExperience.ToString() : "")" disabled/>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Employment Type</label>
-                    <input class="form-control" value="@(job.EmploymentType.HasValue ? job.EmploymentType.Value.GetDescriptionValue() : "Any")"
-                           disabled/>
-                </div>
-
-                <div class="col-12">
-                    <label class="form-label d-block">Required Endorsements</label>
-                    <div class="d-flex flex-wrap gap-3">
-                        @foreach (var end in Enum.GetValues<CdlEndorsement>())
+    <!-- Hero Section -->
+    <div class="card shadow-sm mb-4 border-0 bg-white">
+        <div class="card-body p-4 p-md-5">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-3">
+                <div>
+                    <h1 class="fw-bold mb-2 text-dark">@job.Title</h1>
+                    <h5 class="text-primary mb-3">@(job.Company?.Name ?? "Unknown Company")</h5>
+                    <div class="d-flex flex-wrap gap-3 text-secondary">
+                        <span class="d-flex align-items-center gap-1">
+                            <i class="bi bi-geo-alt"></i> @(job.City != null ? $"{job.City}, {job.State}" : job.State) @job.ZipCode
+                        </span>
+                        <span class="d-flex align-items-center gap-1">
+                            <i class="bi bi-clock"></i> Posted @job.PostedAt.ToLocalTime().ToString("MMM dd, yyyy")
+                        </span>
+                        @if (job.EmploymentType.HasValue)
                         {
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="end_@end"
-                                       checked="@job.RequiredEndorsements.Contains(end)"
-                                       disabled/>
-                                <label class="form-check-label" for="end_@end">@end</label>
-                            </div>
+                            <span class="d-flex align-items-center gap-1">
+                                <i class="bi bi-briefcase"></i> @job.EmploymentType.Value.GetDescriptionValue()
+                            </span>
                         }
                     </div>
                 </div>
-
-                <div class="col-md-6">
-                    <label class="form-label">Posted</label>
-                    <input class="form-control" value="@job.PostedAt.ToLocalTime().ToString("MM/dd/yyyy")" disabled/>
+                <div class="text-md-end bg-light p-3 rounded border">
+                    <div class="text-muted small text-uppercase fw-bold mb-1">Compensation</div>
+                    <div class="fs-4 fw-bold text-success">@FormatCompensation(job)</div>
+                    @if (job.SignOnBonus > 0)
+                    {
+                        <div class="badge bg-success mt-2 fs-6 px-3 py-2">
+                            <i class="bi bi-gift"></i> $@job.SignOnBonus?.ToString("N0") Sign-On Bonus
+                        </div>
+                    }
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label">Updated</label>
-                    <input class="form-control" value="@job.UpdatedAt.ToLocalTime().ToString("MM/dd/yyyy")" disabled/>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Main Content (Left Col) -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-sm border-0 bg-white h-100">
+                <div class="card-body p-4">
+                    <h4 class="fw-bold mb-4 border-bottom pb-2">Job Description</h4>
+                    <div class="text-secondary" style="white-space: pre-wrap; line-height: 1.6;">
+                        @Display(job.Description)
+                    </div>
+                    
+                    @if (!string.IsNullOrWhiteSpace(job.PayNotes))
+                    {
+                        <h5 class="fw-bold mt-5 mb-3">Pay Notes</h5>
+                        <div class="alert alert-info border-0 bg-light text-dark">
+                            @job.PayNotes
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Requirements (Right Col) -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 bg-white mb-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-4 border-bottom pb-2">Requirements</h5>
+                    
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-3 d-flex justify-content-between align-items-center">
+                            <span class="text-secondary">CDL Class</span>
+                            <span class="fw-bold">@(job.RequiredCdlClass.HasValue ? $"Class {job.RequiredCdlClass}" : "Any")</span>
+                        </li>
+                        <li class="mb-3 d-flex justify-content-between align-items-center">
+                            <span class="text-secondary">Experience</span>
+                            <span class="fw-bold">@(job.MinYearsExperience > 0 ? $"{job.MinYearsExperience} Years" : "No minimum")</span>
+                        </li>
+                        @if (job.RequiredTrailerType.HasValue)
+                        {
+                            <li class="mb-3 d-flex justify-content-between align-items-center">
+                                <span class="text-secondary">Trailer Type</span>
+                                <span class="fw-bold">@job.RequiredTrailerType.Value.ToString()</span>
+                            </li>
+                        }
+                        @if (job.HomeTime.HasValue)
+                        {
+                            <li class="mb-3 d-flex justify-content-between align-items-center">
+                                <span class="text-secondary">Home Time</span>
+                                <span class="fw-bold">@job.HomeTime.Value.ToString()</span>
+                            </li>
+                        }
+                    </ul>
+
+                    @if (job.RequiredEndorsements.Any())
+                    {
+                        <div class="mt-4 pt-3 border-top">
+                            <div class="text-secondary mb-2 small fw-bold text-uppercase">Endorsements</div>
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach (var end in job.RequiredEndorsements)
+                                {
+                                    <span class="badge bg-secondary">@end.GetDescriptionValue()</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 bg-white">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-4 border-bottom pb-2">Policies & Perks</h5>
+                    <div class="d-flex flex-wrap gap-2">
+                        @if (job.AllowsPets)
+                        {
+                            <span class="badge bg-info text-dark bg-opacity-25 border border-info rounded-pill px-3 py-2"><i class="bi bi-check2"></i> Pets Allowed</span>
+                        }
+                        @if (job.AllowsRiders)
+                        {
+                            <span class="badge bg-info text-dark bg-opacity-25 border border-info rounded-pill px-3 py-2"><i class="bi bi-check2"></i> Riders Allowed</span>
+                        }
+                        @if (job.IsTeamDriving)
+                        {
+                            <span class="badge bg-primary text-white rounded-pill px-3 py-2"><i class="bi bi-people"></i> Team Driving</span>
+                        }
+                        @if (job.RequiresManualTransmission)
+                        {
+                            <span class="badge bg-warning text-dark rounded-pill px-3 py-2"><i class="bi bi-gear"></i> Manual Transmission Required</span>
+                        }
+                    </div>
+                    @if (!job.AllowsPets && !job.AllowsRiders && !job.IsTeamDriving && !job.RequiresManualTransmission)
+                    {
+                        <div class="text-muted fst-italic">No specific policies listed.</div>
+                    }
                 </div>
             </div>
         </div>
@@ -436,5 +468,20 @@ else
             : string.Empty;
     }
 
+    private static string FormatCompensation(Job? job)
+    {
+        if (job == null || !job.PayRate.HasValue) return "Not specified";
+        
+        return job.PayPeriod switch
+        {
+            PayPeriod.Mile => $"{job.PayRate:N0} CPM (Cents Per Mile)",
+            PayPeriod.PercentageOfLoad => $"{job.PayRate:N0}% of Load",
+            PayPeriod.Hour => $"${job.PayRate:N2} / hr",
+            PayPeriod.Week => $"${job.PayRate:N2} / wk",
+            PayPeriod.Month => $"${job.PayRate:N2} / mo",
+            PayPeriod.Year => $"${job.PayRate:N0} / yr",
+            _ => $"${job.PayRate:N2}"
+        };
+    }
 }
 

@@ -9,73 +9,80 @@
 <div>
     @if (!Profile.Certifications.Any())
     {
-        <div class="text-muted">No certifications available.</div>
+        <div class="text-center text-muted py-5 border rounded-3 bg-light mb-4">
+            <i class="bi bi-award fs-1 text-secondary mb-3 d-block"></i>
+            <p class="fs-5 mb-0">No certifications available.</p>
+        </div>
     }
     else
     {
-        @foreach (var (cert, i) in Profile.Certifications.Select((c, i) => (c, i)))
-        {
-            <div class="card mb-3">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <span>@(string.IsNullOrEmpty(cert.Name) ? $"Certification #{i + 1}" : cert.Name)</span>
-                    @if(!IsReadOnly) {
-                        <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => Profile.Certifications.Remove(cert)">Remove</button>
-                    }
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Certification Name *</label>
-                            <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="cert.Name"/>
+        <div class="row g-4 mb-4">
+            @foreach (var (cert, i) in Profile.Certifications.Select((c, i) => (c, i)))
+            {
+                <div class="col-12">
+                    <div class="card shadow-sm border-0 bg-light">
+                        <div class="card-header bg-white border-bottom fw-bold text-dark d-flex justify-content-between align-items-center py-3">
+                            <span>@(string.IsNullOrEmpty(cert.Name) ? $"Certification #{i + 1}" : cert.Name)</span>
+                            @if(!IsReadOnly) {
+                                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" @onclick="() => Profile.Certifications.Remove(cert)"><i class="bi bi-trash me-1"></i> Remove</button>
+                            }
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Issuing Authority</label>
-                            <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="cert.IssuingAuthority"/>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Certification Number</label>
-                            <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="cert.CertificationNumber"/>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Issued Date</label>
-                            <InputDate disabled="@IsReadOnly" class="form-control" @bind-Value="cert.IssuedDate"/>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Expiration Date</label>
-                            <InputDate disabled="@IsReadOnly" class="form-control" @bind-Value="cert.ExpiryDate"/>
-                            <div class="form-text">Leave blank if it doesn't expire</div>
-                        </div>
-                        <div class="col-12 mt-3">
-                            <label class="form-label fw-bold">Certification Document</label>
-                            @if (cert.HasDocument)
-                            {
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="text-success"><i class="bi bi-check-circle"></i> Document uploaded</span>
-                                    <a class="btn btn-sm btn-outline-primary" href="@(certUrls.GetValueOrDefault(cert.Id))" target="_blank">View</a>
-                                    @if (!IsReadOnly)
+                        <div class="card-body p-4">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-secondary small text-uppercase">Certification Name *</label>
+                                    <InputText disabled="@IsReadOnly" class="form-control bg-white border-0 shadow-sm" @bind-Value="cert.Name"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-secondary small text-uppercase">Issuing Authority</label>
+                                    <InputText disabled="@IsReadOnly" class="form-control bg-white border-0 shadow-sm" @bind-Value="cert.IssuingAuthority"/>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold text-secondary small text-uppercase">Certification Number</label>
+                                    <InputText disabled="@IsReadOnly" class="form-control bg-white border-0 shadow-sm" @bind-Value="cert.CertificationNumber"/>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold text-secondary small text-uppercase">Issued Date</label>
+                                    <InputDate disabled="@IsReadOnly" class="form-control bg-white border-0 shadow-sm" @bind-Value="cert.IssuedDate"/>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold text-secondary small text-uppercase">Expiration Date</label>
+                                    <InputDate disabled="@IsReadOnly" class="form-control bg-white border-0 shadow-sm" @bind-Value="cert.ExpiryDate"/>
+                                    <div class="form-text mt-1"><i class="bi bi-info-circle me-1"></i> Leave blank if it doesn't expire</div>
+                                </div>
+                                <div class="col-12 mt-4 pt-3 border-top border-secondary border-opacity-25">
+                                    <label class="form-label fw-semibold text-secondary small text-uppercase">Certification Document</label>
+                                    @if (cert.HasDocument)
                                     {
-                                        <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => DeleteDocumentAsync(cert)">Remove</button>
+                                        <div class="d-flex align-items-center gap-3 bg-white p-3 rounded-3 shadow-sm">
+                                            <span class="text-success fw-medium"><i class="bi bi-check-circle-fill me-1"></i> Document uploaded</span>
+                                            <a class="btn btn-sm btn-outline-primary rounded-pill px-3 ms-auto" href="@(certUrls.GetValueOrDefault(cert.Id))" target="_blank"><i class="bi bi-eye me-1"></i> View</a>
+                                            @if (!IsReadOnly)
+                                            {
+                                                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" @onclick="() => DeleteDocumentAsync(cert)"><i class="bi bi-trash me-1"></i> Remove</button>
+                                            }
+                                        </div>
+                                    }
+                                    else if (!IsReadOnly)
+                                    {
+                                        <InputFile class="form-control bg-white border-0 shadow-sm" accept=".pdf,.jpg,.jpeg,.png" OnChange="@(e => UploadDocumentAsync(e, cert))"/>
+                                        <small class="text-muted mt-2 d-block"><i class="bi bi-paperclip me-1"></i> PDF, JPG, or PNG. Max 5 MB.</small>
+                                    }
+                                    else
+                                    {
+                                        <div class="text-muted small fst-italic">No document uploaded.</div>
                                     }
                                 </div>
-                            }
-                            else if (!IsReadOnly)
-                            {
-                                <InputFile class="form-control" accept=".pdf,.jpg,.jpeg,.png" OnChange="@(e => UploadDocumentAsync(e, cert))"/>
-                                <small class="text-muted">PDF, JPG, or PNG. Max 5 MB.</small>
-                            }
-                            else
-                            {
-                                <div class="text-muted small">No document uploaded.</div>
-                            }
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        }
+            }
+        </div>
     }
     
     @if(!IsReadOnly) {
-        <button type="button" class="btn btn-outline-primary mt-3" @onclick="AddCertification">+ Add Certification</button>
+        <button type="button" class="btn btn-outline-primary rounded-pill px-4 fw-medium shadow-sm" @onclick="AddCertification"><i class="bi bi-plus-circle me-1"></i> Add Certification</button>
     }
 </div>
 

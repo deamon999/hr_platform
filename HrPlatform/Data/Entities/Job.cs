@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using HrPlatform.Data.Enums;
 
 namespace HrPlatform.Data.Models;
@@ -30,6 +30,13 @@ public class Job
     public List<CdlEndorsement> RequiredEndorsements { get; set; } = [];
     public TrailerType? RequiredTrailerType { get; set; }
     public int MinYearsExperience { get; set; }
+
+    public HomeTimeFrequency? HomeTime { get; set; }
+    public decimal? SignOnBonus { get; set; }
+    public bool RequiresManualTransmission { get; set; }
+    public bool AllowsPets { get; set; }
+    public bool AllowsRiders { get; set; }
+    public bool IsTeamDriving { get; set; }
 
     public bool IsActive { get; set; } = true;
 

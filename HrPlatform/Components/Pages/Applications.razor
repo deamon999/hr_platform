@@ -49,228 +49,141 @@ else
     <div>
         @if (viewMode == "table")
         {
-        <div class="table-responsive d-none d-md-block">
-            <table class="table  table-hover align-middle">
-                <thead class="">
-                <tr>
-                    <th>Job</th>
-                    <th>Driver</th>
-                    <th>Applied</th>
-                    <th>Status</th>
-                    <th>Reviewed</th>
-                    <th>Match Score</th>
-                    <th>Actions</th>
-                </tr>
-                </thead>
-                <tbody>
+            <div class="row g-3">
                 @foreach (var app in pagedApps)
                 {
-                    <tr>
-                        <td>
-                            <strong>@app.Job.Title</strong><br/>
-                            <small class="">@(app.Job.Company?.Name ?? "")</small>
-                        </td>
-                        <td>
-                            @app.User.FirstName @app.User.LastName<br/>
-                            <small class="">@app.User.Email</small>
-                        </td>
-                        <td class="text-nowrap">@app.AppliedAt.ToLocalTime().ToString("MM/dd/yyyy")</td>
-                        <td>
-                            <span class="badge @StatusBadge(app.Status)">@app.Status</span>
-                        </td>
-                        <td class="text-nowrap">
-                            @(app.ReviewedAt.HasValue
-                                ? app.ReviewedAt.Value.ToLocalTime().ToString("MM/dd/yyyy")
-                                : "—")
-                        </td>
-                        <td>
-                            @{
-                                var profile = app.User?.DriverProfile;
-                                if (profile != null)
-                                {
-                                    // Ensure License + EmploymentHistory are loaded
-                                    var s = JobMatchService.ComputeScore(profile, app.Job);
-                                    <span class="badge @JobMatchService.ScoreBadgeClass(s)"
-                                          title="@JobMatchService.ScoreLabel(s)">
-                                        @s%
-                                    </span>
-                                }
-                            }
-                        </td>
-                        <td>
-                            <div class="d-flex gap-1 flex-wrap">
-                                <a href="/applications/@app.Id/chat" class="btn btn-sm btn-outline-primary position-relative">
-                                    <i class="bi bi-chat-dots"></i> Messages
-                                    @if (unreadCounts.TryGetValue(app.Id, out var count) && count > 0)
-                                    {
-                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                            @count
-                                        </span>
-                                    }
-                                </a>
+                    <div class="col-12">
+                        <div class="card shadow-sm border-0 bg-white h-100 app-card">
+                            <div class="card-body p-4">
+                                <div class="row g-3">
+                                    <div class="col-md-7">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h5 class="fw-bold mb-0 text-dark">@app.Job.Title</h5>
+                                        </div>
+                                        <h6 class="text-primary mb-3">@(app.Job.Company?.Name ?? "Unknown Company")</h6>
+                                        
+                                        <div class="mb-3">
+                                            <div class="fw-bold text-dark"><i class="bi bi-person"></i> @app.User.FirstName @app.User.LastName</div>
+                                            <div class="text-secondary small">@app.User.Email</div>
+                                        </div>
 
-                                @if (isManager)
-                                {
-                                    <a href="/profiles/@app.User.DriverProfile.Id"
-                                       class="btn btn-sm btn-outline-secondary">View Profile</a>
-
-                                    @if (reviewing != app.Id)
-                                    {
-                                        <button class="btn btn-sm btn-outline-info"
-                                                @onclick="() => BeginReview(app)">
-                                            Change Status
-                                        </button>
-                                    }
-                                    else
-                                    {
-                                        <select class="form-select form-select-sm w-auto" @bind="reviewStatus">
-                                            @foreach (var s in Enum.GetValues<ApplicationStatus>())
+                                        <div class="d-flex flex-wrap gap-2 text-secondary small">
+                                            <span class="badge @StatusBadge(app.Status) rounded-pill px-3 py-2 border">@app.Status</span>
+                                            <span class="d-flex align-items-center"><i class="bi bi-calendar3 me-1"></i> Applied @app.AppliedAt.ToLocalTime().ToString("MMM dd, yyyy")</span>
+                                            @if (app.ReviewedAt.HasValue)
                                             {
-                                                <option value="@s">@s</option>
+                                                <span class="d-flex align-items-center"><i class="bi bi-eye me-1"></i> Reviewed @app.ReviewedAt.Value.ToLocalTime().ToString("MMM dd, yyyy")</span>
                                             }
-                                        </select>
-                                        <input type="text" class="form-control form-control-sm"
-                                               placeholder="Notes (optional)"
-                                               @bind="reviewNotes" style="width:160px"/>
-                                        <button class="btn btn-sm btn-primary" @onclick="SaveReviewAsync">Save</button>
-                                        <button class="btn btn-sm btn-secondary" @onclick="() => reviewing = null">×</button>
-                                    }
-                                }
-
-                                @if (isDriver)
-                                {
-                                    <button type="button"
-                                            class="btn btn-sm btn-outline-danger"
-                                            @onclick="() => ConfirmWithdraw(app)">
-                                        Withdraw Application
-                                    </button>
-                                }
-                            </div>
-                        </td>
-                    </tr>
-                }
-                </tbody>
-            </table>
-        </div>
-
-        <div class="d-block d-md-none">
-            @foreach (var app in pagedApps)
-            {
-                <div class="card mb-3 ">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-1">
-                            <h5 class="card-title mb-0"><strong>@app.Job.Title</strong></h5>
-                            <span class="badge @StatusBadge(app.Status)">@app.Status</span>
-                        </div>
-                        <div class=" small mb-3">@(app.Job.Company?.Name ?? "")</div>
-
-                        <div class="row mb-3">
-                            <div class="col-12 mb-2">
-                                <strong>Driver:</strong> <br/>
-                                @app.User.FirstName @app.User.LastName <br/>
-                                <small>@app.User.Email</small>
-                            </div>
-                            <div class="col-6">
-                                <strong>Applied:</strong><br/>
-                                @app.AppliedAt.ToLocalTime().ToString("MM/dd/yyyy")
-                            </div>
-                            <div class="col-3">
-                                <strong>Reviewed:</strong><br/>
-                                @(app.ReviewedAt.HasValue ? app.ReviewedAt.Value.ToLocalTime().ToString("MM/dd/yyyy") : "—")
-                            </div>
-                            <div class="col-3">
-                                <strong>Match Score:</strong><br/>
-                                @{
-                                    var profile = app.User?.DriverProfile;
-                                    if (profile != null)
-                                    {
-                                        // Ensure License + EmploymentHistory are loaded
-                                        var s = JobMatchService.ComputeScore(profile, app.Job);
-                                        <span class="badge @JobMatchService.ScoreBadgeClass(s)"
-                                              title="@JobMatchService.ScoreLabel(s)">
-                                            @s%
-                                        </span>
-                                    }
-                                }
-                            </div>
-                        </div>
-
-                        <div class="d-flex flex-column gap-2 pt-3 border-top">
-                            <a href="/applications/@app.Id/chat" class="btn btn-sm btn-outline-primary w-100 position-relative">
-                                <i class="bi bi-chat-dots"></i> Messages
-                                @if (unreadCounts.TryGetValue(app.Id, out var count2) && count2 > 0)
-                                {
-                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                        @count2
-                                    </span>
-                                }
-                            </a>
-
-                            @if (isManager)
-                            {
-                                <a href="/profiles/@app.User.DriverProfile.Id" class="btn btn-sm btn-outline-secondary w-100">
-                                    View Profile
-                                </a>
-
-                                @if (reviewing != app.Id)
-                                {
-                                    <button class="btn btn-sm btn-outline-info w-100" @onclick="() => BeginReview(app)">
-                                        Change Status
-                                    </button>
-                                }
-                                else
-                                {
-                                    <div class="p-2 border rounded  d-flex flex-column gap-2 mt-2">
-                                        <label class="small fw-bold mb-0">Update Status</label>
-                                        <select class="form-select form-select-sm" @bind="reviewStatus">
-                                            @foreach (var s in Enum.GetValues<ApplicationStatus>())
-                                            {
-                                                <option value="@s">@s</option>
-                                            }
-                                        </select>
-                                        <input type="text" class="form-control form-control-sm" placeholder="Notes (optional)" @bind="reviewNotes"/>
-                                        <div class="d-flex gap-2 mt-1">
-                                            <button class="btn btn-sm btn-primary flex-fill" @onclick="SaveReviewAsync">Save</button>
-                                            <button class="btn btn-sm btn-secondary flex-fill" @onclick="() => reviewing = null">Cancel</button>
                                         </div>
                                     </div>
-                                }
-                            }
+                                    
+                                    <div class="col-md-5 d-flex flex-column justify-content-between">
+                                        <div class="text-md-end mb-3">
+                                            <div class="text-muted small text-uppercase fw-bold mb-1">Match Score</div>
+                                            @{
+                                                var profile = app.User?.DriverProfile;
+                                                if (profile != null)
+                                                {
+                                                    var s = JobMatchService.ComputeScore(profile, app.Job);
+                                                    <span class="badge @JobMatchService.ScoreBadgeClass(s) rounded-pill px-3 py-2 fs-6 border" title="@JobMatchService.ScoreLabel(s)">
+                                                        @s% Match
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted small">Profile Incomplete</span>
+                                                }
+                                            }
+                                        </div>
+                                        
+                                        <div class="d-flex gap-2 justify-content-md-end flex-wrap mt-auto">
+                                            <a href="/applications/@app.Id/chat" class="btn btn-primary position-relative">
+                                                <i class="bi bi-chat-dots"></i> Messages
+                                                @if (unreadCounts.TryGetValue(app.Id, out var count) && count > 0)
+                                                {
+                                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light">
+                                                        @count
+                                                    </span>
+                                                }
+                                            </a>
 
-                            @if (isDriver)
-                            {
-                                <button type="button" class="btn btn-sm btn-outline-danger w-100" @onclick="() => ConfirmWithdraw(app)">
-                                    Withdraw Application
-                                </button>
-                            }
+                                            @if (isManager)
+                                            {
+                                                <a href="/profiles/@app.User.DriverProfile?.Id" class="btn btn-outline-secondary">
+                                                    Profile
+                                                </a>
+
+                                                @if (reviewing != app.Id)
+                                                {
+                                                    <button class="btn btn-outline-info" @onclick="() => BeginReview(app)">
+                                                        Update Status
+                                                    </button>
+                                                }
+                                                else
+                                                {
+                                                    <div class="d-flex flex-column gap-2 p-2 border rounded shadow-sm bg-light w-100 mt-2 mt-md-0 position-absolute" style="max-width: 300px; z-index: 10; right: 0;">
+                                                        <select class="form-select form-select-sm" @bind="reviewStatus">
+                                                            @foreach (var s in Enum.GetValues<ApplicationStatus>())
+                                                            {
+                                                                <option value="@s">@s</option>
+                                                            }
+                                                        </select>
+                                                        <input type="text" class="form-control form-control-sm" placeholder="Notes (optional)" @bind="reviewNotes"/>
+                                                        <div class="d-flex gap-1">
+                                                            <button class="btn btn-sm btn-primary flex-fill" @onclick="SaveReviewAsync">Save</button>
+                                                            <button class="btn btn-sm btn-secondary" @onclick="() => reviewing = null"><i class="bi bi-x"></i></button>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            }
+
+                                            @if (isDriver)
+                                            {
+                                                <button type="button" class="btn btn-outline-danger" @onclick="() => ConfirmWithdraw(app)">
+                                                    Withdraw
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            }
-        </div>
+                }
+            </div>
 
-        @if (totalPages > 1)
-        {
-            <nav aria-label="Application list pagination" class="mt-4">
-                <ul class="pagination justify-content-center">
-                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                        <button class="page-link" @onclick="() => ChangePage(currentPage - 1)" tabindex="-1">Previous</button>
-                    </li>
+            <style>
+                .app-card {
+                    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+                }
+                .app-card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+                }
+            </style>
 
-                    @for (var i = 1; i <= totalPages; i++)
-                    {
-                        var pageIndex = i;
-                        <li class="page-item @(currentPage == pageIndex ? "active" : "")">
-                            <button class="page-link" @onclick="() => ChangePage(pageIndex)">@pageIndex</button>
+            @if (totalPages > 1)
+            {
+                <nav aria-label="Application list pagination" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                            <button class="page-link" @onclick="() => ChangePage(currentPage - 1)" tabindex="-1">Previous</button>
                         </li>
-                    }
 
-                    <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                        <button class="page-link" @onclick="() => ChangePage(currentPage + 1)">Next</button>
-                    </li>
-                </ul>
-            </nav>
-        }
+                        @for (var i = 1; i <= totalPages; i++)
+                        {
+                            var pageIndex = i;
+                            <li class="page-item @(currentPage == pageIndex ? "active" : "")">
+                                <button class="page-link" @onclick="() => ChangePage(pageIndex)">@pageIndex</button>
+                            </li>
+                        }
+
+                        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                            <button class="page-link" @onclick="() => ChangePage(currentPage + 1)">Next</button>
+                        </li>
+                    </ul>
+                </nav>
+            }
         }
         else if (viewMode == "kanban" && pagedApps is not null)
         {
@@ -282,7 +195,7 @@ else
                     <div class="col-md-3">
                         <div class="card h-100 border-0 bg-light">
                             <div class="card-header d-flex justify-content-between bg-transparent border-0 pb-0">
-                                <span class="badge @StatusBadge(col) w-100 text-start py-2 fs-6 shadow-sm">
+                                <span class="badge @StatusBadge(col) rounded-pill w-100 text-start py-2 fs-6 shadow-sm border border-light text-dark bg-opacity-25">
                                     @col (@colApps.Count)
                                 </span>
                             </div>

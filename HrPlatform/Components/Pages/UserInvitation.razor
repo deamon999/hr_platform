@@ -16,18 +16,17 @@
 <PageTitle>Send Invitation</PageTitle>
 
 <div class="container-fluid px-0">
-    <div class="d-flex justify-content-between align-items-center mb-4" @onclick="GoToInvitations">
-        <h3 class="mb-0">Send Invitation</h3>
-        <a class="btn btn-outline-secondary btn-sm">
-            ← Back to Invitations
-        </a>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0 text-dark">Send Invitation</h2>
+        <button class="btn btn-outline-secondary rounded-pill px-4" @onclick="GoToInvitations">
+            <i class="bi bi-arrow-left me-1"></i> Back to Invitations
+        </button>
     </div>
 
-    <div class="row g-4">
-
-        <div class="col-lg-5">
-            <div class="card ">
-                <div class="card-body">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="card shadow-sm border-0 app-card">
+                <div class="card-body p-4 p-md-5">
 
                     @if (!string.IsNullOrEmpty(_successMessage))
                     {
@@ -51,81 +50,77 @@
                         <DataAnnotationsValidator/>
                         <ValidationSummary class="text-danger"/>
 
-                        <div class="mb-3">
-                            <label class="form-label">Contact Method</label>
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold text-secondary small text-uppercase">Contact Method</label>
+                            
+                            <div class="d-flex gap-3 mt-2">
+                                <InputRadioGroup @bind-Value="_model.ContactMethod" Name="contactMethod">
+                                    <div class="form-check form-check-inline">
+                                        <InputRadio class="form-check-input" Value="@ContactMethod.Email" id="contactEmail"/>
+                                        <label class="form-check-label fw-medium ms-1" for="contactEmail">Email</label>
+                                    </div>
 
-                            <InputRadioGroup @bind-Value="_model.ContactMethod" Name="contactMethod">
-                                <div class="form-check form-check-inline">
-                                    <InputRadio class="form-check-input" Value="@ContactMethod.Email"
-                                                id="contactEmail"/>
-                                    <label class="form-check-label" for="contactEmail">Email</label>
-                                </div>
-
-                                <div class="form-check form-check-inline">
-                                    <InputRadio class="form-check-input" Value="@ContactMethod.Phone"
-                                                id="contactPhone"/>
-                                    <label class="form-check-label" for="contactPhone">Phone</label>
-                                </div>
-                            </InputRadioGroup>
+                                    <div class="form-check form-check-inline">
+                                        <InputRadio class="form-check-input" Value="@ContactMethod.Phone" id="contactPhone"/>
+                                        <label class="form-check-label fw-medium ms-1" for="contactPhone">Phone</label>
+                                    </div>
+                                </InputRadioGroup>
+                            </div>
                         </div>
-
 
                         @if (_model.ContactMethod == ContactMethod.Phone)
                         {
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold">Phone Number</label>
-                                <InputText class="form-control" @bind-Value="_model.Phone" placeholder="+1234567890"/>
-                                <ValidationMessage For="() => _model.Phone" class="text-danger"/>
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold text-secondary small text-uppercase">Phone Number</label>
+                                <InputText class="form-control form-control-lg bg-light border-0" @bind-Value="_model.Phone" placeholder="+1234567890"/>
+                                <ValidationMessage For="() => _model.Phone" class="text-danger small mt-1"/>
                             </div>
                         }
                         else
                         {
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold">Email address</label>
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold text-secondary small text-uppercase">Email address</label>
                                 <InputText @bind-Value="_model.Email"
-                                           class="form-control"
+                                           class="form-control form-control-lg bg-light border-0"
                                            placeholder="user@example.com"/>
-                                <ValidationMessage For="() => _model.Email" class="text-danger"/>
+                                <ValidationMessage For="() => _model.Email" class="text-danger small mt-1"/>
                             </div>
                         }
 
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Role</label>
-                            <InputSelect @bind-Value="_model.Role" class="form-select">
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold text-secondary small text-uppercase">Role</label>
+                            <InputSelect @bind-Value="_model.Role" class="form-select form-select-lg bg-light border-0">
                                 <option value="">-- Select a role --</option>
                                 @foreach (var role in _roles)
                                 {
                                     <option value="@role">@role</option>
                                 }
                             </InputSelect>
-                            <ValidationMessage For="() => _model.Role" class="text-danger"/>
+                            <ValidationMessage For="() => _model.Role" class="text-danger small mt-1"/>
                         </div>
 
                         @if (_model.Role == "Manager")
                         {
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold">Company ID</label>
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold text-secondary small text-uppercase">Company</label>
                                 <InputSelect @bind-Value="_model.CompanyId"
-                                             class="form-select">
+                                             class="form-select form-select-lg bg-light border-0">
                                     <option value="">-- Select a company --</option>
                                     @foreach (var company in _companies)
                                     {
                                         <option value="@company.Id">@company.Name</option>
                                     }
                                 </InputSelect>
-                                <div class="form-text">
-                                    This will be stored on the user's profile automatically.
-                                </div>
-                                <ValidationMessage For="() => _model.CompanyId" class="text-danger"/>
+                                <div class="form-text mt-2"><i class="bi bi-info-circle me-1"></i> This will be stored on the user's profile automatically.</div>
+                                <ValidationMessage For="() => _model.CompanyId" class="text-danger small mt-1"/>
                             </div>
                         }
 
-                        <div class="d-grid mt-4">
-                            <button type="submit" class="btn btn-primary" disabled="@_sending">
+                        <div class="d-grid mt-5">
+                            <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold" disabled="@_sending">
                                 @if (_sending)
                                 {
-                                    <span class="spinner-border spinner-border-sm me-2"
-                                          role="status" aria-hidden="true"></span>
+                                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                                 }
                                 Send Invitation
                             </button>
@@ -136,6 +131,12 @@
         </div>
     </div>
 </div>
+
+<style>
+    .app-card {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+</style>
 
 @code {
     [Parameter] public int? Id { get; set; }

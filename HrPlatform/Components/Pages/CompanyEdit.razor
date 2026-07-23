@@ -12,105 +12,134 @@
 
 <PageTitle>@Title</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0">@Title</h2>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0 text-dark">@Title</h2>
+    @if (isView)
+    {
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-primary rounded-pill px-4" @onclick="() => GoToEdit(company.Id)"><i class="bi bi-pencil me-1"></i> Edit</button>
+            <button type="button" class="btn btn-outline-secondary rounded-pill px-4" @onclick="Cancel"><i class="bi bi-arrow-left me-1"></i> Back</button>
+        </div>
+    }
 </div>
 
 @if (company is null)
 {
-    <p>Loading...</p>
+    <div class="d-flex align-items-center gap-2 text-muted">
+        <div class="spinner-border spinner-border-sm"></div>
+        Loading...
+    </div>
 }
 else
 {
-    <EditForm Model="company" OnValidSubmit="SaveAsync">
-        <DataAnnotationsValidator/>
-        <ValidationSummary/>
+    <div class="card shadow-sm border-0 app-card mb-4">
+        <div class="card-body p-4">
+            <EditForm Model="company" OnValidSubmit="SaveAsync">
+                <DataAnnotationsValidator/>
+                <ValidationSummary class="text-danger mb-4"/>
 
-        <div class="mb-3">
-            <label class="form-label">Name *</label>
-            <InputText class="form-control" @bind-Value="company.Name" disabled="@isView"/>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Registration #</label>
-            <InputText class="form-control" @bind-Value="company.RegistrationNumber" disabled="@isView"/>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Date Registered</label>
-            <InputDate class="form-control" @bind-Value="company.DateRegistered" disabled="@isView"/>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Address</label>
-            <InputText class="form-control" @bind-Value="company.Address" disabled="@isView"/>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Description</label>
-            <InputTextArea class="form-control" @bind-Value="company.Description" disabled="@isView" rows="3"/>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Website URL</label>
-            <InputText class="form-control" @bind-Value="company.WebsiteUrl" disabled="@isView"/>
-        </div>
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label class="form-label">Fleet Size</label>
-                <InputNumber class="form-control" @bind-Value="company.FleetSize" disabled="@isView"/>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label class="form-label">Home Time Frequency</label>
-                <InputSelect class="form-select" @bind-Value="company.HomeTime" disabled="@isView">
-                    <option value="">-- Select --</option>
-                    @foreach (var ht in Enum.GetValues<HrPlatform.Data.Enums.HomeTimeFrequency>())
-                    {
-                        <option value="@ht">@ht</option>
-                    }
-                </InputSelect>
-            </div>
-        </div>
-        <div class="row mb-3">
-            <div class="col-md-3">
-                <div class="form-check">
-                    <InputCheckbox class="form-check-input" @bind-Value="company.PaidCdlTraining" disabled="@isView" id="paidTraining" />
-                    <label class="form-check-label" for="paidTraining">Paid CDL Training</label>
+                <div class="row g-4 mb-4">
+                    <div class="col-md-12">
+                        <label class="form-label fw-semibold text-secondary small text-uppercase">Company Name *</label>
+                        <InputText class="form-control form-control-lg bg-light border-0" @bind-Value="company.Name" disabled="@isView"/>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold text-secondary small text-uppercase">Registration #</label>
+                        <InputText class="form-control bg-light border-0" @bind-Value="company.RegistrationNumber" disabled="@isView"/>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold text-secondary small text-uppercase">Date Registered</label>
+                        <InputDate class="form-control bg-light border-0" @bind-Value="company.DateRegistered" disabled="@isView"/>
+                    </div>
+                    
+                    <div class="col-12">
+                        <label class="form-label fw-semibold text-secondary small text-uppercase">Address</label>
+                        <InputText class="form-control bg-light border-0" @bind-Value="company.Address" disabled="@isView"/>
+                    </div>
+                    
+                    <div class="col-12">
+                        <label class="form-label fw-semibold text-secondary small text-uppercase">Description</label>
+                        <InputTextArea class="form-control bg-light border-0" @bind-Value="company.Description" disabled="@isView" rows="3"/>
+                    </div>
+                    
+                    <div class="col-12">
+                        <label class="form-label fw-semibold text-secondary small text-uppercase">Website URL</label>
+                        <InputText class="form-control bg-light border-0" @bind-Value="company.WebsiteUrl" disabled="@isView"/>
+                    </div>
                 </div>
-            </div>
-            <div class="col-md-3">
-                <div class="form-check">
-                    <InputCheckbox class="form-check-input" @bind-Value="company.SignOnBonus" disabled="@isView" id="signOnBonus" />
-                    <label class="form-check-label" for="signOnBonus">Sign-On Bonus</label>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="form-check">
-                    <InputCheckbox class="form-check-input" @bind-Value="company.BenefitsOffered" disabled="@isView" id="benefits" />
-                    <label class="form-check-label" for="benefits">Benefits Offered</label>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="form-check">
-                    <InputCheckbox class="form-check-input" @bind-Value="company.HiringNewGrads" disabled="@isView" id="newGrads" />
-                    <label class="form-check-label" for="newGrads">Hiring New Grads</label>
-                </div>
-            </div>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Benefits Summary</label>
-            <InputTextArea class="form-control" @bind-Value="company.BenefitsSummary" disabled="@isView" rows="2"/>
-        </div>
 
-        <div class="d-flex gap-2">
-            @if (isView)
-            {
-                <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => GoToEdit(company.Id)">Edit</button>
-                <button type="button" class="btn btn-secondary" @onclick="Cancel">Back</button>
-            }
-            else
-            {
-                <button type="submit" class="btn btn-primary">@(isNew ? "Create" : "Save")</button>
-                <button type="button" class="btn btn-outline-secondary" @onclick="Cancel">Cancel</button>
-            }
+                <hr class="my-4 text-muted opacity-25" />
+                <h5 class="fw-bold mb-3">Trucking & Benefits</h5>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold text-secondary small text-uppercase">Fleet Size</label>
+                        <InputNumber class="form-control bg-light border-0" @bind-Value="company.FleetSize" disabled="@isView"/>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold text-secondary small text-uppercase">Home Time Frequency</label>
+                        <InputSelect class="form-select bg-light border-0" @bind-Value="company.HomeTime" disabled="@isView">
+                            <option value="">-- Select --</option>
+                            @foreach (var ht in Enum.GetValues<HrPlatform.Data.Enums.HomeTimeFrequency>())
+                            {
+                                <option value="@ht">@ht</option>
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+                
+                <div class="row g-4 mb-4">
+                    <div class="col-md-3">
+                        <div class="form-check form-switch mt-1">
+                            <InputCheckbox class="form-check-input" @bind-Value="company.PaidCdlTraining" disabled="@isView" id="paidTraining" />
+                            <label class="form-check-label fw-medium ms-2" for="paidTraining">Paid CDL Training</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-check form-switch mt-1">
+                            <InputCheckbox class="form-check-input" @bind-Value="company.SignOnBonus" disabled="@isView" id="signOnBonus" />
+                            <label class="form-check-label fw-medium ms-2" for="signOnBonus">Sign-On Bonus</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-check form-switch mt-1">
+                            <InputCheckbox class="form-check-input" @bind-Value="company.BenefitsOffered" disabled="@isView" id="benefits" />
+                            <label class="form-check-label fw-medium ms-2" for="benefits">Benefits Offered</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-check form-switch mt-1">
+                            <InputCheckbox class="form-check-input" @bind-Value="company.HiringNewGrads" disabled="@isView" id="newGrads" />
+                            <label class="form-check-label fw-medium ms-2" for="newGrads">Hiring New Grads</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="form-label fw-semibold text-secondary small text-uppercase">Benefits Summary</label>
+                    <InputTextArea class="form-control bg-light border-0" @bind-Value="company.BenefitsSummary" disabled="@isView" rows="2"/>
+                </div>
+
+                @if (!isView)
+                {
+                    <div class="d-flex gap-2 pt-3 border-top border-secondary">
+                        <button type="submit" class="btn btn-primary px-5 py-2 fw-bold rounded-pill">
+                            @(isNew ? "Create Company" : "Save Changes")
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary px-4 py-2 rounded-pill" @onclick="Cancel">Cancel</button>
+                    </div>
+                }
+            </EditForm>
         </div>
-    </EditForm>
+    </div>
 }
+
+<style>
+    .app-card {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+</style>
 
 @code {
     [Parameter] public int Id { get; set; }

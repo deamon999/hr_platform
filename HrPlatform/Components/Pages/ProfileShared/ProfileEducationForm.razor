@@ -4,64 +4,71 @@
 <div>
     @if (!Profile.EducationHistory.Any())
     {
-        <div class="text-muted">No education history available.</div>
+        <div class="text-center text-muted py-5 border rounded-3 bg-light mb-4">
+            <i class="bi bi-mortarboard fs-1 text-secondary mb-3 d-block"></i>
+            <p class="fs-5 mb-0">No education history available.</p>
+        </div>
     }
     else
     {
-        @foreach (var (edu, i) in Profile.EducationHistory.Select((e, i) => (e, i)))
-        {
-            <div class="card mb-3">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <span>@(string.IsNullOrEmpty(edu.InstitutionName) ? $"Institution #{i + 1}" : edu.InstitutionName)</span>
-                    @if(!IsReadOnly) {
-                        <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => Profile.EducationHistory.Remove(edu)">Remove</button>
-                    }
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Institution Name *</label>
-                            <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="edu.InstitutionName"/>
+        <div class="row g-4 mb-4">
+            @foreach (var (edu, i) in Profile.EducationHistory.Select((e, i) => (e, i)))
+            {
+                <div class="col-12">
+                    <div class="card shadow-sm border-0 bg-light">
+                        <div class="card-header bg-white border-bottom fw-bold text-dark d-flex justify-content-between align-items-center py-3">
+                            <span>@(string.IsNullOrEmpty(edu.InstitutionName) ? $"Institution #{i + 1}" : edu.InstitutionName)</span>
+                            @if(!IsReadOnly) {
+                                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" @onclick="() => Profile.EducationHistory.Remove(edu)"><i class="bi bi-trash me-1"></i> Remove</button>
+                            }
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Education Level *</label>
-                            <InputSelect disabled="@IsReadOnly" class="form-select" @bind-Value="edu.Level">
-                                @foreach (var level in Enum.GetValues<EducationLevel>())
-                                {
-                                    <option value="@level">@level</option>
-                                }
-                            </InputSelect>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Field of Study</label>
-                            <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="edu.FieldOfStudy"/>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">City</label>
-                            <InputText disabled="@IsReadOnly" class="form-control" @bind-Value="edu.City"/>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">State</label>
-                            <InputText disabled="@IsReadOnly" class="form-control" maxlength="2" @bind-Value="edu.State"/>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Graduation Date</label>
-                            <InputDate disabled="@IsReadOnly" class="form-control" @bind-Value="edu.GraduationDate"/>
-                        </div>
-                        <div class="col-md-8 d-flex align-items-end">
-                            <div class="form-check mb-2">
-                                <input type="checkbox" disabled="@IsReadOnly" class="form-check-input" id="grad_@i" @bind="edu.Graduated"/>
-                                <label class="form-check-label" for="grad_@i">Graduated</label>
+                        <div class="card-body p-4">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-secondary small text-uppercase">Institution Name *</label>
+                                    <InputText disabled="@IsReadOnly" class="form-control bg-white border-0 shadow-sm" @bind-Value="edu.InstitutionName"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-secondary small text-uppercase">Education Level *</label>
+                                    <InputSelect disabled="@IsReadOnly" class="form-select bg-white border-0 shadow-sm" @bind-Value="edu.Level">
+                                        @foreach (var level in Enum.GetValues<EducationLevel>())
+                                        {
+                                            <option value="@level">@level</option>
+                                        }
+                                    </InputSelect>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-secondary small text-uppercase">Field of Study</label>
+                                    <InputText disabled="@IsReadOnly" class="form-control bg-white border-0 shadow-sm" @bind-Value="edu.FieldOfStudy"/>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-semibold text-secondary small text-uppercase">City</label>
+                                    <InputText disabled="@IsReadOnly" class="form-control bg-white border-0 shadow-sm" @bind-Value="edu.City"/>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-semibold text-secondary small text-uppercase">State</label>
+                                    <InputText disabled="@IsReadOnly" class="form-control bg-white border-0 shadow-sm" maxlength="2" @bind-Value="edu.State"/>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold text-secondary small text-uppercase">Graduation Date</label>
+                                    <InputDate disabled="@IsReadOnly" class="form-control bg-white border-0 shadow-sm" @bind-Value="edu.GraduationDate"/>
+                                </div>
+                                <div class="col-md-8 d-flex align-items-end">
+                                    <div class="form-check form-switch mb-2 ms-2">
+                                        <input type="checkbox" disabled="@IsReadOnly" class="form-check-input" id="grad_@i" @bind="edu.Graduated"/>
+                                        <label class="form-check-label fw-medium ms-2" for="grad_@i">Graduated</label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        }
+            }
+        </div>
     }
     
     @if(!IsReadOnly) {
-        <button type="button" class="btn btn-outline-primary mt-3" @onclick="AddEducation">+ Add Education</button>
+        <button type="button" class="btn btn-outline-primary rounded-pill px-4 fw-medium shadow-sm" @onclick="AddEducation"><i class="bi bi-plus-circle me-1"></i> Add Education</button>
     }
 </div>
 

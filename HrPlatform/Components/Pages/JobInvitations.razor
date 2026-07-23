@@ -23,7 +23,7 @@
 {
     <div class="d-flex align-items-center gap-2 text-muted">
         <div class="spinner-border spinner-border-sm"></div>
-        Loading…
+        Loadingâ€¦
     </div>
 }
 else if (!_paginationResult.Items.Any())
@@ -45,119 +45,71 @@ else
     }
 
     <div>
-        <div class="table-responsive d-none d-md-block">
-            <table class="table  table-hover align-middle">
-                <thead class="">
-                <tr>
-                    <th>Job</th>
-                    <th>Company</th>
-                    <th>Invited</th>
-                    <th>Responded</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-                </thead>
-                <tbody>
-                @foreach (var inv in _paginationResult.Items)
-                {
-                    <tr>
-                        <td><strong>@inv.Job.Title</strong></td>
-                        <td><span class="text-muted">@(inv.Job.Company?.Name ?? "—")</span></td>
-                        <td class="text-nowrap">@inv.CreatedAt.ToString("MMM dd, yyyy")</td>
-                        <td class="text-nowrap">
-                            @(inv.ReviewedAt.HasValue ? inv.ReviewedAt.Value.ToString("MMM dd, yyyy") : "—")
-                        </td>
-                        <td>
-                            <span class="badge @(StatusBadgeClass(inv.Status))">@inv.Status</span>
-                        </td>
-                        <td>
-                            @if (inv.Status == JobInvitationStatus.Pending)
-                            {
-                                <div class="d-flex gap-1">
-                                    <button class="btn btn-success btn-sm"
-                                            @onclick="@(() => Respond(inv, JobInvitationStatus.Accepted))">
-                                        ? Accept
-                                    </button>
-                                    <button class="btn btn-outline-danger btn-sm"
-                                            @onclick="@(() => Respond(inv, JobInvitationStatus.Declined))">
-                                        ? Decline
-                                    </button>
-                                </div>
-                            }
-                            else if (inv.Status == JobInvitationStatus.Accepted)
-                            {
-                                <button class="btn btn-primary btn-sm"
-                                        @onclick="@(() => GoToJobApply(inv.JobId))">
-                                    Apply for This Job ?
-                                </button>
-                            }
-                            else
-                            {
-                                <span class="text-muted small">No further action required.</span>
-                            }
-                        </td>
-                    </tr>
-                }
-                </tbody>
-            </table>
-        </div>
+        <div class="row g-3">
+            @foreach (var inv in _paginationResult.Items)
+            {
+                <div class="col-12">
+                    <div class="card shadow-sm border-0 bg-white h-100 app-card">
+                        <div class="card-body p-4">
+                            <div class="row g-3">
+                                <div class="col-md-7">
+                                    <div class="d-flex align-items-center mb-2 gap-2">
+                                        <h4 class="fw-bold mb-0 text-dark">@inv.Job.Title</h4>
+                                        <span class="badge @(StatusBadgeClass(inv.Status)) rounded-pill px-3 py-1">@inv.Status</span>
+                                    </div>
+                                    
+                                    <div class="mb-3 text-secondary small">
+                                        <div class="d-flex align-items-center gap-3 mb-1">
+                                            <span><i class="bi bi-building"></i> @(inv.Job.Company?.Name ?? "â€”")</span>
+                                        </div>
+                                    </div>
 
-        <div class="d-block d-md-none">
-            <div class="d-flex flex-column gap-3">
-                @foreach (var inv in _paginationResult.Items)
-                {
-                    <div class="card  @(CardBorderClass(inv.Status))">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <span class="fw-semibold text-truncate me-2">@inv.Job.Title</span>
-                            <span class="badge @(StatusBadgeClass(inv.Status)) flex-shrink-0">
-                                @inv.Status
-                            </span>
-                        </div>
-                        <div class="card-body">
-                            <p class="mb-1 text-muted small">
-                                <strong>Company:</strong> @(inv.Job.Company?.Name ?? "—")
-                            </p>
-                            <p class="mb-1 text-muted small">
-                                <strong>Invited:</strong> @inv.CreatedAt.ToString("MMM dd, yyyy")
-                            </p>
-                            @if (inv.ReviewedAt.HasValue)
-                            {
-                                <p class="mb-1 text-muted small">
-                                    <strong>Responded:</strong>
-                                    @inv.ReviewedAt.Value.ToString("MMM dd, yyyy")
-                                </p>
-                            }
-                        </div>
-                        <div class="card-footer bg-transparent">
-                            @if (inv.Status == JobInvitationStatus.Pending)
-                            {
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-success btn-sm flex-fill"
-                                            @onclick="@(() => Respond(inv, JobInvitationStatus.Accepted))">
-                                        ? Accept
-                                    </button>
-                                    <button class="btn btn-outline-danger btn-sm flex-fill"
-                                            @onclick="@(() => Respond(inv, JobInvitationStatus.Declined))">
-                                        ? Decline
-                                    </button>
+                                    <div class="d-flex flex-wrap gap-2 text-secondary small">
+                                        <span class="badge bg-light text-dark rounded-pill px-3 py-2 border"><i class="bi bi-calendar-event me-1"></i> Invited: @inv.CreatedAt.ToString("MMM dd, yyyy")</span>
+                                        @if (inv.ReviewedAt.HasValue)
+                                        {
+                                            <span class="badge bg-light text-dark rounded-pill px-3 py-2 border"><i class="bi bi-reply me-1"></i> Responded: @inv.ReviewedAt.Value.ToString("MMM dd, yyyy")</span>
+                                        }
+                                    </div>
                                 </div>
-                            }
-                            else if (inv.Status == JobInvitationStatus.Accepted)
-                            {
-                                <button class="btn btn-primary btn-sm w-100"
-                                        @onclick="@(() => GoToJobApply(inv.JobId))">
-                                    Apply for This Job ?
-                                </button>
-                            }
-                            else
-                            {
-                                <span class="text-muted small">No further action required.</span>
-                            }
+                                
+                                <div class="col-md-5 d-flex gap-2 justify-content-md-end align-items-end flex-wrap mt-3 mt-md-0">
+                                    @if (inv.Status == JobInvitationStatus.Pending)
+                                    {
+                                        <button class="btn btn-success px-4" @onclick="@(() => Respond(inv, JobInvitationStatus.Accepted))">
+                                            <i class="bi bi-check-lg"></i> Accept
+                                        </button>
+                                        <button class="btn btn-outline-danger" @onclick="@(() => Respond(inv, JobInvitationStatus.Declined))">
+                                            <i class="bi bi-x-lg"></i> Decline
+                                        </button>
+                                    }
+                                    else if (inv.Status == JobInvitationStatus.Accepted)
+                                    {
+                                        <button class="btn btn-primary px-4" @onclick="@(() => GoToJobApply(inv.JobId))">
+                                            Apply for This Job <i class="bi bi-arrow-right ms-1"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">No further action required.</span>
+                                    }
+                                </div>
+                            </div>
                         </div>
                     </div>
-                }
-            </div>
+                </div>
+            }
         </div>
+
+        <style>
+            .app-card {
+                transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            }
+            .app-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+            }
+        </style>
 
         @if (_paginationResult.TotalPages > 1)
         {
