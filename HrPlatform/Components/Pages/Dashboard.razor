@@ -32,10 +32,10 @@ else
             <div class="d-flex gap-3 flex-wrap">
                 @foreach (var kv in stats.ApplicationsByStatus)
                 {
-                    <div class="card" style="min-width:140px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color);">
+                    <div class="card" style="min-width:140px; background: var(--bg-card); border: 1px solid var(--border-color);">
                         <div class="card-body text-center p-3">
-                            <div class="fs-3 fw-bold text-white">@kv.Value</div>
-                            <div class="text-white-50 small text-uppercase mt-1" style="letter-spacing: 0.05em;">@kv.Key</div>
+                            <div class="fs-3 fw-bold text-dark">@kv.Value</div>
+                            <div class="text-secondary small text-uppercase mt-1" style="letter-spacing: 0.05em;">@kv.Key</div>
                         </div>
                     </div>
                 }
