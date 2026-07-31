@@ -8,11 +8,12 @@
 @inject IDriverProfileService ProfileSvc
 @inject AuthenticationStateProvider AuthState
 @inject UserManager<ApplicationUser> UserManager
+@inject ICompanyService CompanyService
 @inject NavigationManager Nav
 
 <PageTitle>Driver Profiles</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
     <h2 class="mb-0">Driver Profiles</h2>
     @if (isAdmin)
     {
@@ -228,11 +229,17 @@ else
             }
             else
             {
-                var user = await UserManager.FindByIdAsync(currentUserId);
-                var companyId = user?.CompanyId;
-                if (user?.Company != null)
+                var auth = await AuthState.GetAuthenticationStateAsync();
+                var companyClaim = auth.User.FindFirst("companyId")?.Value;
+                int? companyId = null;
+                if (int.TryParse(companyClaim, out var cid))
                 {
-                    companyName = user.Company.Name;
+                    companyId = cid;
+                    var comp = await CompanyService.GetByIdAsync(cid);
+                    if (comp != null)
+                    {
+                        companyName = comp.Name;
+                    }
                 }
                 
                 pagedProfiles = companyId.HasValue

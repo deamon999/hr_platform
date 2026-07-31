@@ -104,7 +104,8 @@
                             <div class="mb-4">
                                 <label class="form-label fw-semibold text-secondary small text-uppercase">Company</label>
                                 <InputSelect @bind-Value="_model.CompanyId"
-                                             class="form-select form-select-lg bg-light border-0">
+                                             class="form-select form-select-lg bg-light border-0"
+                                             disabled="@_isManager">
                                     <option value="">-- Select a company --</option>
                                     @foreach (var company in _companies)
                                     {
@@ -147,6 +148,7 @@
     private List<Company> _companies = new();
     private List<string> _roles = new();
     private AuthenticationState auth;
+    private bool _isManager;
 
     protected override async Task OnInitializedAsync()
     {
@@ -156,7 +158,9 @@
             .ToList()!;
         auth = await AuthState.GetAuthenticationStateAsync();
         var user = auth.User;
-        if (Id.HasValue && user.IsInRole(RoleConstants.Manager))
+        _isManager = user.IsInRole(RoleConstants.Manager);
+        
+        if (Id.HasValue && _isManager)
         {
             _model.JobId = Id.Value;
             _roles = _roles
@@ -189,8 +193,15 @@
 
         try
         {
-            if (auth.User.IsInRole(RoleConstants.Manager))
+            if (_isManager)
             {
+                // Force company to be the manager's company to prevent tampering
+                var companyClaim = auth.User.FindFirstValue("companyId");
+                if (companyClaim != null && int.TryParse(companyClaim, out int userCompanyId))
+                {
+                    _model.CompanyId = userCompanyId;
+                }
+
                 if (_model.CompanyId is null)
                 {
                     _errorMessage = "Please select a company for the manager invitation.";

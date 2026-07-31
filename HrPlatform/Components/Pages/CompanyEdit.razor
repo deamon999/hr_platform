@@ -5,7 +5,7 @@
 @using System.Security.Claims
 @rendermode InteractiveServer
 
-@attribute [Authorize(Roles = $"{RoleConstants.Driver},{RoleConstants.Manager}")]
+@attribute [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.Driver},{RoleConstants.Manager}")]
 @inject ICompanyService CompanySvc
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthState
@@ -14,11 +14,21 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="fw-bold mb-0 text-dark">@Title</h2>
-    @if (isView)
+    @if (isView && company != null && user != null)
     {
         <div class="d-flex gap-2">
-            <button type="button" class="btn btn-primary rounded-pill px-4" @onclick="() => GoToEdit(company.Id)"><i class="bi bi-pencil me-1"></i> Edit</button>
-            <button type="button" class="btn btn-outline-secondary rounded-pill px-4" @onclick="Cancel"><i class="bi bi-arrow-left me-1"></i> Back</button>
+            @{
+                bool canEdit = user.IsInRole(RoleConstants.Admin) || 
+                               (user.IsInRole(RoleConstants.Manager) && user.FindFirst("companyId")?.Value == company.Id.ToString());
+            }
+            @if (canEdit)
+            {
+                <button type="button" class="btn btn-primary rounded-pill px-4" @onclick="() => GoToEdit(company.Id)"><i class="bi bi-pencil me-1"></i> Edit</button>
+            }
+            @if (user.IsInRole(RoleConstants.Admin))
+            {
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" @onclick="Cancel"><i class="bi bi-arrow-left me-1"></i> Back</button>
+            }
         </div>
     }
 </div>
@@ -164,6 +174,11 @@ else
 
         if (isNew)
         {
+            if (!user.IsInRole(RoleConstants.Admin))
+            {
+                Nav.NavigateTo("/");
+                return;
+            }
             company = new Company();
         }
         else
@@ -171,7 +186,30 @@ else
             if (companyId == 0)
             {
                 string companyClaim = user.FindFirst("companyId")?.Value;
-                companyId = int.Parse(companyClaim);
+                if (!string.IsNullOrEmpty(companyClaim))
+                {
+                    companyId = int.Parse(companyClaim);
+                }
+            }
+
+            // Security check: if trying to edit, ensure permissions
+            if (!isView && !user.IsInRole(RoleConstants.Admin))
+            {
+                if (user.IsInRole(RoleConstants.Driver))
+                {
+                    Nav.NavigateTo("/");
+                    return;
+                }
+
+                string companyClaim = user.FindFirst("companyId")?.Value;
+                if (companyClaim != null && int.TryParse(companyClaim, out int userCompanyId))
+                {
+                    if (companyId != 0 && companyId != userCompanyId)
+                    {
+                        Nav.NavigateTo("/");
+                        return;
+                    }
+                }
             }
 
             company = await CompanySvc.GetByIdAsync(companyId);
@@ -184,9 +222,23 @@ else
         if (isView) return; // Guard clause
 
         if (isNew)
+        {
+            if (!user.IsInRole(RoleConstants.Admin)) return;
             await CompanySvc.CreateAsync(company!);
+        }
         else
+        {
+            if (!user.IsInRole(RoleConstants.Admin))
+            {
+                if (user.IsInRole(RoleConstants.Driver)) return;
+                string companyClaim = user.FindFirst("companyId")?.Value;
+                if (companyClaim != null && int.TryParse(companyClaim, out int userCompanyId))
+                {
+                    if (company!.Id != userCompanyId) return;
+                }
+            }
             await CompanySvc.UpdateAsync(company!);
+        }
 
         GoBack();
     }

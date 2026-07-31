@@ -23,6 +23,38 @@
         <label class="form-label fw-semibold text-secondary small text-uppercase">Average Weekly Miles</label>
         <InputNumber disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.AverageWeeklyMiles"/>
     </div>
+    
+    <div class="col-12 mt-4">
+        <h5 class="fw-bold text-dark mb-3 border-bottom pb-2">Lifestyle & Preferences</h5>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Preferred Home Time</label>
+        <InputSelect disabled="@IsReadOnly" class="form-select bg-light border-0 shadow-sm" @bind-Value="Profile.PreferredHomeTime">
+            <option value="">Any</option>
+            @foreach (var ht in Enum.GetValues<HomeTimeFrequency>())
+            {
+                <option value="@ht">@ht.ToString()</option>
+            }
+        </InputSelect>
+    </div>
+    <div class="col-md-6 d-flex flex-column gap-3">
+        <div class="form-check form-switch mt-md-4 mt-2">
+            <InputCheckbox disabled="@IsReadOnly" class="form-check-input" @bind-Value="Profile.CanDriveManual" id="chkManual" />
+            <label class="form-check-label fw-semibold" for="chkManual">Can drive manual transmission</label>
+        </div>
+        <div class="form-check form-switch">
+            <InputCheckbox disabled="@IsReadOnly" class="form-check-input" @bind-Value="Profile.WantsTeamDriving" id="chkTeam" />
+            <label class="form-check-label fw-semibold" for="chkTeam">Open to Team Driving</label>
+        </div>
+        <div class="form-check form-switch">
+            <InputCheckbox disabled="@IsReadOnly" class="form-check-input" @bind-Value="Profile.WantsToDriveWithPets" id="chkPets" />
+            <label class="form-check-label fw-semibold" for="chkPets">Wants to drive with pets</label>
+        </div>
+        <div class="form-check form-switch">
+            <InputCheckbox disabled="@IsReadOnly" class="form-check-input" @bind-Value="Profile.WantsToDriveWithRiders" id="chkRiders" />
+            <label class="form-check-label fw-semibold" for="chkRiders">Wants to drive with riders</label>
+        </div>
+    </div>
 </div>
 
 @code {

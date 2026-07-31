@@ -516,6 +516,11 @@
             AccidentFreeMiles = src.AccidentFreeMiles,
             StatesOperated = src.StatesOperated,
             AverageWeeklyMiles = src.AverageWeeklyMiles,
+            PreferredHomeTime = src.PreferredHomeTime,
+            CanDriveManual = src.CanDriveManual,
+            WantsToDriveWithPets = src.WantsToDriveWithPets,
+            WantsToDriveWithRiders = src.WantsToDriveWithRiders,
+            WantsTeamDriving = src.WantsTeamDriving,
             License = src.License == null
                 ? null
                 : new DriverLicense
@@ -607,6 +612,11 @@
         if (a.TotalMilesDriven != b.TotalMilesDriven) return false;
         if (a.AccidentFreeMiles != b.AccidentFreeMiles) return false;
         if (a.AverageWeeklyMiles != b.AverageWeeklyMiles) return false;
+        if (a.PreferredHomeTime != b.PreferredHomeTime) return false;
+        if (a.CanDriveManual != b.CanDriveManual) return false;
+        if (a.WantsToDriveWithPets != b.WantsToDriveWithPets) return false;
+        if (a.WantsToDriveWithRiders != b.WantsToDriveWithRiders) return false;
+        if (a.WantsTeamDriving != b.WantsTeamDriving) return false;
         if (!a.Skills.SequenceEqual(b.Skills)) return false;
         if (a.EmploymentHistory.Count != b.EmploymentHistory.Count) return false;
         if (a.EducationHistory.Count != b.EducationHistory.Count) return false;

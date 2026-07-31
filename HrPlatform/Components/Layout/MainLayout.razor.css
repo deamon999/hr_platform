@@ -14,7 +14,7 @@ main {
 }
 
 .top-row {
-    height: 3.5rem;
+    height: 4.5rem;
     display: flex;
     align-items: center;
     background: #e2e8f0;
@@ -53,9 +53,9 @@ main {
 
     .sidebar {
         width: 250px;
-        min-height: 100vh;
+        min-height: calc(100vh - 4.5rem);
         position: sticky;
-        top: 0;
+        top: 4.5rem;
     }
 
     .top-row {

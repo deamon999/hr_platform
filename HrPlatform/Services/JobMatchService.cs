@@ -1,4 +1,4 @@
-﻿using HrPlatform.Data.Models;
+using HrPlatform.Data.Models;
 
 namespace HrPlatform.Services;
 
@@ -45,6 +45,34 @@ public class JobMatchService : IJobMatchService
             if (profile.AllTrailerTypes.Contains(job.RequiredTrailerType.Value))
                 score += 25;
         }
+
+        // Home Time (15 points)
+        if (job.HomeTime.HasValue && profile.PreferredHomeTime.HasValue)
+        {
+            max += 15;
+            if (job.HomeTime.Value == profile.PreferredHomeTime.Value)
+                score += 15;
+        }
+
+        // Manual Transmission (10 points)
+        max += 10;
+        if (!job.RequiresManualTransmission || profile.CanDriveManual)
+            score += 10;
+
+        // Team Driving (10 points)
+        max += 10;
+        if (job.IsTeamDriving == profile.WantsTeamDriving)
+            score += 10;
+
+        // Pets (5 points)
+        max += 5;
+        if (job.AllowsPets == profile.WantsToDriveWithPets)
+            score += 5;
+
+        // Riders (5 points)
+        max += 5;
+        if (job.AllowsRiders == profile.WantsToDriveWithRiders)
+            score += 5;
 
         return max == 0 ? 100 : score * 100 / max;
     }

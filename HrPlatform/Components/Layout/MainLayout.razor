@@ -1,14 +1,14 @@
 @inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu/>
-    </div>
+<div class="app-layout d-flex flex-column" style="min-height: 100vh;">
+    <header class="top-row px-4 d-flex justify-content-between align-items-center bg-white shadow-sm" style="position: sticky; top: 0; z-index: 1050; border-bottom: 1px solid var(--border-color);">
+        <a class="navbar-brand text-dark fw-bold text-decoration-none d-flex align-items-center gap-2" href="">
+            <img src="/logo.jpg" alt="CDL Pool Logo" style="height: 48px; border-radius: 6px; object-fit: cover;" />
+            CDL Pool
+        </a>
 
-    <main>
-        <div class="top-row px-4 d-flex justify-content-end align-items-center shadow-sm">
-
+        <div class="d-flex align-items-center pe-5 pe-sm-0">
             <AuthorizeView>
                 <Authorized>
                     <NavLink class="nav-link text-dark me-3" href="Account/Manage">
@@ -39,14 +39,21 @@
                 </NotAuthorized>
             </AuthorizeView>
         </div>
+    </header>
 
+    <div class="page flex-grow-1 d-flex flex-row">
+        <div class="sidebar">
+            <NavMenu/>
+        </div>
 
-        <article class="content px-4 py-4">
-            <div class="container-fluid">
-                @Body
-            </div>
-        </article>
-    </main>
+        <main class="flex-grow-1">
+            <article class="content px-4 py-4">
+                <div class="container-fluid">
+                    @Body
+                </div>
+            </article>
+        </main>
+    </div>
 </div>
 
 <div id="blazor-error-ui" data-nosnippet>

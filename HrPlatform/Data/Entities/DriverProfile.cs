@@ -42,6 +42,13 @@ public class DriverProfile
     [MaxLength(20)] public string? ZipCode { get; set; }
 
     public AvailabilityStatus AvailabilityStatus { get; set; } = AvailabilityStatus.OpenToOpportunities;
+    
+    // Trucking Lifestyle & Preferences
+    public HomeTimeFrequency? PreferredHomeTime { get; set; }
+    public bool CanDriveManual { get; set; }
+    public bool WantsToDriveWithPets { get; set; }
+    public bool WantsToDriveWithRiders { get; set; }
+    public bool WantsTeamDriving { get; set; }
 
     public DateOnly? AvailableFrom { get; set; }
 
@@ -75,53 +82,63 @@ public class DriverProfile
         EmploymentHistory.SelectMany(e => e.TrailerTypes.Select(t => t.TrailerType)).Distinct();
 
     /// <summary>
-    /// Returns a 0-100 completeness score based on the 7 most
-    /// important hiring criteria for CDL drivers.
+    /// Returns a 0-100 completeness score based on required and optional hiring criteria.
     /// </summary>
     [System.ComponentModel.DataAnnotations.Schema.NotMapped]
     public int CompletenessScore
     {
         get
         {
-            var checks = new[]
-            {
-                !string.IsNullOrWhiteSpace(FirstName) &&
-                !string.IsNullOrWhiteSpace(LastName) &&
-                !string.IsNullOrWhiteSpace(PhoneNumber),
+            int score = 0;
+            
+            // Required items (16 points each, max 80)
+            if (!string.IsNullOrWhiteSpace(FirstName) && !string.IsNullOrWhiteSpace(LastName) && !string.IsNullOrWhiteSpace(PhoneNumber))
+                score += 16;
+            
+            if (License != null && License.ExpiryDate > DateOnly.FromDateTime(DateTime.Today))
+                score += 16;
+                
+            if (MedicalCard != null && MedicalCard.ExpiryDate > DateOnly.FromDateTime(DateTime.Today))
+                score += 16;
+                
+            if (EmploymentHistory.Any())
+                score += 16;
+                
+            if (YearsOfExperience > 0 && TotalMilesDriven > 0)
+                score += 16;
 
-                License != null &&
-                License.ExpiryDate > DateOnly.FromDateTime(DateTime.Today),
+            // Optional items (5 points each, max 20)
+            if (!string.IsNullOrWhiteSpace(ProfessionalSummary))
+                score += 5;
+                
+            if (Skills.Any())
+                score += 5;
+                
+            if (Certifications.Any())
+                score += 5;
+                
+            if (EducationHistory.Any())
+                score += 5;
 
-                MedicalCard != null &&
-                MedicalCard.ExpiryDate > DateOnly.FromDateTime(DateTime.Today),
-
-                EmploymentHistory.Any(),
-
-                YearsOfExperience > 0 && TotalMilesDriven > 0,
-
-                !string.IsNullOrWhiteSpace(ProfessionalSummary),
-
-                Certifications.Any() || Skills.Any()
-            };
-            return checks.Count(c => c) * 100 / checks.Length;
+            return score;
         }
     }
 
     [System.ComponentModel.DataAnnotations.Schema.NotMapped]
     public string CompletenessLabel => CompletenessScore switch
     {
-        >= 85 => "Complete",
-        >= 60 => "Good",
-        >= 40 => "Needs work",
+        >= 95 => "Complete",
+        >= 80 => "Good",     // All required fields met
+        >= 50 => "Needs work",
         _ => "Incomplete"
     };
 
     [System.ComponentModel.DataAnnotations.Schema.NotMapped]
     public string CompletenessBadgeClass => CompletenessScore switch
     {
-        >= 85 => "bg-success",
-        >= 60 => "bg-info text-dark",
-        >= 40 => "bg-warning text-dark",
+        >= 95 => "bg-success",
+        >= 80 => "bg-info text-dark",
+        >= 50 => "bg-warning text-dark",
         _ => "bg-danger"
     };
 
@@ -131,6 +148,8 @@ public class DriverProfile
         get
         {
             var missing = new List<string>();
+            
+            // Required Fields
             if (string.IsNullOrWhiteSpace(FirstName) || string.IsNullOrWhiteSpace(LastName) || string.IsNullOrWhiteSpace(PhoneNumber))
                 missing.Add("Basic Contact Info");
             
@@ -144,13 +163,20 @@ public class DriverProfile
                 missing.Add("Employment History");
 
             if (YearsOfExperience <= 0 || TotalMilesDriven <= 0)
-                missing.Add("Driving Experience (Years & Miles)");
+                missing.Add("Driving Experience");
 
+            // Optional Fields
             if (string.IsNullOrWhiteSpace(ProfessionalSummary))
-                missing.Add("Professional Summary");
+                missing.Add("Professional Summary (Optional)");
 
-            if (!Certifications.Any() && !Skills.Any())
-                missing.Add("Skills or Certifications");
+            if (!Certifications.Any())
+                missing.Add("Certifications (Optional)");
+                
+            if (!Skills.Any())
+                missing.Add("Skills (Optional)");
+                
+            if (!EducationHistory.Any())
+                missing.Add("Education (Optional)");
 
             return missing;
         }
