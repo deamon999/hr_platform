@@ -8,52 +8,65 @@
             CDL Pool
         </a>
 
-        <div class="d-flex align-items-center pe-5 pe-sm-0">
+        <div class="d-flex align-items-center mobile-auth-spacer">
             <AuthorizeView>
                 <Authorized>
-                    <NavLink class="nav-link text-dark me-3" href="Account/Manage">
+                    <NavLink class="nav-link text-dark me-3" href="Account/Manage" title="Manage Account">
                         <span class="bi bi-person-fill" aria-hidden="true"></span>
-                        @context.User.Identity?.Name
+                        <span class="d-none d-sm-inline ms-1">@context.User.Identity?.Name</span>
                     </NavLink>
 
                     <form action="Account/Logout" method="post" class="d-inline">
                         <AntiforgeryToken/>
                         <input type="hidden" name="ReturnUrl" value=""/>
-                        <button type="submit" class="nav-link btn btn-link p-0 text-dark">
+                        <button type="submit" class="nav-link btn btn-link p-0 text-dark" title="Logout">
                             <span class="bi bi-box-arrow-right" aria-hidden="true"></span>
-                            Logout
+                            <span class="d-none d-sm-inline ms-1">Logout</span>
                         </button>
                     </form>
                 </Authorized>
 
                 <NotAuthorized>
-                    <NavLink class="nav-link text-dark me-3" href="Account/Register">
+                    <NavLink class="nav-link text-dark me-3" href="Account/Register" title="Register">
                         <span class="bi bi-person-plus" aria-hidden="true"></span>
-                        Register
+                        <span class="d-none d-sm-inline ms-1">Register</span>
                     </NavLink>
 
-                    <NavLink class="nav-link text-dark" href="Account/Login">
+                    <NavLink class="nav-link text-dark" href="Account/Login" title="Login">
                         <span class="bi bi-box-arrow-in-right" aria-hidden="true"></span>
-                        Login
+                        <span class="d-none d-sm-inline ms-1">Login</span>
                     </NavLink>
                 </NotAuthorized>
             </AuthorizeView>
         </div>
     </header>
 
-    <div class="page flex-grow-1 d-flex flex-row">
+    <div class="page flex-grow-1">
         <div class="sidebar">
             <NavMenu/>
         </div>
 
-        <main class="flex-grow-1">
-            <article class="content px-4 py-4">
+        <main class="flex-grow-1 d-flex flex-column">
+            <article class="content px-4 py-4 flex-grow-1">
                 <div class="container-fluid">
                     @Body
                 </div>
             </article>
+
         </main>
     </div>
+
+    <footer class="mt-auto py-3 bg-white border-top text-muted" style="z-index: 1050;">
+        <div class="container-fluid px-4 d-flex flex-wrap justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+                <img src="/logo.jpg" alt="CDL Pool Logo" style="height: 24px; border-radius: 4px; object-fit: cover;" />
+                <span class="fw-semibold" style="font-size: 0.9rem;">CDL Pool &copy; @DateTime.Now.Year</span>
+            </div>
+            <ul class="nav">
+                <li class="nav-item"><a href="/about" class="nav-link px-2 text-muted" style="font-size: 0.9rem;">About</a></li>
+            </ul>
+        </div>
+    </footer>
 </div>
 
 <div id="blazor-error-ui" data-nosnippet>

@@ -25,10 +25,15 @@
                     <label for="Input.Email" class="form-label">Email</label>
                     <ValidationMessage For="() => Input.Email" class="text-danger"/>
                 </div>
-                <div class="form-floating mb-3">
+                <div class="form-floating mb-3 position-relative">
                     <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control"
-                               autocomplete="current-password" aria-required="true" placeholder="password"/>
+                               autocomplete="current-password" aria-required="true" placeholder="password" style="padding-right: 2.5rem;"/>
                     <label for="Input.Password" class="form-label">Password</label>
+                    <button type="button" class="btn btn-link position-absolute end-0 top-50 translate-middle-y text-secondary text-decoration-none" 
+                            style="z-index: 5; margin-right: 0.5rem;" 
+                            onclick="const input = document.getElementById('Input.Password'); const icon = this.querySelector('i'); if (input.type === 'password') { input.type = 'text'; icon.classList.replace('bi-eye-fill', 'bi-eye-slash-fill'); } else { input.type = 'password'; icon.classList.replace('bi-eye-slash-fill', 'bi-eye-fill'); }">
+                        <i class="bi bi-eye-fill"></i>
+                    </button>
                     <ValidationMessage For="() => Input.Password" class="text-danger"/>
                 </div>
                 <div class="checkbox mb-3">

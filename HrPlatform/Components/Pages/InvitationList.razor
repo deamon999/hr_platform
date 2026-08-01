@@ -6,13 +6,20 @@
 @inject IInvitationService InvitationService
 @inject ICompanyService CompanyService
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <button type="button" class="btn btn-primary btn-sm" @onclick="GoToInvite">+ Invite User</button>
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div class="w-100" style="max-width: 350px;">
+        <input class="form-control"
+               placeholder="Search by email, phone, or company"
+               value="@_searchTerm"
+               @oninput="HandleSearchInput"
+               disabled="@isLoading" />
+    </div>
+    <button type="button" class="btn btn-primary px-4" @onclick="GoToInvite">+ Invite User</button>
 </div>
 
 @if (isLoading)
 {
-    <div class="d-flex align-items-center gap-2">
+    <div class="d-flex align-items-center gap-2 mb-3">
         <div class="spinner-border spinner-border-sm" role="status"></div>
         Loading invitations…
     </div>
@@ -23,12 +30,6 @@ else if (!pagedInvitations.Any() && string.IsNullOrEmpty(_searchTerm))
 }
 else
 {
-    <div class="mb-3" style="max-width:320px">
-        <input class="form-control"
-               placeholder="Search by email, phone, or company"
-               value="@_searchTerm"
-               @oninput="HandleSearchInput"/>
-    </div>
 
     @if (_statusMessage is not null)
     {

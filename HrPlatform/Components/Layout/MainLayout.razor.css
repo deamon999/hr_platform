@@ -9,7 +9,7 @@ main {
 }
 
 .sidebar {
-    background: #f1f5f9;
+    background: #faf8f5;
     border-right: 1px solid var(--border-color);
 }
 
@@ -17,7 +17,7 @@ main {
     height: 4.5rem;
     display: flex;
     align-items: center;
-    background: #e2e8f0;
+    background: #f7f5f0;
     border-bottom: 1px solid rgba(0,0,0,0.1);
 }
 
@@ -43,6 +43,10 @@ main {
 
     .top-row ::deep a, .top-row ::deep .btn-link {
         margin-left: 0;
+    }
+
+    .mobile-auth-spacer {
+        padding-right: 5rem !important;
     }
 }
 
