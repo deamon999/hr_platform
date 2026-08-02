@@ -4,17 +4,20 @@ using System.Collections.Generic;
 using HrPlatform.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace HrPlatform.Migrations
+namespace HrPlatform.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260802151746_UpdateEmploymentHistory")]
+    partial class UpdateEmploymentHistory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -799,19 +802,7 @@ namespace HrPlatform.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<bool>("HasCompletedSAPProgram")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("HasFailedDrugTest")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("HasLicenseSuspension")
-                        .HasColumnType("boolean");
-
                     b.Property<bool>("HasMilitaryService")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("HasRefusedDrugTest")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsApplicationCompleted")

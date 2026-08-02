@@ -62,6 +62,12 @@ public class DriverProfile
     public int LocalExperience { get; set; }
     public int OwnerOperatorExperience { get; set; }
 
+    // Safety & Background
+    public bool HasLicenseSuspension { get; set; }
+    public bool HasFailedDrugTest { get; set; }
+    public bool HasRefusedDrugTest { get; set; }
+    public bool HasCompletedSAPProgram { get; set; }
+
     // Military Service
     public bool HasMilitaryService { get; set; }
     public string? MilitaryBranch { get; set; }

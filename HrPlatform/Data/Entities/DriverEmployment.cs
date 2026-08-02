@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using HrPlatform.Data.Enums;
 
 namespace HrPlatform.Data.Models;
@@ -28,7 +28,13 @@ public class DriverEmployment
     // Navigation property for trailer types junction table
     public ICollection<DriverEmploymentTrailerType> TrailerTypes { get; set; } = [];
 
-    [MaxLength(2000)] public string? Responsibilities { get; set; }
+    public PayPeriod? PayType { get; set; }
+    
+    public bool MayWeContact { get; set; } = true;
+    
+    [MaxLength(20)] public string? CompanyPhone { get; set; }
+    
+    [MaxLength(100)] public string? CompanyEmail { get; set; }
 
     // Helper methods for managing trailer types
     public bool HasTrailerType(TrailerType trailerType) =>

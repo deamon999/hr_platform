@@ -3,86 +3,99 @@
 @using HrPlatform.Utils
 
 <div>
+    <p class="text-secondary small mb-4">Please list your last 10 years of employment history.</p>
+
     @if (!Profile.EmploymentHistory.Any())
     {
-        <div class="text-center text-muted py-5 border rounded-3 bg-light mb-4">
-            <i class="bi bi-briefcase fs-1 text-secondary mb-3 d-block"></i>
-            <p class="fs-5 mb-0">No employment history available.</p>
+        <div class="text-center py-5 mb-4">
+            <p class="fs-5 text-secondary mb-0">No employment history available.</p>
         </div>
     }
     else
     {
-        <div class="row g-4 mb-4">
+        <div class="d-flex flex-column gap-5 mb-4">
             @foreach (var (emp, i) in Profile.EmploymentHistory.Select((e, i) => (e, i)))
             {
-                <div class="col-12">
-                    <div class="card shadow-none border bg-light">
-                        <div class="card-header bg-white border-bottom fw-bold text-dark d-flex justify-content-between align-items-center py-3">
-                            <span>@(string.IsNullOrEmpty(emp.CompanyName) ? $"Employer #{i + 1}" : emp.CompanyName)</span>
-                            @if(!IsReadOnly) {
-                                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" @onclick="() => Profile.EmploymentHistory.Remove(emp)"><i class="bi bi-trash me-1"></i> Remove</button>
-                            }
+                <div class="position-relative">
+                    <div class="d-flex align-items-center mb-4">
+                        <h6 class="fw-bold text-warning mb-0 me-3 text-nowrap">@(i == 0 && !emp.EndDate.HasValue ? "Current Employer" : $"Employer #{i + 1}")</h6>
+                        <div class="flex-grow-1 border-bottom border-warning opacity-50"></div>
+                        @if(!IsReadOnly) {
+                            <button type="button" class="btn btn-sm btn-link text-danger ms-3 text-decoration-none" @onclick="() => Profile.EmploymentHistory.Remove(emp)">
+                                <i class="bi bi-x-lg"></i> Remove
+                            </button>
+                        }
+                    </div>
+                    
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-secondary small">Company Name *</label>
+                            <InputText disabled="@IsReadOnly" class="form-control bg-dark text-white border-secondary" @bind-Value="emp.CompanyName"/>
                         </div>
-                        <div class="card-body p-4">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label fw-semibold text-secondary small text-uppercase">Company Name *</label>
-                                    <InputText disabled="@IsReadOnly" class="form-control bg-white border-0 shadow-sm" @bind-Value="emp.CompanyName"/>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label fw-semibold text-secondary small text-uppercase">Job Title *</label>
-                                    <InputText disabled="@IsReadOnly" class="form-control bg-white border-0 shadow-sm" @bind-Value="emp.JobTitle"/>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label fw-semibold text-secondary small text-uppercase">City</label>
-                                    <InputText disabled="@IsReadOnly" class="form-control bg-white border-0 shadow-sm" @bind-Value="emp.City"/>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label fw-semibold text-secondary small text-uppercase">State</label>
-                                    <InputText disabled="@IsReadOnly" class="form-control bg-white border-0 shadow-sm" maxlength="2" @bind-Value="emp.State"/>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label fw-semibold text-secondary small text-uppercase">Start Date *</label>
-                                    <InputDate disabled="@IsReadOnly" class="form-control bg-white border-0 shadow-sm" @bind-Value="emp.StartDate"/>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label fw-semibold text-secondary small text-uppercase">End Date</label>
-                                    <InputDate disabled="@IsReadOnly" class="form-control bg-white border-0 shadow-sm" @bind-Value="emp.EndDate"/>
-                                    <div class="form-text mt-1"><i class="bi bi-info-circle me-1"></i> Leave blank if current employer</div>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label fw-semibold text-secondary small text-uppercase">Avg Weekly Miles</label>
-                                    <InputNumber disabled="@IsReadOnly" class="form-control bg-white border-0 shadow-sm" @bind-Value="emp.AverageWeeklyMiles"/>
-                                </div>
-                                
-                                <div class="col-12 mt-4">
-                                    <label class="form-label fw-semibold text-secondary small text-uppercase d-block mb-3">Trailer Types Pulled</label>
-                                    <div class="d-flex flex-wrap gap-3">
-                                        @foreach (var type in Enum.GetValues<TrailerType>())
-                                        {
-                                            <div class="form-check">
-                                                <input type="checkbox" disabled="@IsReadOnly" class="form-check-input" id="emp_@(i)_tt_@type" 
-                                                       checked="@emp.HasTrailerType(type)" 
-                                                       @onchange="e => ToggleTrailerType(emp, type, (bool)e.Value!)" />
-                                                <label class="form-check-label fw-medium" for="emp_@(i)_tt_@type">@type</label>
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
-                                
-                                <div class="col-12 mt-4">
-                                    <label class="form-label fw-semibold text-secondary small text-uppercase">Responsibilities / Routes</label>
-                                    <InputTextArea disabled="@IsReadOnly" class="form-control bg-white border-0 shadow-sm" rows="3" @bind-Value="emp.Responsibilities"/>
-                                </div>
-                                
-                                @if (emp.EndDate.HasValue)
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-secondary small">Company Phone</label>
+                            <InputText disabled="@IsReadOnly" class="form-control bg-dark text-white border-secondary" @bind-Value="emp.CompanyPhone"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-secondary small">Company Email</label>
+                            <InputText disabled="@IsReadOnly" class="form-control bg-dark text-white border-secondary" @bind-Value="emp.CompanyEmail"/>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-secondary small">Position / Job Title *</label>
+                            <InputText disabled="@IsReadOnly" class="form-control bg-dark text-white border-secondary" @bind-Value="emp.JobTitle"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-secondary small">Start Date *</label>
+                            <InputDate disabled="@IsReadOnly" class="form-control bg-dark text-white border-secondary" @bind-Value="emp.StartDate"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-secondary small">End Date</label>
+                            <InputDate disabled="@IsReadOnly" class="form-control bg-dark text-white border-secondary" @bind-Value="emp.EndDate"/>
+                            <div class="form-text text-secondary mt-1" style="font-size: 0.75rem;">Leave blank if current employer</div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-secondary small">Pay Type</label>
+                            <InputSelect disabled="@IsReadOnly" class="form-select bg-dark text-white border-secondary" @bind-Value="emp.PayType">
+                                <option value="">Select...</option>
+                                @foreach (var p in Enum.GetValues<PayPeriod>())
                                 {
-                                    <div class="col-12">
-                                        <label class="form-label fw-semibold text-secondary small text-uppercase">Reason for Leaving</label>
-                                        <InputText disabled="@IsReadOnly" class="form-control bg-white border-0 shadow-sm" @bind-Value="emp.ReasonForLeaving"/>
+                                    <option value="@p">Per @p.ToString()</option>
+                                }
+                            </InputSelect>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-secondary small">Average Weekly Miles</label>
+                            <InputNumber disabled="@IsReadOnly" class="form-control bg-dark text-white border-secondary" @bind-Value="emp.AverageWeeklyMiles"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-secondary small">May we contact?</label>
+                            <InputSelect disabled="@IsReadOnly" class="form-select bg-dark text-white border-secondary" @bind-Value="emp.MayWeContact">
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </InputSelect>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-secondary small mb-2 d-block">Equipment Driven</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach (var type in Enum.GetValues<TrailerType>())
+                                {
+                                    bool isChecked = emp.HasTrailerType(type);
+                                    <div class="form-check me-2">
+                                        <input type="checkbox" disabled="@IsReadOnly" class="form-check-input darker-border-checkbox" id="emp_@(i)_tt_@type" 
+                                               checked="@isChecked" 
+                                               @onchange="e => ToggleTrailerType(emp, type, (bool)e.Value!)" />
+                                        <label class="form-check-label text-white small" for="emp_@(i)_tt_@type">@type</label>
                                     </div>
                                 }
                             </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-secondary small">Reason for Leaving</label>
+                            <InputText disabled="@IsReadOnly" class="form-control bg-dark text-white border-secondary" @bind-Value="emp.ReasonForLeaving" placeholder="Leave blank if current employer"/>
                         </div>
                     </div>
                 </div>
@@ -91,7 +104,7 @@
     }
     
     @if(!IsReadOnly) {
-        <button type="button" class="btn btn-outline-primary rounded-pill px-4 fw-medium shadow-sm" @onclick="AddEmployment"><i class="bi bi-plus-circle me-1"></i> Add Employment</button>
+        <button type="button" class="btn btn-outline-warning rounded-pill px-4 fw-medium" @onclick="AddEmployment"><i class="bi bi-plus-lg me-1"></i> Add Another Employer</button>
     }
 </div>
 

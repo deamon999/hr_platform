@@ -31,10 +31,18 @@
                             <div class="fw-medium text-truncate">@doc.FileName</div>
                             <small class="text-muted">@doc.DocumentType • @doc.UploadedAt.ToLocalTime().ToString("g")</small>
                         </div>
-                        @if (!IsReadOnly)
-                        {
-                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" @onclick="() => DeleteDocumentAsync(doc)"><i class="bi bi-trash"></i></button>
-                        }
+                        <div class="d-flex align-items-center">
+                            @if (!string.IsNullOrEmpty(doc.Id))
+                            {
+                                <button type="button" @onclick="() => PreviewDocument(doc)" class="btn btn-sm btn-outline-primary rounded-pill px-3 me-2" title="View Document">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            }
+                            @if (!IsReadOnly)
+                            {
+                                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" @onclick="() => DeleteDocumentAsync(doc)" title="Delete Document"><i class="bi bi-trash"></i></button>
+                            }
+                        </div>
                     </div>
                 </div>
             }
@@ -66,6 +74,38 @@
             </div>
         </div>
     }
+
+    @if (showPreviewModal && previewDoc != null)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg bg-dark">
+                    <div class="modal-header border-secondary border-bottom">
+                        <h5 class="modal-title text-white">@previewDoc.FileName</h5>
+                        <button type="button" class="btn-close btn-close-white" @onclick="ClosePreview"></button>
+                    </div>
+                    <div class="modal-body p-0" style="height: 70vh;">
+                        @if (previewDoc.ContentType.StartsWith("image/"))
+                        {
+                            <div class="w-100 h-100 d-flex justify-content-center align-items-center bg-black">
+                                <img src="/api/documents/@previewDoc.Id" alt="@previewDoc.FileName" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+                            </div>
+                        }
+                        else
+                        {
+                            <iframe src="/api/documents/@previewDoc.Id" style="width: 100%; height: 100%; border: none;"></iframe>
+                        }
+                    </div>
+                    <div class="modal-footer border-secondary border-top">
+                        <a href="/api/documents/@previewDoc.Id?download=true" class="btn btn-primary rounded-pill px-4">
+                            <i class="bi bi-download me-2"></i> Download
+                        </a>
+                        <button type="button" class="btn btn-secondary rounded-pill px-4" @onclick="ClosePreview">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
 @code {
@@ -73,6 +113,20 @@
     [Parameter] public bool IsReadOnly { get; set; }
 
     private string newDocType = "CDL";
+    private bool showPreviewModal;
+    private HrPlatform.Data.Entities.DocumentFile? previewDoc;
+
+    private void PreviewDocument(HrPlatform.Data.Entities.DocumentFile doc)
+    {
+        previewDoc = doc;
+        showPreviewModal = true;
+    }
+
+    private void ClosePreview()
+    {
+        showPreviewModal = false;
+        previewDoc = null;
+    }
 
     private async Task HandleFileSelected(InputFileChangeEventArgs e)
     {
