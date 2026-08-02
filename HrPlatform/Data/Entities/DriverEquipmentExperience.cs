@@ -22,11 +22,4 @@ public class DriverEquipmentExperience
     public int Pneumatic { get; set; }
     public int Dump { get; set; }
 
-    // Other Experience Flags
-    public bool AutomaticTransmission { get; set; }
-    public bool CanadaExperience { get; set; }
-    public bool HazmatEndorsement { get; set; }
-    public bool MountainDriving { get; set; }
-    public bool WinterDriving { get; set; }
-    public bool NycExperience { get; set; }
 }

@@ -4,10 +4,13 @@
 @using HrPlatform.Utils
 @using HrPlatform.Data.Entities
 @using HrPlatform.Data.Enums
+@using HrPlatform.Data.Models
+@using Microsoft.AspNetCore.Identity
 @rendermode InteractiveServer
 
 @attribute [Authorize(Roles = $"{RoleConstants.Driver}")]
 @inject IDriverProfileService ProfileService
+@inject UserManager<ApplicationUser> UserManager
 @inject AuthenticationStateProvider AuthState
 @inject NavigationManager Nav
 
@@ -275,10 +278,14 @@
             isNew = true;
             maxReachedTab = 0;
             activeTab = 0;
+            var appUser = await UserManager.FindByIdAsync(userId);
             profile = new DriverProfile
             {
                 UserId = userId,
                 DateOfBirth = Today,
+                FirstName = appUser?.FirstName ?? string.Empty,
+                LastName = appUser?.LastName ?? string.Empty,
+                Email = appUser?.Email ?? string.Empty,
                 EquipmentExperience = new DriverEquipmentExperience()
             };
         }
@@ -329,11 +336,18 @@
     {
         if (editContext.Validate())
         {
+            if (activeTab < 10)
+            {
+                var nextTab = activeTab + 1;
+                if (nextTab > maxReachedTab) maxReachedTab = nextTab;
+                if (nextTab > profile!.LastWizardStep) profile.LastWizardStep = nextTab;
+            }
+            
             await SaveProfileToDbAsync();
+            
             if (activeTab < 10)
             {
                 activeTab++;
-                if (activeTab > maxReachedTab) maxReachedTab = activeTab;
             }
         }
     }
@@ -342,6 +356,13 @@
     {
         if (editContext.Validate())
         {
+            if (activeTab < 10)
+            {
+                var nextTab = activeTab + 1;
+                if (nextTab > maxReachedTab) maxReachedTab = nextTab;
+                if (nextTab > profile!.LastWizardStep) profile.LastWizardStep = nextTab;
+            }
+
             await SaveProfileToDbAsync();
             Nav.NavigateTo(ReturnUrl ?? "/jobs");
         }
@@ -368,9 +389,24 @@
             profile.LastWizardStep = activeTab;
         }
 
+        // Temporarily null out empty nested objects to prevent EF from trying to insert them
+        bool licenseWasEmpty = false;
+        if (profile!.License != null && profile.License.Id == 0 && string.IsNullOrWhiteSpace(profile.License.LicenseNumber))
+        {
+            profile.License = null;
+            licenseWasEmpty = true;
+        }
+        
+        bool medicalCardWasEmpty = false;
+        if (profile.MedicalCard != null && profile.MedicalCard.Id == 0 && profile.MedicalCard.ExpiryDate == default && string.IsNullOrWhiteSpace(profile.MedicalCard.MedicalExaminerName))
+        {
+            profile.MedicalCard = null;
+            medicalCardWasEmpty = true;
+        }
+
         if (isNew)
         {
-            profile!.UserId = currentUserId;
+            profile.UserId = currentUserId;
             await ProfileService.CreateAsync(profile!);
             isNew = false;
         }
@@ -378,6 +414,10 @@
         {
             await ProfileService.UpdateAsync(profile!, currentUserId);
         }
+        
+        // Restore for UI binding
+        if (licenseWasEmpty) profile.License = new DriverLicense();
+        if (medicalCardWasEmpty) profile.MedicalCard = new DriverMedicalCard();
         
         // Mark form as unmodified so we don't prompt on exit
         editContext.MarkAsUnmodified();

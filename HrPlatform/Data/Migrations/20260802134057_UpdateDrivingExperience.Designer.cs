@@ -4,17 +4,20 @@ using System.Collections.Generic;
 using HrPlatform.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace HrPlatform.Migrations
+namespace HrPlatform.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260802134057_UpdateDrivingExperience")]
+    partial class UpdateDrivingExperience
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -571,6 +574,12 @@ namespace HrPlatform.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("AutomaticTransmission")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("CanadaExperience")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("CarHauler")
                         .HasColumnType("integer");
 
@@ -586,8 +595,17 @@ namespace HrPlatform.Migrations
                     b.Property<int>("Flatbed")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("HazmatEndorsement")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("Lowboy")
                         .HasColumnType("integer");
+
+                    b.Property<bool>("MountainDriving")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("NycExperience")
+                        .HasColumnType("boolean");
 
                     b.Property<int>("Pneumatic")
                         .HasColumnType("integer");
@@ -603,6 +621,9 @@ namespace HrPlatform.Migrations
 
                     b.Property<int>("Tanker")
                         .HasColumnType("integer");
+
+                    b.Property<bool>("WinterDriving")
+                        .HasColumnType("boolean");
 
                     b.HasKey("Id");
 

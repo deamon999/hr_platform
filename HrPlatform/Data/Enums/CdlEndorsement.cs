@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 
 namespace HrPlatform.Data.Enums;
 
@@ -13,5 +13,7 @@ public enum CdlEndorsement
     [Description("School Bus")] SchoolBus,
 
     [Description("Hazardous Materials + Tank Vehicles Combination")]
-    HazTanker
+    HazTanker,
+    [Description("TWIC")] 
+    TWIC
 }

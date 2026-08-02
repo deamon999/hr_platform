@@ -4,17 +4,20 @@ using System.Collections.Generic;
 using HrPlatform.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace HrPlatform.Migrations
+namespace HrPlatform.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260802132853_UpdateMedicalCardSelfCertification")]
+    partial class UpdateMedicalCardSelfCertification
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -571,6 +574,12 @@ namespace HrPlatform.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("AutomaticTransmission")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("CanadaExperience")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("CarHauler")
                         .HasColumnType("integer");
 
@@ -586,8 +595,17 @@ namespace HrPlatform.Migrations
                     b.Property<int>("Flatbed")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("HazmatEndorsement")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("Lowboy")
                         .HasColumnType("integer");
+
+                    b.Property<bool>("MountainDriving")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("NycExperience")
+                        .HasColumnType("boolean");
 
                     b.Property<int>("Pneumatic")
                         .HasColumnType("integer");
@@ -603,6 +621,9 @@ namespace HrPlatform.Migrations
 
                     b.Property<int>("Tanker")
                         .HasColumnType("integer");
+
+                    b.Property<bool>("WinterDriving")
+                        .HasColumnType("boolean");
 
                     b.HasKey("Id");
 
@@ -721,7 +742,7 @@ namespace HrPlatform.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)");
 
-                    b.Property<int>("SelfCertification")
+                    b.Property<int?>("SelfCertification")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -740,6 +761,9 @@ namespace HrPlatform.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<long>("AccidentFreeMiles")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("AddressLine2")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -747,6 +771,9 @@ namespace HrPlatform.Migrations
                     b.Property<string>("AlternatePhone")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
+
+                    b.Property<int>("AverageWeeklyMiles")
+                        .HasColumnType("integer");
 
                     b.Property<bool>("CanDriveManual")
                         .HasColumnType("boolean");
@@ -803,9 +830,6 @@ namespace HrPlatform.Migrations
                     b.Property<int>("LastWizardStep")
                         .HasColumnType("integer");
 
-                    b.Property<int>("LocalExperience")
-                        .HasColumnType("integer");
-
                     b.Property<string>("MiddleName")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -818,12 +842,6 @@ namespace HrPlatform.Migrations
 
                     b.Property<string>("MinimumWeeklyPay")
                         .HasColumnType("text");
-
-                    b.Property<int>("OtrExperience")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("OwnerOperatorExperience")
-                        .HasColumnType("integer");
 
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
@@ -849,9 +867,15 @@ namespace HrPlatform.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<int>("StatesOperated")
+                        .HasColumnType("integer");
+
                     b.Property<string>("StreetAddress")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<long>("TotalMilesDriven")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");

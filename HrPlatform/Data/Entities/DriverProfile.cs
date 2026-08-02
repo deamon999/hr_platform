@@ -58,10 +58,9 @@ public class DriverProfile
     public bool WantsTeamDriving { get; set; }
 
     public int YearsOfExperience { get; set; }
-    public long TotalMilesDriven { get; set; }
-    public long AccidentFreeMiles { get; set; }
-    public int StatesOperated { get; set; }
-    public int AverageWeeklyMiles { get; set; }
+    public int OtrExperience { get; set; }
+    public int LocalExperience { get; set; }
+    public int OwnerOperatorExperience { get; set; }
 
     // Military Service
     public bool HasMilitaryService { get; set; }
@@ -125,7 +124,7 @@ public class DriverProfile
             if (EmploymentHistory.Any())
                 score += 16;
                 
-            if (YearsOfExperience > 0 && TotalMilesDriven > 0)
+            if (YearsOfExperience > 0)
                 score += 16;
 
             // Optional items (5 points each, max 15)
@@ -180,7 +179,7 @@ public class DriverProfile
             if (!EmploymentHistory.Any())
                 missing.Add("Employment History");
 
-            if (YearsOfExperience <= 0 || TotalMilesDriven <= 0)
+            if (YearsOfExperience <= 0)
                 missing.Add("Driving Experience");
 
             // Optional Fields

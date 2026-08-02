@@ -20,9 +20,9 @@ public class DriverLicense
 
     [MaxLength(200)] public string? Restrictions { get; set; }
 
-    [Required] public DateOnly IssuedDate { get; set; }
+    [Required] public DateOnly IssuedDate { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
 
-    [Required] public DateOnly ExpiryDate { get; set; }
+    [Required] public DateOnly ExpiryDate { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
 
     [MaxLength(500)]
     public string? DocumentBlobPath { get; set; }
