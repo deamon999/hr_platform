@@ -14,6 +14,10 @@ public class DriverProfile
     // Add the navigation property
     public ApplicationUser? User { get; set; }
 
+    public int LastWizardStep { get; set; } = 0;
+    
+    public bool IsApplicationCompleted { get; set; } = false;
+
     [Required] [MaxLength(100)] public string FirstName { get; set; } = default!;
 
     [MaxLength(100)] public string? MiddleName { get; set; }
@@ -31,9 +35,9 @@ public class DriverProfile
     [MaxLength(150)]
     public string Email { get; set; } = default!;
 
-    [MaxLength(300)] public string? LinkedInUrl { get; set; }
-
     [MaxLength(200)] public string? StreetAddress { get; set; }
+    
+    [MaxLength(100)] public string? AddressLine2 { get; set; }
 
     [MaxLength(100)] public string? City { get; set; }
 
@@ -41,24 +45,37 @@ public class DriverProfile
 
     [MaxLength(20)] public string? ZipCode { get; set; }
 
-    public AvailabilityStatus AvailabilityStatus { get; set; } = AvailabilityStatus.OpenToOpportunities;
-    
     // Trucking Lifestyle & Preferences
     public HomeTimeFrequency? PreferredHomeTime { get; set; }
+    public string? PreferredPosition { get; set; }
+    public List<string>? PreferredFreight { get; set; } = new();
+    public List<string>? PreferredRegions { get; set; } = new();
+    public string? MinimumWeeklyPay { get; set; }
+    
     public bool CanDriveManual { get; set; }
     public bool WantsToDriveWithPets { get; set; }
     public bool WantsToDriveWithRiders { get; set; }
     public bool WantsTeamDriving { get; set; }
-
-    public DateOnly? AvailableFrom { get; set; }
-
-    [MaxLength(2000)] public string? ProfessionalSummary { get; set; }
 
     public int YearsOfExperience { get; set; }
     public long TotalMilesDriven { get; set; }
     public long AccidentFreeMiles { get; set; }
     public int StatesOperated { get; set; }
     public int AverageWeeklyMiles { get; set; }
+
+    // Military Service
+    public bool HasMilitaryService { get; set; }
+    public string? MilitaryBranch { get; set; }
+    public int? MilitaryYears { get; set; }
+
+    // Consents & Authorizations
+    public bool ConsentFCRA { get; set; }
+    public bool ConsentPSP { get; set; }
+    public bool ConsentMVR { get; set; }
+    public bool ConsentClearinghouse { get; set; }
+    public bool ConsentEmployment { get; set; }
+    public string? ElectronicSignatureName { get; set; }
+    public DateOnly? SignatureDate { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
@@ -69,6 +86,10 @@ public class DriverProfile
 
     // Navigation property for skills junction table
     public ICollection<DriverProfileSkill> Skills { get; set; } = [];
+
+    public DriverEquipmentExperience? EquipmentExperience { get; set; }
+
+    public ICollection<DocumentFile> Documents { get; set; } = [];
 
     [ValidateComplexType] public ICollection<DriverEmployment> EmploymentHistory { get; set; } = [];
 
@@ -107,10 +128,7 @@ public class DriverProfile
             if (YearsOfExperience > 0 && TotalMilesDriven > 0)
                 score += 16;
 
-            // Optional items (5 points each, max 20)
-            if (!string.IsNullOrWhiteSpace(ProfessionalSummary))
-                score += 5;
-                
+            // Optional items (5 points each, max 15)
             if (Skills.Any())
                 score += 5;
                 
@@ -166,9 +184,6 @@ public class DriverProfile
                 missing.Add("Driving Experience");
 
             // Optional Fields
-            if (string.IsNullOrWhiteSpace(ProfessionalSummary))
-                missing.Add("Professional Summary (Optional)");
-
             if (!Certifications.Any())
                 missing.Add("Certifications (Optional)");
                 

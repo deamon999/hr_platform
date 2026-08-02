@@ -15,7 +15,7 @@
             @foreach (var (edu, i) in Profile.EducationHistory.Select((e, i) => (e, i)))
             {
                 <div class="col-12">
-                    <div class="card shadow-sm border-0 bg-light">
+                    <div class="card shadow-none border bg-light">
                         <div class="card-header bg-white border-bottom fw-bold text-dark d-flex justify-content-between align-items-center py-3">
                             <span>@(string.IsNullOrEmpty(edu.InstitutionName) ? $"Institution #{i + 1}" : edu.InstitutionName)</span>
                             @if(!IsReadOnly) {

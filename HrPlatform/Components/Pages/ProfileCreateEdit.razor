@@ -11,11 +11,7 @@
 @inject AuthenticationStateProvider AuthState
 @inject NavigationManager Nav
 
-<PageTitle>@(isNew ? "Create Driver Profile" : "Edit Driver Profile")</PageTitle>
-
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold mb-0 text-dark">@(isNew ? "Create Driver Profile" : "Edit Driver Profile")</h2>
-</div>
+<PageTitle>@(isNew ? "Driver Application" : "Edit Application")</PageTitle>
 
 <div>
     @if (profile is null)
@@ -27,200 +23,192 @@
     }
     else
     {
-        <div class="row g-4">
-            <div class="col-lg-3 mb-4 mb-lg-0">
-                <div class="card shadow-sm border-0 app-card">
-                    <div class="card-body p-3">
-                        <ul class="nav nav-pills flex-column gap-2">
-                            @foreach (var (label, index) in tabs.Select((l, i) => (l, i)))
-                            {
-                                var locked = isNew && index > maxReachedTab;
-                                var completed = isNew && index < maxReachedTab;
+        <div class="row g-0 h-100" style="min-height: calc(100vh - 4.5rem);">
+            <!-- Sidebar Progress -->
+            <div class="col-lg-3 p-4" style="background-color: var(--bg-card); border-right: 1px solid var(--border-color);">
+                <div class="mb-4">
+                    <h5 class="text-secondary fw-bold text-uppercase mb-4" style="font-size: 0.8rem; letter-spacing: 1px;">Application Progress</h5>
+                    <ul class="nav flex-column gap-3 wizard-steps">
+                        @foreach (var (label, index) in tabs.Select((l, i) => (l, i)))
+                        {
+                            var locked = isNew && index > maxReachedTab;
+                            var completed = isNew && index < maxReachedTab;
+                            var active = activeTab == index;
 
-                                <li class="nav-item">
-                                    <button type="button"
-                                            class="nav-link text-start w-100 rounded-pill @(activeTab == index ? "active fw-semibold shadow-sm" : "text-dark") @(locked ? "disabled opacity-50" : "")"
-                                            @onclick="() => ActivateTab(index)"
-                                            disabled="@locked"
-                                            title="@(locked ? "Complete previous sections first" : label)">
+                            <li class="nav-item">
+                                <button type="button"
+                                        class="nav-link text-start w-100 p-0 d-flex align-items-center @(active ? "active-step" : "inactive-step") @(locked ? "disabled opacity-50" : "")"
+                                        @onclick="() => ActivateTab(index)"
+                                        disabled="@locked"
+                                        style="background: transparent; border: none;">
+                                    <div class="step-circle @(active ? "active-circle" : (completed ? "completed-circle" : "inactive-circle")) me-3 d-flex justify-content-center align-items-center rounded-circle" style="width: 24px; height: 24px; font-size: 0.75rem;">
                                         @if (completed)
                                         {
-                                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                            <i class="bi bi-check"></i>
                                         }
-                                        else if (locked)
+                                        else
                                         {
-                                            <i class="bi bi-lock-fill text-muted me-2"></i>
+                                            <span>@(index + 1)</span>
                                         }
-                                        @label
-                                    </button>
-                                </li>
-                            }
-                        </ul>
+                                    </div>
+                                    <span style="font-size: 0.9rem;">@label</span>
+                                </button>
+                            </li>
+                        }
+                    </ul>
+                </div>
+                
+                <div class="mt-auto pt-5">
+                    <div class="d-flex align-items-center text-muted">
+                        <i class="bi bi-question-circle fs-4 me-3 text-primary"></i>
+                        <div>
+                            <div class="fw-bold text-light" style="font-size: 0.9rem;">Need Help?</div>
+                            <small>Our team is here to help you.</small>
+                            <div class="mt-1">
+                                <a href="mailto:support@cdlpool.com" class="text-primary text-decoration-none small"><i class="bi bi-envelope me-1"></i> Contact Support</a>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                @if (isNew)
-                {
-                    <div class="alert alert-info mt-4 border-0 shadow-sm rounded-3">
-                        <i class="bi bi-info-circle-fill me-2"></i>
-                        <small>Complete each section in order. You can freely navigate between sections after saving your profile.</small>
-                    </div>
-                }
             </div>
 
-            <div class="col-lg-9">
-                <EditForm Model="profile" OnValidSubmit="SaveAsync">
+            <!-- Main Content Area -->
+            <div class="col-lg-9 d-flex flex-column bg-white text-dark">
+                <EditForm EditContext="editContext" class="d-flex flex-column flex-grow-1">
                     <DataAnnotationsValidator/>
-                    <ValidationSummary class="text-danger mb-4"/>
-
-                    <div class="card shadow-sm border-0 app-card">
-                        <div class="card-header bg-white border-bottom p-4">
-                            <h4 class="mb-0 fw-bold">@tabs[activeTab]</h4>
+                    
+                    <!-- Top Bar -->
+                    <div class="px-5 py-4 d-flex justify-content-between align-items-center border-bottom" style="border-color: var(--border-color) !important;">
+                        <h4 class="mb-0 fw-bold text-uppercase d-flex align-items-center">
+                            <span class="text-primary me-2">@(activeTab + 1).</span> @tabs[activeTab]
+                        </h4>
+                        <div>
+                            <button type="button" class="btn btn-link text-muted text-decoration-none" @onclick="CancelEdit">
+                                <i class="bi bi-x-circle me-1"></i> Cancel
+                            </button>
                         </div>
+                    </div>
+                    
+                    <div class="px-5 py-4 flex-grow-1 overflow-auto">
+                        <ValidationSummary class="text-danger mb-4"/>
 
-                        <div class="card-body p-4">
-                            <div class="@(activeTab == 0 ? "" : "d-none")">
-                                <HrPlatform.Components.Pages.ProfileShared.ProfilePersonalForm Profile="profile" IsReadOnly="false" />
-                            </div>
-                            <div class="@(activeTab == 1 ? "" : "d-none")">
-                                <HrPlatform.Components.Pages.ProfileShared.ProfileDrivingStatsForm Profile="profile" IsReadOnly="false" />
-                            </div>
-                            <div class="@(activeTab == 2 ? "" : "d-none")">
-                                <HrPlatform.Components.Pages.ProfileShared.ProfileLicenseForm Profile="profile" IsReadOnly="false" />
-                            </div>
-                            <div class="@(activeTab == 3 ? "" : "d-none")">
-                                <HrPlatform.Components.Pages.ProfileShared.ProfileSkillsForm Profile="profile" IsReadOnly="false" />
-                            </div>
-                            <div class="@(activeTab == 4 ? "" : "d-none")">
-                                <HrPlatform.Components.Pages.ProfileShared.ProfileEmploymentForm Profile="profile" IsReadOnly="false" />
-                            </div>
-                            <div class="@(activeTab == 5 ? "" : "d-none")">
-                                <HrPlatform.Components.Pages.ProfileShared.ProfileEducationForm Profile="profile" IsReadOnly="false" />
-                            </div>
-                            <div class="@(activeTab == 6 ? "" : "d-none")">
-                                <HrPlatform.Components.Pages.ProfileShared.ProfileCertificationsForm Profile="profile" IsReadOnly="false" />
-                            </div>
-                            <div class="@(activeTab == 7 ? "" : "d-none")">
-                                <div class="alert alert-info border-0 shadow-sm rounded-3 mb-4 d-flex align-items-center">
-                                    <i class="bi bi-info-circle-fill fs-4 me-3"></i>
-                                    <div>
-                                        <strong>DOT disclosure:</strong> List all moving violations, accidents, and DUI convictions in the past 3 years.
-                                    </div>
+                        <div class="@(activeTab == 0 ? "" : "d-none")">
+                            <HrPlatform.Components.Pages.ProfileShared.ProfilePersonalForm Profile="profile" IsReadOnly="false" />
+                        </div>
+                        <div class="@(activeTab == 1 ? "" : "d-none")">
+                            <HrPlatform.Components.Pages.ProfileShared.ProfileLicenseForm Profile="profile" IsReadOnly="false" />
+                        </div>
+                        <div class="@(activeTab == 2 ? "" : "d-none")">
+                            <HrPlatform.Components.Pages.ProfileShared.ProfileDrivingStatsForm Profile="profile" IsReadOnly="false" />
+                        </div>
+                        <div class="@(activeTab == 3 ? "" : "d-none")">
+                            <HrPlatform.Components.Pages.ProfileShared.ProfileEmploymentForm Profile="profile" IsReadOnly="false" />
+                        </div>
+                        <div class="@(activeTab == 4 ? "" : "d-none")">
+                            <HrPlatform.Components.Pages.ProfileShared.ProfileSafetyForm Profile="profile" IsReadOnly="false" />
+                        </div>
+                        <div class="@(activeTab == 5 ? "" : "d-none")">
+                            <HrPlatform.Components.Pages.ProfileShared.ProfileDocumentsForm Profile="profile" IsReadOnly="false" />
+                        </div>
+                        <div class="@(activeTab == 6 ? "" : "d-none")">
+                            <HrPlatform.Components.Pages.ProfileShared.ProfilePreferencesForm Profile="profile" IsReadOnly="false" />
+                        </div>
+                        <div class="@(activeTab == 7 ? "" : "d-none")">
+                            <HrPlatform.Components.Pages.ProfileShared.ProfileEducationForm Profile="profile" IsReadOnly="false" />
+                        </div>
+                        <div class="@(activeTab == 8 ? "" : "d-none")">
+                            <HrPlatform.Components.Pages.ProfileShared.ProfileCertificationsForm Profile="profile" IsReadOnly="false" />
+                        </div>
+                        <div class="@(activeTab == 9 ? "" : "d-none")">
+                            <HrPlatform.Components.Pages.ProfileShared.ProfileConsentsForm Profile="profile" IsReadOnly="false" />
+                        </div>
+                        <div class="@(activeTab == 10 ? "" : "d-none")">
+                            <HrPlatform.Components.Pages.ProfileShared.ProfileReviewForm Profile="profile" />
+                        </div>
+                        <div class="@(activeTab == 11 ? "" : "d-none")">
+                            <!-- Application Submitted Success -->
+                            <div class="text-center py-5">
+                                <i class="bi bi-check-circle-fill text-primary" style="font-size: 4rem;"></i>
+                                <h2 class="mt-4 mb-3 fw-bold">Application Submitted!</h2>
+                                <p class="text-secondary mb-5">Thank you! Your application has been submitted successfully.<br/>You can now apply to jobs that match your profile.</p>
+                                <div class="d-flex justify-content-center gap-3">
+                                    <button type="button" class="btn btn-outline-primary px-4 py-2" @onclick="CancelEdit">View My Profile</button>
+                                    <a href="/jobs" class="btn btn-primary px-4 py-2">Browse Jobs</a>
                                 </div>
-
-                                @if (profile.ViolationHistory == null || !profile.ViolationHistory.Any())
-                                {
-                                    <div class="text-center text-muted py-5 border rounded-3 bg-light mb-4">
-                                        <i class="bi bi-shield-check fs-1 text-success mb-3 d-block"></i>
-                                        <p class="fs-5 mb-0">No safety records or violations reported.</p>
-                                    </div>
-                                }
-                                else
-                                {
-                                    <div class="row g-4 mb-4">
-                                        @foreach (var (viol, vi) in profile.ViolationHistory.Select((v,i)=>(v,i)))
-                                        {
-                                            <div class="col-12">
-                                                <div class="card shadow-sm border-0 bg-light">
-                                                    <div class="card-header bg-white border-bottom fw-bold text-dark d-flex justify-content-between align-items-center py-3">
-                                                        <span>Incident #@(vi + 1)</span>
-                                                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3"
-                                                                @onclick="() => profile.ViolationHistory.Remove(viol)">
-                                                            <i class="bi bi-trash me-1"></i> Remove
-                                                        </button>
-                                                    </div>
-                                                    <div class="card-body p-4">
-                                                        <div class="row g-3">
-                                                            <div class="col-md-4">
-                                                                <label class="form-label fw-semibold text-secondary small text-uppercase">Type *</label>
-                                                                <InputSelect class="form-select bg-white border-0 shadow-sm" @bind-Value="viol.Type">
-                                                                    @foreach (var vt in Enum.GetValues<ViolationType>())
-                                                                    { <option value="@vt">@vt</option> }
-                                                                </InputSelect>
-                                                            </div>
-                                                            <div class="col-md-4">
-                                                                <label class="form-label fw-semibold text-secondary small text-uppercase">Date *</label>
-                                                                <InputDate class="form-control bg-white border-0 shadow-sm" @bind-Value="viol.OccurredDate"/>
-                                                            </div>
-                                                            <div class="col-md-4">
-                                                                <label class="form-label fw-semibold text-secondary small text-uppercase">At fault?</label>
-                                                                <div class="form-check form-switch mt-2">
-                                                                    <InputCheckbox class="form-check-input" @bind-Value="viol.AtFault" id="@($"fault_{vi}")"/>
-                                                                    <label class="form-check-label fw-medium ms-2" for="@($"fault_{vi}")">Yes, I was at fault</label>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-12">
-                                                                <label class="form-label fw-semibold text-secondary small text-uppercase">Description</label>
-                                                                <InputTextArea class="form-control bg-white border-0 shadow-sm" rows="2"
-                                                                               @bind-Value="viol.Description"/>
-                                                            </div>
-                                                            <div class="col-md-6">
-                                                                <label class="form-label fw-semibold text-secondary small text-uppercase">Resolution</label>
-                                                                <InputText class="form-control bg-white border-0 shadow-sm" @bind-Value="viol.Resolution"
-                                                                           placeholder="e.g. Fine paid, license suspended 30 days"/>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        }
-                                    </div>
-                                }
-                                <button type="button" class="btn btn-outline-primary rounded-pill px-4 fw-medium shadow-sm"
-                                        @onclick="AddViolation">
-                                    <i class="bi bi-plus-circle me-1"></i> Add incident
-                                </button>
                             </div>
                         </div>
                     </div>
 
-                    <div class="mt-4 d-flex gap-2 align-items-center flex-wrap pt-2">
-                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" @onclick="CancelEdit">Cancel</button>
-
-                        @if (isNew && activeTab > 0)
-                        {
-                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4" @onclick="GoPrevious">
-                                <i class="bi bi-arrow-left me-1"></i> Previous
-                            </button>
-                        }
-
-                        @if (isNew && activeTab < tabs.Length - 1)
-                        {
-                            <button type="button" class="btn btn-primary rounded-pill px-4" @onclick="GoNext">
-                                Next <i class="bi bi-arrow-right ms-1"></i>
-                            </button>
-                        }
-
-                        @if (!isNew || maxReachedTab == tabs.Length - 1)
-                        {
-                            <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold">
-                                @(isNew ? "Create Profile" : "Save Changes")
-                            </button>
-                        }
-
-                        @if (isNew && maxReachedTab < tabs.Length - 1)
-                        {
-                            <small class="text-muted ms-2"><i class="bi bi-exclamation-circle me-1"></i> Review all @tabs.Length sections to enable Save.</small>
-                        }
-                    </div>
-
-                    @if (!string.IsNullOrEmpty(successMessage))
+                    <!-- Bottom Nav Bar -->
+                    @if (activeTab < 11)
                     {
-                        <div class="alert alert-success mt-4 border-0 shadow-sm rounded-3">
-                            <i class="bi bi-check-circle-fill me-2"></i> @successMessage
+                        <div class="px-5 py-4 border-top d-flex justify-content-between align-items-center bg-white" style="border-color: var(--border-color) !important;">
+                            @if (activeTab > 0)
+                            {
+                                <button type="button" class="btn btn-outline-secondary px-4" @onclick="GoPrevious">
+                                    <i class="bi bi-arrow-left me-2"></i> Previous
+                                </button>
+                            }
+                            else
+                            {
+                                <div></div>
+                            }
+
+                            @if (activeTab < 10)
+                            {
+                                <div class="d-flex gap-3">
+                                    <button type="button" class="btn btn-outline-primary px-4 fw-medium" @onclick="SaveAndExitAsync">
+                                        Save & Exit
+                                    </button>
+                                    <button type="button" class="btn btn-primary px-4 fw-medium" @onclick="SaveAndContinueAsync">
+                                        Save & Continue <i class="bi bi-arrow-right ms-2"></i>
+                                    </button>
+                                </div>
+                            }
+                            else if (activeTab == 10)
+                            {
+                                <div class="d-flex gap-3">
+                                    <button type="button" class="btn btn-outline-primary px-4 fw-medium" @onclick="SaveAndExitAsync">
+                                        Save & Exit
+                                    </button>
+                                    <button type="button" class="btn btn-primary px-5 fw-bold" @onclick="SubmitApplicationAsync">
+                                        Submit Application <i class="bi bi-check-circle ms-2"></i>
+                                    </button>
+                                </div>
+                            }
                         </div>
                     }
                 </EditForm>
             </div>
-            </div>
-
+        </div>
 
         <style>
-            .app-card {
-                transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            .wizard-steps .active-step {
+                color: var(--text-primary);
+                font-weight: 600;
             }
-            .nav-pills .nav-link:hover:not(.active):not(.disabled) {
-                background-color: #f8f9fa;
+            .wizard-steps .inactive-step {
+                color: var(--text-secondary);
+            }
+            .wizard-steps .inactive-step:hover:not(.disabled) {
+                color: var(--text-primary);
+            }
+            .step-circle {
+                border: 1px solid var(--border-color);
+            }
+            .active-circle {
+                background-color: var(--accent-primary);
+                border-color: var(--accent-primary);
+                color: #000;
+            }
+            .completed-circle {
+                background-color: transparent;
+                border-color: var(--text-secondary);
+                color: var(--text-secondary);
+            }
+            .inactive-circle {
+                background-color: transparent;
+                color: var(--text-secondary);
             }
         </style>
 
@@ -232,16 +220,14 @@
                         <div class="modal-header bg-danger text-white border-0">
                             <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i> Discard changes?</h5>
                         </div>
-
                         <div class="modal-body p-4 fs-5">
-                            You have unsaved changes. Are you sure you want to discard them?
+                            You have unsaved changes. Are you sure you want to exit?
                         </div>
-
-                        <div class="modal-footer border-0 bg-light">
-                            <button class="btn btn-secondary rounded-pill px-4" @onclick="() => showCancelConfirm = false">
-                                Continue Editing
+                        <div class="modal-footer border-0">
+                            <button type="button" class="btn btn-secondary px-4" @onclick="() => showCancelConfirm = false">
+                                Cancel
                             </button>
-                            <button class="btn btn-danger rounded-pill px-4" @onclick="ConfirmCancel">Discard Changes</button>
+                            <button type="button" class="btn btn-danger px-4" @onclick="ConfirmCancel">Exit</button>
                         </div>
                     </div>
                 </div>
@@ -255,19 +241,19 @@
     [Parameter] public int Id { get; set; }
 
     private DriverProfile? profile;
+    private EditContext editContext = default!;
     private bool isNew;
     private string? successMessage;
     private string userId = default!;
     private int activeTab;
     private int maxReachedTab;
     private string? newSkill;
-    private DriverProfile? originalSnapshot;
     private bool showCancelConfirm;
 
     private static DateOnly Today => DateOnly.FromDateTime(DateTime.Today);
 
     private static readonly string[] tabs =
-        ["Personal", "Driving Stats", "License & Medical", "Skills", "Employment", "Education", "Certifications", "Safety Record"];
+        ["Personal Information", "CDL License & Medical", "Driving Experience", "Employment History", "Safety History", "Documents", "Preferences", "Education", "Certifications", "Consents & Authorizations", "Review & Submit", "Application Submitted"];
 
     protected override async Task OnInitializedAsync()
     {
@@ -288,12 +274,13 @@
         {
             isNew = true;
             maxReachedTab = 0;
+            activeTab = 0;
             profile = new DriverProfile
             {
                 UserId = userId,
-                DateOfBirth = Today
+                DateOfBirth = Today,
+                EquipmentExperience = new DriverEquipmentExperience()
             };
-            originalSnapshot = null;
         }
         else
         {
@@ -304,15 +291,18 @@
             }
 
             isNew = false;
-            maxReachedTab = tabs.Length - 1;
+            maxReachedTab = existing.IsApplicationCompleted ? tabs.Length - 1 : existing.LastWizardStep;
+            activeTab = existing.IsApplicationCompleted ? 0 : existing.LastWizardStep;
             profile = existing;
-            originalSnapshot = CloneProfile(profile);
+            if (profile.EquipmentExperience == null) profile.EquipmentExperience = new DriverEquipmentExperience();
         }
+        
+        editContext = new EditContext(profile!);
     }
 
     private void ActivateTab(int index)
     {
-        if (isNew && index > maxReachedTab)
+        if (!profile!.IsApplicationCompleted && index > maxReachedTab)
             return;
 
         activeTab = index;
@@ -335,300 +325,81 @@
             activeTab--;
     }
 
-    private async Task SaveAsync()
+    private async Task SaveAndContinueAsync()
+    {
+        if (editContext.Validate())
+        {
+            await SaveProfileToDbAsync();
+            if (activeTab < 10)
+            {
+                activeTab++;
+                if (activeTab > maxReachedTab) maxReachedTab = activeTab;
+            }
+        }
+    }
+
+    private async Task SaveAndExitAsync()
+    {
+        if (editContext.Validate())
+        {
+            await SaveProfileToDbAsync();
+            Nav.NavigateTo(ReturnUrl ?? "/jobs");
+        }
+    }
+
+    private async Task SubmitApplicationAsync()
+    {
+        if (editContext.Validate())
+        {
+            profile!.IsApplicationCompleted = true;
+            await SaveProfileToDbAsync();
+            activeTab = 11;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveProfileToDbAsync()
     {
         var auth = await AuthState.GetAuthenticationStateAsync();
         var currentUserId = auth.User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+
+        if (activeTab > profile!.LastWizardStep)
+        {
+            profile.LastWizardStep = activeTab;
+        }
 
         if (isNew)
         {
             profile!.UserId = currentUserId;
             await ProfileService.CreateAsync(profile!);
             isNew = false;
-            maxReachedTab = tabs.Length - 1;
         }
         else
         {
             await ProfileService.UpdateAsync(profile!, currentUserId);
         }
-
-        // 1. Set the success message
-        successMessage = "Profile saved successfully! Redirecting...";
-
-        // 2. Force the UI to re-render so the user sees the message
-        StateHasChanged();
-
-        // 3. Wait briefly (e.g., 1.5 seconds)
-        await Task.Delay(1500);
-
-        // 4. Navigate to the ReturnUrl if present, otherwise to /my-profile
-        var destination = !string.IsNullOrEmpty(ReturnUrl) ? ReturnUrl : "/my-profile";
-        Nav.NavigateTo(destination);
+        
+        // Mark form as unmodified so we don't prompt on exit
+        editContext.MarkAsUnmodified();
     }
-
-    private void ToggleEndorsement(DriverLicense license, CdlEndorsement value, bool add)
-    {
-        if (add)
-            license.AddEndorsement(value);
-        else
-            license.RemoveEndorsement(value);
-    }
-
-    private void ToggleTrailerType(DriverEmployment emp, TrailerType type, bool add)
-    {
-        if (add)
-            emp.AddTrailerType(type);
-        else
-            emp.RemoveTrailerType(type);
-    }
-
-    private void AddEmployment()
-    {
-        profile?.EmploymentHistory.Add(new DriverEmployment
-        {
-            DriverProfileId = profile!.Id,
-            StartDate = Today
-        });
-    }
-
-    private void AddLicense()
-    {
-        if (profile is null)
-            return;
-
-        profile.License = new DriverLicense
-        {
-            DriverProfileId = profile.Id,
-            IssuedDate = Today,
-            ExpiryDate = Today
-        };
-    }
-
-    private void AddMedicalCard()
-    {
-        if (profile is null)
-            return;
-
-        profile.MedicalCard = new DriverMedicalCard
-        {
-            DriverProfileId = profile.Id,
-            IssuedDate = Today,
-            ExpiryDate = Today
-        };
-    }
-
-    private void AddEducation()
-    {
-        if (profile is null)
-            return;
-
-        profile.EducationHistory.Add(new DriverEducation
-        {
-            DriverProfileId = profile.Id,
-            GraduationDate = Today
-        });
-    }
-
-    private void AddCertification()
-    {
-        if (profile is null)
-            return;
-
-        profile.Certifications.Add(new DriverCertification
-        {
-            DriverProfileId = profile.Id,
-            IssuedDate = Today,
-            ExpiryDate = Today
-        });
-    }
-
-    private void AddViolation()
-    {
-        profile?.ViolationHistory.Add(new DriverViolation {
-            DriverProfileId = profile.Id,
-            OccurredDate = DateOnly.FromDateTime(DateTime.Today)
-        });
-    }
-
-    private void AddSkill()
-    {
-        if (string.IsNullOrWhiteSpace(newSkill) || profile is null)
-            return;
-
-        profile.AddSkill(newSkill);
-        newSkill = null;
-    }
-
     private void CancelEdit()
     {
-        if (!isNew && profile is not null)
+        if (editContext.IsModified())
         {
-            if (!IsUnchanged(profile, originalSnapshot))
-            {
-                showCancelConfirm = true;
-                return;
-            }
-
-            Nav.NavigateTo($"/profiles/{profile.Id}");
+            showCancelConfirm = true;
         }
         else
         {
-            Nav.NavigateTo("/");
+            ConfirmCancel();
         }
     }
 
     private void ConfirmCancel()
     {
-        showCancelConfirm = false;
-
-        if (profile is not null && originalSnapshot is not null)
-        {
-            profile = originalSnapshot;
-        }
-
-        if (profile is not null)
-            Nav.NavigateTo($"/profiles/{profile.Id}");
+        if (isNew)
+            Nav.NavigateTo("/jobs");
         else
-            Nav.NavigateTo("/");
+            Nav.NavigateTo(ReturnUrl ?? $"/profiles/{profile!.Id}");
     }
-
-    private static DriverProfile CloneProfile(DriverProfile src)
-    {
-        return new DriverProfile
-        {
-            Id = src.Id,
-            UserId = src.UserId,
-            FirstName = src.FirstName,
-            MiddleName = src.MiddleName,
-            LastName = src.LastName,
-            DateOfBirth = src.DateOfBirth,
-            PhoneNumber = src.PhoneNumber,
-            AlternatePhone = src.AlternatePhone,
-            Email = src.Email,
-            LinkedInUrl = src.LinkedInUrl,
-            StreetAddress = src.StreetAddress,
-            City = src.City,
-            State = src.State,
-            ZipCode = src.ZipCode,
-            ProfessionalSummary = src.ProfessionalSummary,
-            YearsOfExperience = src.YearsOfExperience,
-            TotalMilesDriven = src.TotalMilesDriven,
-            AccidentFreeMiles = src.AccidentFreeMiles,
-            StatesOperated = src.StatesOperated,
-            AverageWeeklyMiles = src.AverageWeeklyMiles,
-            PreferredHomeTime = src.PreferredHomeTime,
-            CanDriveManual = src.CanDriveManual,
-            WantsToDriveWithPets = src.WantsToDriveWithPets,
-            WantsToDriveWithRiders = src.WantsToDriveWithRiders,
-            WantsTeamDriving = src.WantsTeamDriving,
-            License = src.License == null
-                ? null
-                : new DriverLicense
-                {
-                    Id = src.License.Id,
-                    LicenseNumber = src.License.LicenseNumber,
-                    IssuingState = src.License.IssuingState,
-                    Class = src.License.Class,
-                    IssuedDate = src.License.IssuedDate,
-                    ExpiryDate = src.License.ExpiryDate,
-                    Endorsements = new List<DriverLicenseEndorsement>(src.License.Endorsements.Select(e => new DriverLicenseEndorsement { Id = e.Id, Endorsement = e.Endorsement })),
-                    Restrictions = src.License.Restrictions
-                },
-            MedicalCard = src.MedicalCard == null
-                ? null
-                : new DriverMedicalCard
-                {
-                    Id = src.MedicalCard.Id,
-                    IssuedDate = src.MedicalCard.IssuedDate,
-                    ExpiryDate = src.MedicalCard.ExpiryDate,
-                    MedicalExaminerName = src.MedicalCard.MedicalExaminerName,
-                    MedicalExaminerCertNumber = src.MedicalCard.MedicalExaminerCertNumber,
-                    SelfCertified = src.MedicalCard.SelfCertified
-                },
-            Skills = new List<DriverProfileSkill>(src.Skills.Select(s => new DriverProfileSkill { Id = s.Id, Skill = s.Skill })),
-            EmploymentHistory = src.EmploymentHistory.Select(e => new DriverEmployment
-            {
-                Id = e.Id,
-                CompanyName = e.CompanyName,
-                JobTitle = e.JobTitle,
-                City = e.City,
-                State = e.State,
-                StartDate = e.StartDate,
-                EndDate = e.EndDate,
-                AverageWeeklyMiles = e.AverageWeeklyMiles,
-                ReasonForLeaving = e.ReasonForLeaving,
-                Responsibilities = e.Responsibilities,
-                TrailerTypes = new List<DriverEmploymentTrailerType>(e.TrailerTypes.Select(t => new DriverEmploymentTrailerType { Id = t.Id, TrailerType = t.TrailerType }))
-            }).ToList(),
-            EducationHistory = src.EducationHistory.Select(ed => new DriverEducation
-            {
-                Id = ed.Id,
-                Level = ed.Level,
-                InstitutionName = ed.InstitutionName,
-                City = ed.City,
-                State = ed.State,
-                FieldOfStudy = ed.FieldOfStudy,
-                GraduationDate = ed.GraduationDate,
-                Graduated = ed.Graduated
-            }).ToList(),
-            Certifications = src.Certifications.Select(c => new DriverCertification
-            {
-                Id = c.Id,
-                Name = c.Name,
-                IssuingAuthority = c.IssuingAuthority,
-                CertificationNumber = c.CertificationNumber,
-                IssuedDate = c.IssuedDate,
-                ExpiryDate = c.ExpiryDate
-            }).ToList(),
-            ViolationHistory = src.ViolationHistory.Select(v => new DriverViolation
-            {
-                Id = v.Id,
-                DriverProfileId = v.DriverProfileId,
-                Type = v.Type,
-                OccurredDate = v.OccurredDate,
-                Description = v.Description,
-                AtFault = v.AtFault,
-                Reportable = v.Reportable,
-                Resolution = v.Resolution
-            }).ToList()
-        };
-    }
-
-    private static bool IsUnchanged(DriverProfile? a, DriverProfile? b)
-    {
-        if (a is null && b is null)
-            return true;
-
-        if (a is null || b is null)
-            return false;
-
-        if (a.FirstName != b.FirstName) return false;
-        if (a.LastName != b.LastName) return false;
-        if (a.DateOfBirth != b.DateOfBirth) return false;
-        if (a.PhoneNumber != b.PhoneNumber) return false;
-        if (a.Email != b.Email) return false;
-        if (a.ProfessionalSummary != b.ProfessionalSummary) return false;
-        if (a.YearsOfExperience != b.YearsOfExperience) return false;
-        if (a.TotalMilesDriven != b.TotalMilesDriven) return false;
-        if (a.AccidentFreeMiles != b.AccidentFreeMiles) return false;
-        if (a.AverageWeeklyMiles != b.AverageWeeklyMiles) return false;
-        if (a.PreferredHomeTime != b.PreferredHomeTime) return false;
-        if (a.CanDriveManual != b.CanDriveManual) return false;
-        if (a.WantsToDriveWithPets != b.WantsToDriveWithPets) return false;
-        if (a.WantsToDriveWithRiders != b.WantsToDriveWithRiders) return false;
-        if (a.WantsTeamDriving != b.WantsTeamDriving) return false;
-        if (!a.Skills.SequenceEqual(b.Skills)) return false;
-        if (a.EmploymentHistory.Count != b.EmploymentHistory.Count) return false;
-        if (a.EducationHistory.Count != b.EducationHistory.Count) return false;
-        if (a.Certifications.Count != b.Certifications.Count) return false;
-        if (a.ViolationHistory.Count != b.ViolationHistory.Count) return false;
-
-        return true;
-    }
-
-
-
 }
-
-
 

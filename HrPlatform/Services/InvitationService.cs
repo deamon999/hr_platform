@@ -1,4 +1,4 @@
-﻿using HrPlatform.Data;
+using HrPlatform.Data;
 using HrPlatform.Data.Entities;
 using HrPlatform.Data.Models;
 using HrPlatform.Models;
@@ -70,6 +70,25 @@ public class InvitationService : IInvitationService
         if (inv is not null)
         {
             inv.IsUsed = true;
+            await _db.SaveChangesAsync();
+        }
+    }
+
+    public async Task MarkAllAsUsedByEmailAsync(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email)) return;
+        var emailLower = email.Trim().ToLowerInvariant();
+        var invs = await _db.Invitations
+            .Where(i => i.Email != null && i.Email.ToLower() == emailLower && !i.IsUsed)
+            .ToListAsync();
+            
+        foreach (var inv in invs)
+        {
+            inv.IsUsed = true;
+        }
+        
+        if (invs.Any())
+        {
             await _db.SaveChangesAsync();
         }
     }
@@ -191,4 +210,15 @@ public class InvitationService : IInvitationService
                                                                                          <p>This link expires on <strong>{expiresAt:MMMM dd, yyyy}</strong>.</p>
                                                                                          </p>
                                                                                          """;
+
+    public async Task<bool> DeleteAsync(int invitationId)
+    {
+        var invitation = await _db.Invitations.FindAsync(invitationId);
+        if (invitation == null)
+            return false;
+
+        _db.Invitations.Remove(invitation);
+        await _db.SaveChangesAsync();
+        return true;
+    }
 }

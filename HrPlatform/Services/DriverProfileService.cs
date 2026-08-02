@@ -1,4 +1,4 @@
-﻿using HrPlatform.Data;
+using HrPlatform.Data;
 using HrPlatform.Data.Enums;
 using HrPlatform.Data.Models;
 using HrPlatform.Models;
@@ -16,11 +16,7 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
             .Include(p => p.User)
             .ThenInclude(u => u.Applications);
 
-        // Availability status
-        if (profileSearch.Availability.HasValue)
-        {
-            q = q.Where(p => p.AvailabilityStatus == profileSearch.Availability.Value);
-        }
+        // Availability status removed from DriverProfile temporarily
 
         // Name search
         if (!string.IsNullOrWhiteSpace(profileSearch.Name))
@@ -57,6 +53,8 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
             .Include(p => p.EducationHistory)
             .Include(p => p.Certifications)
             .Include(p => p.Skills)
+            .Include(p => p.EquipmentExperience)
+            .Include(p => p.Documents)
             .FirstOrDefaultAsync(p => p.UserId == userId);
     }
 
@@ -71,6 +69,8 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
             .Include(p => p.EducationHistory)
             .Include(p => p.Certifications)
             .Include(p => p.Skills)
+            .Include(p => p.EquipmentExperience)
+            .Include(p => p.Documents)
             .FirstOrDefaultAsync(p => p.Id == id);
     }
 
@@ -96,12 +96,66 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
 
     public async Task UpdateAsync(DriverProfile profile, string currentUserId)
     {
-        // ensure only owner can update
-        var existing = await db.DriverProfiles.AsNoTracking().FirstOrDefaultAsync(p => p.Id == profile.Id);
+        var existing = await db.DriverProfiles.AsNoTracking()
+            .Include(p => p.License).ThenInclude(l => l.Endorsements)
+            .Include(p => p.MedicalCard)
+            .Include(p => p.EmploymentHistory).ThenInclude(e => e.TrailerTypes)
+            .Include(p => p.EducationHistory)
+            .Include(p => p.Certifications)
+            .Include(p => p.Skills)
+            .Include(p => p.EquipmentExperience)
+            .Include(p => p.Documents)
+            .FirstOrDefaultAsync(p => p.Id == profile.Id);
+
         if (existing is null)
             throw new InvalidOperationException("Profile not found");
         if (existing.UserId != currentUserId)
             throw new UnauthorizedAccessException("Only the profile owner may update the profile.");
+
+        // Find and explicitly delete orphaned items
+        var incomingJobs = profile.EmploymentHistory.Select(e => e.Id).ToHashSet();
+        foreach (var job in existing.EmploymentHistory) {
+            if (!incomingJobs.Contains(job.Id)) db.Entry(job).State = EntityState.Deleted;
+            else {
+                var incJob = profile.EmploymentHistory.First(e => e.Id == job.Id);
+                var incTrailers = incJob.TrailerTypes.Select(t => t.Id).ToHashSet();
+                foreach (var tt in job.TrailerTypes) {
+                    if (!incTrailers.Contains(tt.Id)) db.Entry(tt).State = EntityState.Deleted;
+                }
+            }
+        }
+        
+        var incomingEdu = profile.EducationHistory.Select(e => e.Id).ToHashSet();
+        foreach (var edu in existing.EducationHistory) {
+            if (!incomingEdu.Contains(edu.Id)) db.Entry(edu).State = EntityState.Deleted;
+        }
+
+        var incomingCerts = profile.Certifications.Select(e => e.Id).ToHashSet();
+        foreach (var cert in existing.Certifications) {
+            if (!incomingCerts.Contains(cert.Id)) db.Entry(cert).State = EntityState.Deleted;
+        }
+
+        var incomingSkills = profile.Skills.Select(e => e.Id).ToHashSet();
+        foreach (var skill in existing.Skills) {
+            if (!incomingSkills.Contains(skill.Id)) db.Entry(skill).State = EntityState.Deleted;
+        }
+
+        var incomingDocs = profile.Documents.Select(e => e.Id).ToHashSet();
+        foreach (var doc in existing.Documents) {
+            if (!incomingDocs.Contains(doc.Id)) db.Entry(doc).State = EntityState.Deleted;
+        }
+
+        if (existing.License != null && profile.License == null) {
+            db.Entry(existing.License).State = EntityState.Deleted;
+        } else if (existing.License != null && profile.License != null) {
+            var incomingEnds = profile.License.Endorsements.Select(e => e.Id).ToHashSet();
+            foreach (var end in existing.License.Endorsements) {
+                if (!incomingEnds.Contains(end.Id)) db.Entry(end).State = EntityState.Deleted;
+            }
+        }
+
+        if (existing.MedicalCard != null && profile.MedicalCard == null) db.Entry(existing.MedicalCard).State = EntityState.Deleted;
+        if (existing.EquipmentExperience != null && profile.EquipmentExperience == null) db.Entry(existing.EquipmentExperience).State = EntityState.Deleted;
 
         profile.UpdatedAt = DateTime.UtcNow;
         db.DriverProfiles.Update(profile);

@@ -1,4 +1,4 @@
-﻿@page "/Account/Register"
+@page "/Account/Register"
 @using System.ComponentModel.DataAnnotations
 @using System.Text
 @using System.Text.Encodings.Web
@@ -17,9 +17,9 @@
 
 <PageTitle>Register</PageTitle>
 
-<h1>Register</h1>
 
-@if (_invitation is not null)
+
+@if (_invitation is not null && !_tokenInvalid)
 {
     <div class="alert alert-info mb-3">
         <strong>You've been invited</strong> as a <strong>@_invitation.Role</strong>.
@@ -35,36 +35,103 @@
     </div>
 }
 
-<div class="row">
-    <div class="col-lg-6">
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-5">
         <StatusMessage Message="@Message"/>
-        <EditForm Model="Input" method="post" OnValidSubmit="RegisterUser" FormName="register">
-            <DataAnnotationsValidator/>
-            <h2>Create a new account.</h2>
-            <hr/>
-            <ValidationSummary class="text-danger" role="alert"/>
+        <section class="card shadow-sm border-0 mt-4">
+            <div class="card-body p-4">
+                <h2 class="text-center fw-bold mb-4">Create Account</h2>
+                <EditForm Model="Input" method="post" OnValidSubmit="RegisterUser" FormName="register">
+                    <DataAnnotationsValidator/>
+                    <ValidationSummary class="text-danger" role="alert"/>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-floating mb-3">
+                        <InputText @bind-Value="Input.FirstName" id="Input.FirstName" class="form-control" autocomplete="given-name" aria-required="true" placeholder="First Name"/>
+                        <label for="Input.FirstName">First Name</label>
+                        <ValidationMessage For="() => Input.FirstName" class="text-danger"/>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-floating mb-3">
+                        <InputText @bind-Value="Input.LastName" id="Input.LastName" class="form-control" autocomplete="family-name" aria-required="true" placeholder="Last Name"/>
+                        <label for="Input.LastName">Last Name</label>
+                        <ValidationMessage For="() => Input.LastName" class="text-danger"/>
+                    </div>
+                </div>
+            </div>
             <div class="form-floating mb-3">
                 <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username"
                            aria-required="true" placeholder="name@example.com"/>
                 <label for="Input.Email">Email</label>
                 <ValidationMessage For="() => Input.Email" class="text-danger"/>
             </div>
-            <div class="form-floating mb-3">
+            <div class="form-floating mb-3 position-relative">
                 <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control"
-                           autocomplete="new-password" aria-required="true" placeholder="password"/>
+                           autocomplete="new-password" aria-required="true" placeholder="Password" style="padding-right: 2.5rem;"/>
                 <label for="Input.Password">Password</label>
+                <button type="button" class="btn btn-link position-absolute end-0 top-50 translate-middle-y text-secondary text-decoration-none" 
+                        style="z-index: 5; margin-right: 0.5rem;" 
+                        onclick="const input = document.getElementById('Input.Password'); const icon = this.querySelector('i'); if (input.type === 'password') { input.type = 'text'; icon.classList.replace('bi-eye-fill', 'bi-eye-slash-fill'); } else { input.type = 'password'; icon.classList.replace('bi-eye-slash-fill', 'bi-eye-fill'); }">
+                    <i class="bi bi-eye-fill"></i>
+                </button>
                 <ValidationMessage For="() => Input.Password" class="text-danger"/>
             </div>
-            <div class="form-floating mb-3">
+            <div class="form-floating mb-3 position-relative">
                 <InputText type="password" @bind-Value="Input.ConfirmPassword" id="Input.ConfirmPassword"
                            class="form-control" autocomplete="new-password" aria-required="true"
-                           placeholder="password"/>
+                           placeholder="Confirm Password" style="padding-right: 2.5rem;"/>
                 <label for="Input.ConfirmPassword">Confirm Password</label>
+                <button type="button" class="btn btn-link position-absolute end-0 top-50 translate-middle-y text-secondary text-decoration-none" 
+                        style="z-index: 5; margin-right: 0.5rem;" 
+                        onclick="const input = document.getElementById('Input.ConfirmPassword'); const icon = this.querySelector('i'); if (input.type === 'password') { input.type = 'text'; icon.classList.replace('bi-eye-fill', 'bi-eye-slash-fill'); } else { input.type = 'password'; icon.classList.replace('bi-eye-slash-fill', 'bi-eye-fill'); }">
+                    <i class="bi bi-eye-fill"></i>
+                </button>
                 <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger"/>
+            </div>
+            <div class="form-check mb-4 mt-2">
+                <InputCheckbox @bind-Value="Input.AcceptTerms" class="form-check-input darker-border-checkbox" id="Input.AcceptTerms"/>
+                <label class="form-check-label text-secondary small" for="Input.AcceptTerms">
+                    I agree to the <span style="cursor: pointer;" class="text-primary text-decoration-none fw-medium" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</span> and Privacy Policy.
+                </label>
+                <ValidationMessage For="() => Input.AcceptTerms" class="text-danger small"/>
             </div>
             <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
         </EditForm>
+            </div>
+        </section>
     </div>
+</div>
+
+<!-- Terms and Conditions Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header border-bottom-0 bg-light">
+        <h5 class="modal-title fw-bold" id="termsModalLabel">Terms and Conditions</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-secondary" style="font-size: 0.95rem; line-height: 1.6;">
+        <h6 class="text-dark fw-bold mb-2">1. Acceptance of Terms</h6>
+        <p class="mb-4">By accessing and registering an account on this platform, you accept and agree to be bound by the terms and provision of this agreement. In addition, when using these particular services, you shall be subject to any posted guidelines or rules applicable to such services.</p>
+        
+        <h6 class="text-dark fw-bold mb-2">2. User License & Platform Usage</h6>
+        <p class="mb-4">Permission is granted to temporarily use the platform for the purposes of employment management, driver onboarding, and logistics coordination. This is the grant of a license, not a transfer of title. Any unauthorized extraction of data, reverse engineering, or disruption of services is strictly prohibited.</p>
+        
+        <h6 class="text-dark fw-bold mb-2">3. Data Accuracy & Integrity</h6>
+        <p class="mb-4">You agree that all information you submit (including CDL information, work history, and personal details) is accurate and truthful. We reserve the right to suspend or terminate accounts that provide false or misleading information.</p>
+
+        <h6 class="text-dark fw-bold mb-2">4. Privacy & Data Collection</h6>
+        <p class="mb-4">Your use of the platform is also governed by our Privacy Policy. We collect necessary data (such as contact info, driving history, and application status) strictly for operational and recruitment purposes. By using the platform, you consent to this data processing.</p>
+        
+        <h6 class="text-dark fw-bold mb-2">5. Disclaimer of Warranties</h6>
+        <p class="mb-4">The materials on this platform are provided on an 'as is' basis. We make no warranties, expressed or implied, and hereby disclaim and negate all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property.</p>
+      </div>
+      <div class="modal-footer border-top-0 bg-light">
+        <button type="button" class="btn btn-primary px-4" data-bs-dismiss="modal">I Understand</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 @code {
@@ -89,17 +156,23 @@
             if (_invitation is not null)
             {
                 Input.Email = _invitation.Email;
-                _tokenInvalid = _invitation.IsUsed || _invitation.ExpiresAt.Second < DateTime.Now.Second;
+                _tokenInvalid = _invitation.IsUsed || _invitation.ExpiresAt < DateTime.UtcNow;
             }
         }
     }
 
     public async Task RegisterUser(EditContext editContext)
     {
-        // If page was loaded with an invalid token, block submission.
-        if (_tokenInvalid) return;
+        // We no longer block registration if the token is invalid; we just let them register organically.
 
         var user = CreateUser();
+        user.FirstName = Input.FirstName;
+        user.LastName = Input.LastName;
+        user.TermsAccepted = Input.AcceptTerms;
+        if (Input.AcceptTerms)
+        {
+            user.TermsAcceptedDate = DateTime.UtcNow;
+        }
 
         await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
         var emailStore = GetEmailStore();
@@ -113,7 +186,7 @@
         }
 
         // --- ROLE ASSIGNMENT LOGIC ---
-        if (_invitation is not null)
+        if (_invitation is not null && !_tokenInvalid)
         {
             if (RoleConstants.Manager.Equals(_invitation.Role, StringComparison.OrdinalIgnoreCase))
             {
@@ -145,6 +218,8 @@
             await UserManager.AddToRoleAsync(user, RoleConstants.Driver);
         }
         // --------------------------------
+
+        await InvitationService.MarkAllAsUsedByEmailAsync(Input.Email);
 
         Logger.LogInformation("User created a new account with password.");
 
@@ -196,6 +271,14 @@
     private sealed class InputModel
     {
         [Required]
+        [Display(Name = "First Name")]
+        public string FirstName { get; set; } = "";
+
+        [Required]
+        [Display(Name = "Last Name")]
+        public string LastName { get; set; } = "";
+
+        [Required]
         [EmailAddress]
         [Display(Name = "Email")]
         public string Email { get; set; } = "";
@@ -210,6 +293,10 @@
         [Display(Name = "Confirm password")]
         [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; } = "";
+
+        [Required]
+        [Range(typeof(bool), "true", "true", ErrorMessage = "You must accept the terms and conditions.")]
+        public bool AcceptTerms { get; set; }
     }
 
 }

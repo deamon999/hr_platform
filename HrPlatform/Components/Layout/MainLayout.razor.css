@@ -9,7 +9,7 @@ main {
 }
 
 .sidebar {
-    background: #faf8f5;
+    background: #13151a;
     border-right: 1px solid var(--border-color);
 }
 
@@ -17,8 +17,8 @@ main {
     height: 4.5rem;
     display: flex;
     align-items: center;
-    background: #f7f5f0;
-    border-bottom: 1px solid rgba(0,0,0,0.1);
+    background: #0f1115;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .top-row ::deep a, .top-row ::deep .btn-link {

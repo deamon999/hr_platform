@@ -7,6 +7,7 @@
 @inject ILogger<Login> Logger
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
+@inject HrPlatform.Services.IDriverProfileService ProfileService
 
 <PageTitle>Log in</PageTitle>
 
@@ -124,6 +125,19 @@
         if (result.Succeeded)
         {
             Logger.LogInformation("User logged in.");
+            if (string.IsNullOrEmpty(ReturnUrl))
+            {
+                var user = await UserManager.FindByEmailAsync(Input.Email);
+                if (user != null && await UserManager.IsInRoleAsync(user, RoleConstants.Driver))
+                {
+                    var profile = await ProfileService.GetByUserIdAsync(user.Id);
+                    if (profile == null)
+                    {
+                        RedirectManager.RedirectTo("/my-profile");
+                        return;
+                    }
+                }
+            }
             RedirectManager.RedirectTo(ReturnUrl);
         }
         else if (result.RequiresTwoFactor)

@@ -25,34 +25,82 @@
     </div>
     
     <div class="col-12 mt-4">
-        <h5 class="fw-bold text-dark mb-3 border-bottom pb-2">Lifestyle & Preferences</h5>
+        <h5 class="fw-bold text-dark mb-3 border-bottom pb-2">Equipment Experience (Years)</h5>
     </div>
-    <div class="col-md-6">
-        <label class="form-label fw-semibold text-secondary small text-uppercase">Preferred Home Time</label>
-        <InputSelect disabled="@IsReadOnly" class="form-select bg-light border-0 shadow-sm" @bind-Value="Profile.PreferredHomeTime">
-            <option value="">Any</option>
-            @foreach (var ht in Enum.GetValues<HomeTimeFrequency>())
-            {
-                <option value="@ht">@ht.ToString()</option>
-            }
-        </InputSelect>
+    <div class="col-md-2 col-sm-4">
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Dry Van</label>
+        <InputNumber disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.EquipmentExperience.DryVan"/>
+    </div>
+    <div class="col-md-2 col-sm-4">
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Reefer</label>
+        <InputNumber disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.EquipmentExperience.Reefer"/>
+    </div>
+    <div class="col-md-2 col-sm-4">
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Flatbed</label>
+        <InputNumber disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.EquipmentExperience.Flatbed"/>
+    </div>
+    <div class="col-md-2 col-sm-4">
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Step Deck</label>
+        <InputNumber disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.EquipmentExperience.StepDeck"/>
+    </div>
+    <div class="col-md-2 col-sm-4">
+        <label class="form-label fw-semibold text-secondary small text-uppercase">RGN</label>
+        <InputNumber disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.EquipmentExperience.Rgn"/>
+    </div>
+    <div class="col-md-2 col-sm-4">
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Lowboy</label>
+        <InputNumber disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.EquipmentExperience.Lowboy"/>
+    </div>
+    <div class="col-md-2 col-sm-4">
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Tanker</label>
+        <InputNumber disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.EquipmentExperience.Tanker"/>
+    </div>
+    <div class="col-md-2 col-sm-4">
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Car Hauler</label>
+        <InputNumber disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.EquipmentExperience.CarHauler"/>
+    </div>
+    <div class="col-md-2 col-sm-4">
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Pneumatic</label>
+        <InputNumber disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.EquipmentExperience.Pneumatic"/>
+    </div>
+    <div class="col-md-2 col-sm-4">
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Dump</label>
+        <InputNumber disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.EquipmentExperience.Dump"/>
+    </div>
+
+    <div class="col-12 mt-4">
+        <h5 class="fw-bold text-dark mb-3 border-bottom pb-2">Special Experience & Skills</h5>
     </div>
     <div class="col-md-6 d-flex flex-column gap-3">
-        <div class="form-check form-switch mt-md-4 mt-2">
+        <div class="form-check form-switch mt-md-2 mt-2">
             <InputCheckbox disabled="@IsReadOnly" class="form-check-input" @bind-Value="Profile.CanDriveManual" id="chkManual" />
             <label class="form-check-label fw-semibold" for="chkManual">Can drive manual transmission</label>
         </div>
         <div class="form-check form-switch">
-            <InputCheckbox disabled="@IsReadOnly" class="form-check-input" @bind-Value="Profile.WantsTeamDriving" id="chkTeam" />
-            <label class="form-check-label fw-semibold" for="chkTeam">Open to Team Driving</label>
+            <InputCheckbox disabled="@IsReadOnly" class="form-check-input" @bind-Value="Profile.EquipmentExperience.AutomaticTransmission" id="chkAuto" />
+            <label class="form-check-label fw-semibold" for="chkAuto">Experience with automatic transmission</label>
         </div>
         <div class="form-check form-switch">
-            <InputCheckbox disabled="@IsReadOnly" class="form-check-input" @bind-Value="Profile.WantsToDriveWithPets" id="chkPets" />
-            <label class="form-check-label fw-semibold" for="chkPets">Wants to drive with pets</label>
+            <InputCheckbox disabled="@IsReadOnly" class="form-check-input" @bind-Value="Profile.EquipmentExperience.HazmatEndorsement" id="chkHazmat" />
+            <label class="form-check-label fw-semibold" for="chkHazmat">Hazmat experience</label>
+        </div>
+    </div>
+    <div class="col-md-6 d-flex flex-column gap-3">
+        <div class="form-check form-switch mt-md-2 mt-2">
+            <InputCheckbox disabled="@IsReadOnly" class="form-check-input" @bind-Value="Profile.EquipmentExperience.MountainDriving" id="chkMountain" />
+            <label class="form-check-label fw-semibold" for="chkMountain">Mountain driving experience</label>
         </div>
         <div class="form-check form-switch">
-            <InputCheckbox disabled="@IsReadOnly" class="form-check-input" @bind-Value="Profile.WantsToDriveWithRiders" id="chkRiders" />
-            <label class="form-check-label fw-semibold" for="chkRiders">Wants to drive with riders</label>
+            <InputCheckbox disabled="@IsReadOnly" class="form-check-input" @bind-Value="Profile.EquipmentExperience.WinterDriving" id="chkWinter" />
+            <label class="form-check-label fw-semibold" for="chkWinter">Winter driving experience (snow/ice)</label>
+        </div>
+        <div class="form-check form-switch">
+            <InputCheckbox disabled="@IsReadOnly" class="form-check-input" @bind-Value="Profile.EquipmentExperience.NycExperience" id="chkNyc" />
+            <label class="form-check-label fw-semibold" for="chkNyc">NYC driving experience</label>
+        </div>
+        <div class="form-check form-switch">
+            <InputCheckbox disabled="@IsReadOnly" class="form-check-input" @bind-Value="Profile.EquipmentExperience.CanadaExperience" id="chkCanada" />
+            <label class="form-check-label fw-semibold" for="chkCanada">Canada driving experience</label>
         </div>
     </div>
 </div>
@@ -60,4 +108,12 @@
 @code {
     [Parameter, EditorRequired] public DriverProfile Profile { get; set; } = default!;
     [Parameter] public bool IsReadOnly { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Profile != null)
+        {
+            Profile.EquipmentExperience ??= new DriverEquipmentExperience { DriverProfileId = Profile.Id };
+        }
+    }
 }

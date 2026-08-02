@@ -1,0 +1,74 @@
+@using HrPlatform.Data.Models
+
+<div class="row g-4">
+    <div class="col-12">
+        <div class="alert alert-warning border-0 shadow-sm rounded-3 mb-4 d-flex align-items-start bg-light">
+            <i class="bi bi-shield-lock-fill fs-4 me-3 text-warning mt-1"></i>
+            <div>
+                <strong>Authorizations & Consents</strong><br/>
+                Please review and authorize the following background checks and inquiries required for employment as a commercial motor vehicle driver.
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-12 d-flex flex-column gap-4">
+        <div class="form-check">
+            <InputCheckbox disabled="@IsReadOnly" class="form-check-input mt-1" @bind-Value="Profile.ConsentFCRA" id="chkFCRA" />
+            <label class="form-check-label ms-2" for="chkFCRA">
+                <strong>Fair Credit Reporting Act (FCRA) Disclosure & Consent</strong><br/>
+                <small class="text-muted">I authorize the procurement of a consumer report and/or investigative consumer report for employment purposes.</small>
+            </label>
+        </div>
+        
+        <div class="form-check">
+            <InputCheckbox disabled="@IsReadOnly" class="form-check-input mt-1" @bind-Value="Profile.ConsentPSP" id="chkPSP" />
+            <label class="form-check-label ms-2" for="chkPSP">
+                <strong>Pre-Employment Screening Program (PSP) Consent</strong><br/>
+                <small class="text-muted">I authorize the prospective employer to access the FMCSA Pre-Employment Screening Program (PSP) system to seek my Driver Record.</small>
+            </label>
+        </div>
+        
+        <div class="form-check">
+            <InputCheckbox disabled="@IsReadOnly" class="form-check-input mt-1" @bind-Value="Profile.ConsentMVR" id="chkMVR" />
+            <label class="form-check-label ms-2" for="chkMVR">
+                <strong>Motor Vehicle Record (MVR) Consent</strong><br/>
+                <small class="text-muted">I authorize the procurement of my Motor Vehicle Record from any state in which I have held a driver's license in the past 3 years.</small>
+            </label>
+        </div>
+        
+        <div class="form-check">
+            <InputCheckbox disabled="@IsReadOnly" class="form-check-input mt-1" @bind-Value="Profile.ConsentClearinghouse" id="chkClear" />
+            <label class="form-check-label ms-2" for="chkClear">
+                <strong>FMCSA Drug & Alcohol Clearinghouse Consent</strong><br/>
+                <small class="text-muted">I authorize the prospective employer to conduct a full/limited query of the FMCSA Commercial Driver's License Drug and Alcohol Clearinghouse.</small>
+            </label>
+        </div>
+        
+        <div class="form-check">
+            <InputCheckbox disabled="@IsReadOnly" class="form-check-input mt-1" @bind-Value="Profile.ConsentEmployment" id="chkEmp" />
+            <label class="form-check-label ms-2" for="chkEmp">
+                <strong>Previous Employment Verification Consent</strong><br/>
+                <small class="text-muted">I authorize my previous employers to release information regarding my employment history, safety performance history, and drug/alcohol testing records.</small>
+            </label>
+        </div>
+    </div>
+    
+    <div class="col-12 mt-4">
+        <h5 class="fw-bold text-dark mb-3 border-bottom pb-2">Electronic Signature</h5>
+        <p class="small text-muted mb-4">By typing my name below, I certify that this application was completed by me, and that all entries on it and information in it are true and complete to the best of my knowledge.</p>
+    </div>
+    
+    <div class="col-md-8">
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Full Legal Name *</label>
+        <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.ElectronicSignatureName" placeholder="Type your full name"/>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Date *</label>
+        <InputDate disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.SignatureDate"/>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public DriverProfile Profile { get; set; } = default!;
+    [Parameter] public bool IsReadOnly { get; set; }
+}

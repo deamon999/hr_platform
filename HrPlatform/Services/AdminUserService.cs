@@ -1,4 +1,4 @@
-﻿using HrPlatform.Data;
+using HrPlatform.Data;
 using HrPlatform.Data.Models;
 using HrPlatform.Models;
 using Microsoft.AspNetCore.Identity;
@@ -90,6 +90,16 @@ public class AdminUserService : IAdminUserService
         if (user is null)
         {
             return;
+        }
+
+        // Explicitly delete any unused or used company invitations associated with this user
+        var userInvitations = await _context.Invitations
+            .Where(i => i.Email == user.Email || (user.PhoneNumber != null && i.Phone == user.PhoneNumber))
+            .ToListAsync();
+            
+        if (userInvitations.Any())
+        {
+            _context.Invitations.RemoveRange(userInvitations);
         }
 
         _context.Users.Remove(user);

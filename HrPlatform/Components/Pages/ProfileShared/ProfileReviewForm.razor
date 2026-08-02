@@ -1,0 +1,100 @@
+@using HrPlatform.Data.Models
+
+<div class="row g-4">
+    <div class="col-12">
+        <h5 class="fw-bold text-dark mb-4 border-bottom pb-2">Final Review</h5>
+        <p class="text-secondary">Please ensure all required sections are completed before submitting your application.</p>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card shadow-none border bg-light h-100">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3"><i class="bi bi-person-badge text-primary me-2"></i> Personal Information</h6>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2 d-flex align-items-center">
+                        <i class="bi @(string.IsNullOrWhiteSpace(Profile.FirstName) ? "bi-x-circle-fill text-danger" : "bi-check-circle-fill text-success") me-2"></i> Name and Contact Info
+                    </li>
+                    <li class="mb-2 d-flex align-items-center">
+                        <i class="bi @(string.IsNullOrWhiteSpace(Profile.StreetAddress) ? "bi-x-circle-fill text-danger" : "bi-check-circle-fill text-success") me-2"></i> Address Information
+                    </li>
+                    <li class="mb-2 d-flex align-items-center">
+                        <i class="bi @(Profile.DateOfBirth == default ? "bi-x-circle-fill text-danger" : "bi-check-circle-fill text-success") me-2"></i> Date of Birth
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card shadow-none border bg-light h-100">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3"><i class="bi bi-card-heading text-primary me-2"></i> License & Experience</h6>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2 d-flex align-items-center">
+                        <i class="bi @(Profile.License == null ? "bi-x-circle-fill text-danger" : "bi-check-circle-fill text-success") me-2"></i> CDL Information
+                    </li>
+                    <li class="mb-2 d-flex align-items-center">
+                        <i class="bi @(Profile.MedicalCard == null ? "bi-x-circle-fill text-danger" : "bi-check-circle-fill text-success") me-2"></i> DOT Medical Card
+                    </li>
+                    <li class="mb-2 d-flex align-items-center">
+                        <i class="bi @(Profile.EquipmentExperience == null ? "bi-exclamation-circle-fill text-warning" : "bi-check-circle-fill text-success") me-2"></i> Equipment Experience
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card shadow-none border bg-light h-100">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3"><i class="bi bi-clock-history text-primary me-2"></i> History & Records</h6>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2 d-flex align-items-center">
+                        <i class="bi @(!Profile.EmploymentHistory.Any() ? "bi-x-circle-fill text-danger" : "bi-check-circle-fill text-success") me-2"></i> Employment History
+                    </li>
+                    <li class="mb-2 d-flex align-items-center">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i> Safety Record (@Profile.ViolationHistory.Count incidents reported)
+                    </li>
+                    <li class="mb-2 d-flex align-items-center">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i> Education & Certifications
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card shadow-none border bg-light h-100">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3"><i class="bi bi-file-earmark-check text-primary me-2"></i> Consents & Signature</h6>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2 d-flex align-items-center">
+                        <i class="bi @(!(Profile.ConsentFCRA && Profile.ConsentMVR && Profile.ConsentClearinghouse) ? "bi-x-circle-fill text-danger" : "bi-check-circle-fill text-success") me-2"></i> Background & Record Consents
+                    </li>
+                    <li class="mb-2 d-flex align-items-center">
+                        <i class="bi @(string.IsNullOrWhiteSpace(Profile.ElectronicSignatureName) ? "bi-x-circle-fill text-danger" : "bi-check-circle-fill text-success") me-2"></i> Electronic Signature
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-12 mt-4 text-center">
+        @if (string.IsNullOrWhiteSpace(Profile.ElectronicSignatureName) || !Profile.ConsentFCRA || Profile.License == null)
+        {
+            <div class="alert alert-danger d-inline-block border-0 shadow-sm rounded-pill px-4">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> Please complete all required fields before submitting.
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-success d-inline-block border-0 shadow-sm rounded-pill px-4">
+                <i class="bi bi-check-circle-fill me-2"></i> Your application is complete and ready to submit!
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public DriverProfile Profile { get; set; } = default!;
+}

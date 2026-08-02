@@ -1,16 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-    --bg-dark: #fdfcf9; /* Warm off-white background */
-    --bg-card: rgba(255, 255, 255, 0.9);
-    --border-color: rgba(0, 0, 0, 0.15);
-    --text-primary: #0f172a;
-    --text-secondary: #475569;
-    --accent-primary: #3b82f6;
-    --accent-hover: #2563eb;
-    --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    --info-gradient: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+    --bg-dark: #0f1115; /* Main background - dark mode */
+    --bg-card: #1a1d24; /* Card background - dark mode */
+    --bg-input: #13151a; /* Input background - dark mode */
+    --border-color: rgba(255, 255, 255, 0.1);
+    --text-primary: #f8fafc; /* White/Light text */
+    --text-secondary: #94a3b8; /* Muted text */
+    --accent-primary: #e6a838; /* Gold/Yellow accent from logo */
+    --accent-hover: #c98e27;
+    --success-color: #10b981;
+    --danger-color: #ef4444;
 }
 
 html, body {
@@ -18,7 +18,7 @@ html, body {
     background-color: var(--bg-dark);
     color: var(--text-primary);
     min-height: 100vh;
-    color-scheme: light;
+    color-scheme: dark;
 }
 
 a, .btn-link {
@@ -40,9 +40,13 @@ main {
     flex: 1;
 }
 
-/* Global Text Colors that adapt to theme */
-.text-muted {
+/* Global Text Colors */
+.text-muted, .text-secondary {
     color: var(--text-secondary) !important;
+}
+
+.text-dark {
+    color: var(--text-primary) !important; /* Override text-dark in dark mode */
 }
 
 strong, b, h1, h2, h3, h4, h5, h6, .card-title, .form-label {
@@ -52,21 +56,27 @@ strong, b, h1, h2, h3, h4, h5, h6, .card-title, .form-label {
 /* Premium Card Styling */
 .card {
     background: var(--bg-card);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--border-color);
-    border-radius: 16px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+}
+
+.bg-white, .bg-light {
+    background-color: var(--bg-card) !important; /* Override bootstrap light colors for dark mode */
+}
+
+/* Invert Bootstrap Close Button for Dark Theme */
+.btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
 }
 
 .card-title {
-    color: rgba(0, 0, 0, 0.6);
+    color: var(--text-primary);
     font-weight: 500;
     font-size: 0.9rem;
     text-transform: uppercase;
@@ -80,38 +90,44 @@ strong, b, h1, h2, h3, h4, h5, h6, .card-title, .form-label {
 
 /* Form Controls */
 .form-control, .form-select {
-    background-color: #ffffff;
-    border: 1px solid var(--border-color);
-    color: var(--text-primary);
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: var(--text-primary) !important;
     border-radius: 8px;
     transition: all 0.2s ease;
+    padding: 0.6rem 1rem;
 }
 
 .form-control:focus, .form-select:focus {
-    background-color: #ffffff;
-    border-color: var(--accent-primary);
-    box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
-    color: var(--text-primary);
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    border-color: var(--accent-primary) !important;
+    box-shadow: 0 0 0 0.25rem rgba(230, 168, 56, 0.25) !important;
+    color: var(--text-primary) !important;
 }
 
 .form-control::placeholder {
-    color: var(--text-secondary);
+    color: var(--text-secondary) !important;
     opacity: 0.7;
 }
 
+.form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+    background-size: 16px 12px;
+}
+
 .form-select option {
-    background-color: #ffffff;
+    background-color: var(--bg-card);
     color: var(--text-primary);
 }
 
 .form-control:disabled, .form-control[readonly], .form-select:disabled, .form-select[readonly] {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: rgba(255, 255, 255, 0.05);
     color: var(--text-secondary);
     opacity: 0.8;
 }
 
 .input-group-text {
-    background-color: rgba(0, 0, 0, 0.03);
+    background-color: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
 }
@@ -123,6 +139,19 @@ strong, b, h1, h2, h3, h4, h5, h6, .card-title, .form-label {
     margin-bottom: 0.5rem;
 }
 
+/* Checkboxes and Radios */
+.form-check-label {
+    color: var(--text-primary);
+}
+.form-check-input {
+    background-color: var(--bg-input);
+    border-color: var(--border-color);
+}
+.form-check-input:checked {
+    background-color: var(--accent-primary);
+    border-color: var(--accent-primary);
+}
+
 /* Buttons */
 .btn {
     border-radius: 8px;
@@ -132,12 +161,23 @@ strong, b, h1, h2, h3, h4, h5, h6, .card-title, .form-label {
 }
 
 .btn-primary {
-    background: var(--primary-gradient);
+    background: var(--accent-primary);
+    color: #000;
     border: none;
 }
 .btn-primary:hover {
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    background: var(--accent-hover);
+    color: #000;
+    box-shadow: 0 4px 12px rgba(230, 168, 56, 0.3);
+}
+
+.btn-outline-primary {
+    color: var(--accent-primary);
+    border-color: var(--accent-primary);
+}
+.btn-outline-primary:hover {
+    background-color: var(--accent-primary);
+    color: #000;
 }
 
 .content {
@@ -146,20 +186,20 @@ strong, b, h1, h2, h3, h4, h5, h6, .card-title, .form-label {
 
 /* Validation */
 .valid.modified:not([type=checkbox]) {
-    outline: 1px solid #10b981;
+    outline: 1px solid var(--success-color);
 }
 .invalid {
-    outline: 1px solid #ef4444;
+    outline: 1px solid var(--danger-color);
 }
 .validation-message {
-    color: #ef4444;
+    color: var(--danger-color);
     font-size: 0.875rem;
     margin-top: 0.25rem;
 }
 
 /* Error UI */
 #blazor-error-ui {
-    background: #ef4444;
+    background: var(--danger-color);
     bottom: 0;
     box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
     display: none;
@@ -168,6 +208,7 @@ strong, b, h1, h2, h3, h4, h5, h6, .card-title, .form-label {
     position: fixed;
     width: 100%;
     z-index: 1000;
+    color: #fff;
 }
 #blazor-error-ui .dismiss {
     cursor: pointer;
@@ -175,13 +216,39 @@ strong, b, h1, h2, h3, h4, h5, h6, .card-title, .form-label {
     right: 0.75rem;
     top: 0.5rem;
 }
+
+/* Alerts */
+.alert-info {
+    background-color: rgba(59, 130, 246, 0.15);
+    color: #93c5fd;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+.alert-danger {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Floating Labels */
+.form-floating > label {
+    color: var(--text-secondary);
+}
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label,
+.form-floating > .form-select ~ label {
+    color: var(--accent-primary);
+}
+.form-floating > .form-control:not(:focus)::placeholder {
+    color: transparent !important;
+}
+
 /* Table Styling */
 .table {
     --bs-table-color: var(--text-primary);
     --bs-table-bg: transparent;
     --bs-table-border-color: var(--border-color);
     --bs-table-hover-color: var(--text-primary);
-    --bs-table-hover-bg: rgba(0, 0, 0, 0.05);
+    --bs-table-hover-bg: rgba(255, 255, 255, 0.05);
     color: var(--text-primary);
 }
 
@@ -194,8 +261,6 @@ strong, b, h1, h2, h3, h4, h5, h6, .card-title, .form-label {
 /* Modal Styling */
 .modal-content {
     background: var(--bg-card);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
 }
@@ -206,7 +271,14 @@ strong, b, h1, h2, h3, h4, h5, h6, .card-title, .form-label {
     border-top-color: var(--border-color);
 }
 
-/* Invert Bootstrap Close Button for Dark Theme (removed for light theme) */
-.btn-close {
-    /* filter: invert(1) grayscale(100%) brightness(200%); */
+/* Utilities for dark mode */
+.border-bottom {
+    border-bottom-color: var(--border-color) !important;
+}
+.border {
+    border-color: var(--border-color) !important;
+}
+
+.text-primary {
+    color: var(--accent-primary) !important;
 }

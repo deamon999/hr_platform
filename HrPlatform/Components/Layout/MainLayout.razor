@@ -2,16 +2,15 @@
 @inject NavigationManager NavigationManager
 
 <div class="app-layout d-flex flex-column" style="min-height: 100vh;">
-    <header class="top-row px-4 d-flex justify-content-between align-items-center bg-white shadow-sm" style="position: sticky; top: 0; z-index: 1050; border-bottom: 1px solid var(--border-color);">
-        <a class="navbar-brand text-dark fw-bold text-decoration-none d-flex align-items-center gap-2" href="">
-            <img src="/logo.jpg" alt="CDL Pool Logo" style="height: 48px; border-radius: 6px; object-fit: cover;" />
-            CDL Pool
+    <header class="top-row px-4 d-flex justify-content-between align-items-center shadow-sm" style="position: sticky; top: 0; z-index: 1050; border-bottom: 1px solid var(--border-color); background: var(--bg-card);">
+        <a class="navbar-brand fw-bold text-decoration-none d-flex align-items-center gap-2" href="" style="color: var(--text-primary);">
+            <img src="/images/logo-light.png" alt="CDL Pool Logo" style="height: 230px; object-fit: contain;" />
         </a>
 
         <div class="d-flex align-items-center mobile-auth-spacer">
             <AuthorizeView>
                 <Authorized>
-                    <NavLink class="nav-link text-dark me-3" href="Account/Manage" title="Manage Account">
+                    <NavLink class="nav-link me-3" href="Account/Manage" title="Manage Account" style="color: var(--text-primary);">
                         <span class="bi bi-person-fill" aria-hidden="true"></span>
                         <span class="d-none d-sm-inline ms-1">@context.User.Identity?.Name</span>
                     </NavLink>
@@ -19,7 +18,7 @@
                     <form action="Account/Logout" method="post" class="d-inline">
                         <AntiforgeryToken/>
                         <input type="hidden" name="ReturnUrl" value=""/>
-                        <button type="submit" class="nav-link btn btn-link p-0 text-dark" title="Logout">
+                        <button type="submit" class="nav-link btn btn-link p-0" title="Logout" style="color: var(--text-primary);">
                             <span class="bi bi-box-arrow-right" aria-hidden="true"></span>
                             <span class="d-none d-sm-inline ms-1">Logout</span>
                         </button>
@@ -27,12 +26,12 @@
                 </Authorized>
 
                 <NotAuthorized>
-                    <NavLink class="nav-link text-dark me-3" href="Account/Register" title="Register">
+                    <NavLink class="nav-link me-3" href="Account/Register" title="Register" style="color: var(--text-primary);">
                         <span class="bi bi-person-plus" aria-hidden="true"></span>
                         <span class="d-none d-sm-inline ms-1">Register</span>
                     </NavLink>
 
-                    <NavLink class="nav-link text-dark" href="Account/Login" title="Login">
+                    <NavLink class="nav-link" href="Account/Login" title="Login" style="color: var(--text-primary);">
                         <span class="bi bi-box-arrow-in-right" aria-hidden="true"></span>
                         <span class="d-none d-sm-inline ms-1">Login</span>
                     </NavLink>
@@ -56,11 +55,10 @@
         </main>
     </div>
 
-    <footer class="mt-auto py-3 bg-white border-top text-muted" style="z-index: 1050;">
+    <footer class="mt-auto py-3 border-top text-secondary" style="z-index: 1050; background: var(--bg-card); border-top-color: var(--border-color) !important;">
         <div class="container-fluid px-4 d-flex flex-wrap justify-content-between align-items-center">
             <div class="d-flex align-items-center gap-2">
-                <img src="/logo.jpg" alt="CDL Pool Logo" style="height: 24px; border-radius: 4px; object-fit: cover;" />
-                <span class="fw-semibold" style="font-size: 0.9rem;">CDL Pool &copy; @DateTime.Now.Year</span>
+                <span class="fw-semibold" style="font-size: 0.9rem;">CDL Pool Recruiting &copy; @DateTime.Now.Year</span>
             </div>
             <ul class="nav">
                 <li class="nav-item"><a href="/about" class="nav-link px-2 text-muted" style="font-size: 0.9rem;">About</a></li>

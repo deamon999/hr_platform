@@ -20,7 +20,7 @@
             @foreach (var (cert, i) in Profile.Certifications.Select((c, i) => (c, i)))
             {
                 <div class="col-12">
-                    <div class="card shadow-sm border-0 bg-light">
+                    <div class="card shadow-none border bg-light">
                         <div class="card-header bg-white border-bottom fw-bold text-dark d-flex justify-content-between align-items-center py-3">
                             <span>@(string.IsNullOrEmpty(cert.Name) ? $"Certification #{i + 1}" : cert.Name)</span>
                             @if(!IsReadOnly) {

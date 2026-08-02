@@ -1,0 +1,85 @@
+@using HrPlatform.Data.Models
+@using HrPlatform.Data.Enums
+
+<div class="row g-4">
+    <div class="col-12">
+        <h5 class="fw-bold text-dark mb-3 border-bottom pb-2">Driving Preferences</h5>
+    </div>
+    
+    <div class="col-md-4">
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Preferred Position</label>
+        <InputSelect disabled="@IsReadOnly" class="form-select bg-light border-0 shadow-sm" @bind-Value="Profile.PreferredPosition">
+            <option value="">Any</option>
+            <option value="Company Driver">Company Driver</option>
+            <option value="Owner Operator">Owner Operator</option>
+            <option value="Lease Purchase">Lease Purchase</option>
+        </InputSelect>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Preferred Home Time</label>
+        <InputSelect disabled="@IsReadOnly" class="form-select bg-light border-0 shadow-sm" @bind-Value="Profile.PreferredHomeTime">
+            <option value="">Any</option>
+            @foreach (var ht in Enum.GetValues<HomeTimeFrequency>())
+            {
+                <option value="@ht">@ht.ToString()</option>
+            }
+        </InputSelect>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Minimum Weekly Pay</label>
+        <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.MinimumWeeklyPay" placeholder="e.g. $1500"/>
+    </div>
+
+    <div class="col-md-6 d-flex flex-column gap-3">
+        <div class="form-check form-switch mt-md-2 mt-2">
+            <InputCheckbox disabled="@IsReadOnly" class="form-check-input" @bind-Value="Profile.WantsTeamDriving" id="chkTeam2" />
+            <label class="form-check-label fw-semibold" for="chkTeam2">Open to Team Driving</label>
+        </div>
+        <div class="form-check form-switch">
+            <InputCheckbox disabled="@IsReadOnly" class="form-check-input" @bind-Value="Profile.WantsToDriveWithPets" id="chkPets2" />
+            <label class="form-check-label fw-semibold" for="chkPets2">Wants to drive with pets</label>
+        </div>
+        <div class="form-check form-switch">
+            <InputCheckbox disabled="@IsReadOnly" class="form-check-input" @bind-Value="Profile.WantsToDriveWithRiders" id="chkRiders2" />
+            <label class="form-check-label fw-semibold" for="chkRiders2">Wants to drive with riders</label>
+        </div>
+    </div>
+    
+    <!-- Freight and Regions can be implemented later as multi-selects. For now we skip or put basic text inputs -->
+
+    <div class="col-12 mt-4">
+        <h5 class="fw-bold text-dark mb-3 border-bottom pb-2">Military Service</h5>
+    </div>
+    
+    <div class="col-md-12">
+        <div class="form-check form-switch mb-3">
+            <InputCheckbox disabled="@IsReadOnly" class="form-check-input" @bind-Value="Profile.HasMilitaryService" id="chkMilitary" />
+            <label class="form-check-label fw-semibold" for="chkMilitary">I have served in the military</label>
+        </div>
+    </div>
+    
+    @if (Profile.HasMilitaryService)
+    {
+        <div class="col-md-6">
+            <label class="form-label fw-semibold text-secondary small text-uppercase">Branch of Service</label>
+            <InputSelect disabled="@IsReadOnly" class="form-select bg-light border-0 shadow-sm" @bind-Value="Profile.MilitaryBranch">
+                <option value="">Select Branch...</option>
+                <option value="Army">Army</option>
+                <option value="Navy">Navy</option>
+                <option value="Air Force">Air Force</option>
+                <option value="Marines">Marine Corps</option>
+                <option value="Coast Guard">Coast Guard</option>
+                <option value="National Guard">National Guard</option>
+            </InputSelect>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-semibold text-secondary small text-uppercase">Years of Service</label>
+            <InputNumber disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.MilitaryYears"/>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public DriverProfile Profile { get; set; } = default!;
+    [Parameter] public bool IsReadOnly { get; set; }
+}

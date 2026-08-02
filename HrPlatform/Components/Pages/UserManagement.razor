@@ -10,20 +10,16 @@
 </div>
 
 <div class="mb-4">
-    <ul class="nav nav-tabs nav-fill border-bottom mb-4" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link @(activeTab == "users" ? "active fw-bold border-bottom border-primary border-3 text-primary" : "text-secondary border-0") py-3" 
-                    @onclick="@(() => activeTab = "users")" type="button" role="tab" style="background: transparent;">
-                Users
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link @(activeTab == "invitations" ? "active fw-bold border-bottom border-primary border-3 text-primary" : "text-secondary border-0") py-3" 
-                    @onclick="@(() => activeTab = "invitations")" type="button" role="tab" style="background: transparent;">
-                Invitations
-            </button>
-        </li>
-    </ul>
+    <div class="d-flex gap-3 mb-4 pb-3 border-bottom">
+        <button class="btn @(activeTab == "users" ? "btn-primary fw-bold" : "btn-outline-secondary") rounded-pill px-5" 
+                @onclick="@(() => activeTab = "users")">
+            Users
+        </button>
+        <button class="btn @(activeTab == "invitations" ? "btn-primary fw-bold" : "btn-outline-secondary") rounded-pill px-5" 
+                @onclick="@(() => activeTab = "invitations")">
+            Invitations
+        </button>
+    </div>
 
     <div>
         @if (activeTab == "users")
@@ -37,11 +33,7 @@
     </div>
 </div>
 
-<style>
-    .nav-tabs .nav-link {
-        border-radius: 0;
-    }
-</style>
+
 
 @code {
     [SupplyParameterFromQuery]

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using HrPlatform.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HrPlatform.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260801033816_AddDriverAppWizardEntities")]
+    partial class AddDriverAppWizardEntities
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -71,28 +74,15 @@ namespace HrPlatform.Migrations
                         .IsRequired()
                         .HasColumnType("bytea");
 
-                    b.Property<string>("DocumentType")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<int?>("DriverProfileId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("FileName")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<string>("FilePath")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
                     b.Property<DateTime>("UploadedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("DriverProfileId");
 
                     b.ToTable("DocumentFiles");
                 });
@@ -289,12 +279,6 @@ namespace HrPlatform.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text");
 
-                    b.Property<bool>("TermsAccepted")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("TermsAcceptedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("boolean");
 
@@ -440,6 +424,41 @@ namespace HrPlatform.Migrations
                     b.HasIndex("DriverProfileId");
 
                     b.ToTable("DriverCertifications");
+                });
+
+            modelBuilder.Entity("HrPlatform.Data.Models.DriverDocument", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("DocumentType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("DriverProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("OriginalFileName")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("UploadDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DriverProfileId");
+
+                    b.ToTable("DriverDocuments");
                 });
 
             modelBuilder.Entity("HrPlatform.Data.Models.DriverEducation", b =>
@@ -761,13 +780,15 @@ namespace HrPlatform.Migrations
                     b.Property<long>("AccidentFreeMiles")
                         .HasColumnType("bigint");
 
-                    b.Property<string>("AddressLine2")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
                     b.Property<string>("AlternatePhone")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
+
+                    b.Property<int>("AvailabilityStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly?>("AvailableFrom")
+                        .HasColumnType("date");
 
                     b.Property<int>("AverageWeeklyMiles")
                         .HasColumnType("integer");
@@ -816,16 +837,14 @@ namespace HrPlatform.Migrations
                     b.Property<bool>("HasMilitaryService")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("IsApplicationCompleted")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<int>("LastWizardStep")
-                        .HasColumnType("integer");
+                    b.Property<string>("LinkedInUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
 
                     b.Property<string>("MiddleName")
                         .HasMaxLength(100)
@@ -856,6 +875,10 @@ namespace HrPlatform.Migrations
 
                     b.PrimitiveCollection<List<string>>("PreferredRegions")
                         .HasColumnType("text[]");
+
+                    b.Property<string>("ProfessionalSummary")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
 
                     b.Property<DateOnly?>("SignatureDate")
                         .HasColumnType("date");
@@ -1233,16 +1256,6 @@ namespace HrPlatform.Migrations
                     b.Navigation("Sender");
                 });
 
-            modelBuilder.Entity("HrPlatform.Data.Entities.DocumentFile", b =>
-                {
-                    b.HasOne("HrPlatform.Data.Models.DriverProfile", "DriverProfile")
-                        .WithMany("Documents")
-                        .HasForeignKey("DriverProfileId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.Navigation("DriverProfile");
-                });
-
             modelBuilder.Entity("HrPlatform.Data.Entities.DriverViolation", b =>
                 {
                     b.HasOne("HrPlatform.Data.Models.DriverProfile", "DriverProfile")
@@ -1304,6 +1317,17 @@ namespace HrPlatform.Migrations
                 {
                     b.HasOne("HrPlatform.Data.Models.DriverProfile", "DriverProfile")
                         .WithMany("Certifications")
+                        .HasForeignKey("DriverProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DriverProfile");
+                });
+
+            modelBuilder.Entity("HrPlatform.Data.Models.DriverDocument", b =>
+                {
+                    b.HasOne("HrPlatform.Data.Models.DriverProfile", "DriverProfile")
+                        .WithMany("Documents")
                         .HasForeignKey("DriverProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

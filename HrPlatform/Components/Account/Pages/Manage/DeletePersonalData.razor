@@ -1,10 +1,12 @@
-﻿@page "/Account/Manage/DeletePersonalData"
+@page "/Account/Manage/DeletePersonalData"
 @using System.ComponentModel.DataAnnotations
+@using Microsoft.EntityFrameworkCore
 
 @inject UserManager<ApplicationUser> UserManager
 @inject SignInManager<ApplicationUser> SignInManager
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<DeletePersonalData> Logger
+@inject HrPlatform.Data.ApplicationDbContext DbContext
 
 <PageTitle>Delete Personal Data</PageTitle>
 
@@ -12,10 +14,14 @@
 
 <h3>Delete Personal Data</h3>
 
-<div class="alert alert-warning" role="alert">
-    <p>
-        <strong>Deleting this data will permanently remove your account, and this cannot be recovered.</strong>
-    </p>
+<div class="alert rounded-3 mb-4 d-flex align-items-center p-4" style="background-color: var(--accent-primary, #e6a838); color: #000; border: none; box-shadow: 0 4px 12px rgba(230, 168, 56, 0.3);" role="alert">
+    <i class="bi bi-exclamation-triangle-fill fs-3 me-3 text-dark"></i>
+    <div>
+        <h5 class="fw-bold mb-1 text-dark">Warning</h5>
+        <p class="mb-0 fw-medium">
+            Deleting this data will permanently remove your account and all associated driver data. This cannot be recovered.
+        </p>
+    </div>
 </div>
 
 <div>
@@ -71,6 +77,17 @@
         {
             message = "Error: Incorrect password.";
             return;
+        }
+
+        // Explicitly delete any unused or used company invitations associated with this user
+        var userInvitations = await DbContext.Invitations
+            .Where(i => i.Email == user.Email || (user.PhoneNumber != null && i.Phone == user.PhoneNumber))
+            .ToListAsync();
+            
+        if (userInvitations.Any())
+        {
+            DbContext.Invitations.RemoveRange(userInvitations);
+            await DbContext.SaveChangesAsync();
         }
 
         var result = await UserManager.DeleteAsync(user);

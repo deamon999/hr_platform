@@ -8,6 +8,9 @@ public class ApplicationUser : IdentityUser
 
     public string? LastName { get; set; }
 
+    public bool TermsAccepted { get; set; }
+    public DateTime? TermsAcceptedDate { get; set; }
+
     // reference to Company entity (for Manager and Company users)
     public int? CompanyId { get; set; }
 

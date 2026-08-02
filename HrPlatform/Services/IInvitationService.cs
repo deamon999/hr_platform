@@ -1,4 +1,4 @@
-﻿using HrPlatform.Data.Entities;
+using HrPlatform.Data.Entities;
 using HrPlatform.Models;
 
 namespace HrPlatform.Services;
@@ -22,6 +22,9 @@ public interface IInvitationService
     /// <summary>Marks the invitation as consumed so it cannot be reused.</summary>
     Task MarkUsedAsync(string token);
 
+    /// <summary>Marks all invitations for the given email as used.</summary>
+    Task MarkAllAsUsedByEmailAsync(string email);
+
     /// <summary>
     /// Returns true when a still-valid (pending, not expired) invitation
     /// already exists for the given email address.
@@ -37,4 +40,5 @@ public interface IInvitationService
     Task<InviteResult> InviteAsync(Invitation invitation, Uri link);
 
     Task<InviteResult> ResendAsync(int invitationId, Uri baseUri);
+    Task<bool> DeleteAsync(int invitationId);
 }

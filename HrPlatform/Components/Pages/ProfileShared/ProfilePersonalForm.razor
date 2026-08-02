@@ -1,7 +1,8 @@
-@using HrPlatform.Data.Models
 @using HrPlatform.Data.Enums
+@using HrPlatform.Utils
 
 <div class="row g-4">
+    <div class="col-12"><h6 class="fw-bold border-bottom pb-2">Basic Information</h6></div>
     <div class="col-md-4">
         <label class="form-label fw-semibold text-secondary small text-uppercase">First Name *</label>
         <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.FirstName"/>
@@ -30,54 +31,35 @@
         <label class="form-label fw-semibold text-secondary small text-uppercase">Alternate Phone</label>
         <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.AlternatePhone"/>
     </div>
-    <div class="col-md-6">
+    <div class="col-12">
         <label class="form-label fw-semibold text-secondary small text-uppercase">Email Address *</label>
         <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.Email"/>
         <ValidationMessage For="() => Profile.Email" class="text-danger small mt-1"/>
     </div>
+    
+    <div class="col-12 mt-4"><h6 class="fw-bold border-bottom pb-2">Current Address</h6></div>
+    
     <div class="col-md-6">
-        <label class="form-label fw-semibold text-secondary small text-uppercase">LinkedIn Profile URL</label>
-        <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.LinkedInUrl"/>
-    </div>
-    
-    <div class="col-12 mt-4"><h6 class="fw-bold border-bottom pb-2">Address Information</h6></div>
-    
-    <div class="col-md-4">
         <label class="form-label fw-semibold text-secondary small text-uppercase">Street Address</label>
         <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.StreetAddress"/>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label fw-semibold text-secondary small text-uppercase">Apt, Suite, Unit, etc. (Optional)</label>
+        <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.AddressLine2"/>
     </div>
     <div class="col-md-4">
         <label class="form-label fw-semibold text-secondary small text-uppercase">City</label>
         <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.City"/>
     </div>
-    <div class="col-md-2">
+    <div class="col-md-4">
         <label class="form-label fw-semibold text-secondary small text-uppercase">State</label>
         <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" maxlength="2" @bind-Value="Profile.State"/>
     </div>
-    <div class="col-md-2">
+    <div class="col-md-4">
         <label class="form-label fw-semibold text-secondary small text-uppercase">Zip Code</label>
         <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.ZipCode"/>
     </div>
     
-    <div class="col-12 mt-4"><h6 class="fw-bold border-bottom pb-2">Availability</h6></div>
-
-    <div class="col-md-4">
-        <label class="form-label fw-semibold text-secondary small text-uppercase">Availability</label>
-        <InputSelect disabled="@IsReadOnly" class="form-select bg-light border-0 shadow-sm" @bind-Value="Profile.AvailabilityStatus">
-            @foreach (var status in Enum.GetValues<AvailabilityStatus>())
-            {
-                <option value="@status">@status</option>
-            }
-        </InputSelect>
-    </div>
-    <div class="col-md-4">
-        <label class="form-label fw-semibold text-secondary small text-uppercase">Available From</label>
-        <InputDate disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.AvailableFrom"/>
-    </div>
-    <div class="col-12">
-        <label class="form-label fw-semibold text-secondary small text-uppercase">Professional Summary</label>
-        <InputTextArea disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" rows="4" @bind-Value="Profile.ProfessionalSummary" placeholder="Tell carriers about your experience and what you're looking for..."/>
-    </div>
 </div>
 
 @code {

@@ -1,0 +1,104 @@
+@using HrPlatform.Data.Models
+@using HrPlatform.Services
+@using System.Security.Claims
+
+@inject AuthenticationStateProvider AuthState
+
+<div>
+    <div class="alert alert-info border-0 shadow-sm rounded-3 mb-4 d-flex align-items-center bg-light">
+        <i class="bi bi-info-circle-fill fs-4 me-3 text-primary"></i>
+        <div>
+            <strong>Required Documents:</strong> Please upload a copy of your CDL and DOT Medical Card (if you haven't already). You may also upload any additional certifications, training records, or TWIC cards here.
+        </div>
+    </div>
+
+    @if (!Profile.Documents.Any())
+    {
+        <div class="text-center text-muted py-5 border rounded-3 bg-light mb-4">
+            <i class="bi bi-file-earmark-text fs-1 text-secondary mb-3 d-block"></i>
+            <p class="fs-5 mb-0">No documents uploaded yet.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4 mb-4">
+            @foreach (var doc in Profile.Documents)
+            {
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center gap-3 bg-light p-3 rounded-3 shadow-none border">
+                        <i class="bi bi-file-earmark-pdf fs-3 text-danger"></i>
+                        <div class="flex-grow-1 text-truncate">
+                            <div class="fw-medium text-truncate">@doc.FileName</div>
+                            <small class="text-muted">@doc.DocumentType • @doc.UploadedAt.ToLocalTime().ToString("g")</small>
+                        </div>
+                        @if (!IsReadOnly)
+                        {
+                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" @onclick="() => DeleteDocumentAsync(doc)"><i class="bi bi-trash"></i></button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @if (!IsReadOnly)
+    {
+        <div class="card shadow-none border bg-light mt-4">
+            <div class="card-body p-4">
+                <h6 class="fw-bold mb-3">Upload New Document</h6>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold text-secondary small text-uppercase">Document Type *</label>
+                        <select class="form-select bg-white border-0 shadow-sm" @bind="newDocType">
+                            <option value="CDL">CDL / Driver License</option>
+                            <option value="Medical Card">DOT Medical Card</option>
+                            <option value="TWIC">TWIC Card</option>
+                            <option value="Training">Training Certificate</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label fw-semibold text-secondary small text-uppercase">Select File *</label>
+                        <InputFile class="form-control bg-white border-0 shadow-sm" accept=".pdf,.jpg,.jpeg,.png" OnChange="HandleFileSelected" />
+                        <small class="text-muted mt-2 d-block"><i class="bi bi-paperclip me-1"></i> PDF, JPG, or PNG. Max 5 MB.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public DriverProfile Profile { get; set; } = default!;
+    [Parameter] public bool IsReadOnly { get; set; }
+
+    private string newDocType = "CDL";
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file.Size > 5 * 1024 * 1024) return;
+
+        using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+
+        var docFile = new HrPlatform.Data.Entities.DocumentFile
+        {
+            DriverProfileId = Profile.Id,
+            DocumentType = newDocType,
+            FileName = file.Name,
+            ContentType = file.ContentType,
+            Data = ms.ToArray(),
+            UploadedAt = DateTime.UtcNow
+        };
+
+        Profile.Documents.Add(docFile);
+    }
+
+    private Task DeleteDocumentAsync(HrPlatform.Data.Entities.DocumentFile doc)
+    {
+        Profile.Documents.Remove(doc);
+        return Task.CompletedTask;
+    }
+}

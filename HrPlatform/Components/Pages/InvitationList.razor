@@ -94,12 +94,17 @@ else
                                         }
                                     </div>
                                     
-                                    @if (!inv.IsUsed && inv.ExpiresAt < DateTime.UtcNow)
-                                    {
-                                        <button class="btn btn-outline-primary" @onclick="() => ResendInvitationAsync(inv)">
-                                            <i class="bi bi-arrow-clockwise"></i> Resend Invitation
+                                    <div class="d-flex gap-2 mt-2">
+                                        @if (!inv.IsUsed && inv.ExpiresAt < DateTime.UtcNow)
+                                        {
+                                            <button class="btn btn-outline-primary btn-sm" @onclick="() => ResendInvitationAsync(inv)">
+                                                <i class="bi bi-arrow-clockwise"></i> Resend
+                                            </button>
+                                        }
+                                        <button class="btn btn-outline-danger btn-sm" @onclick="() => DeleteInvitationAsync(inv)">
+                                            <i class="bi bi-trash"></i> Delete
                                         </button>
-                                    }
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -260,6 +265,22 @@ else
         _statusClass = result.Success ? "alert-success" : "alert-danger";
 
         await LoadAsync(_searchTerm);
+    }
+
+    private async Task DeleteInvitationAsync(Invitation inv)
+    {
+        var success = await InvitationService.DeleteAsync(inv.Id);
+        if (success)
+        {
+            _statusMessage = "Invitation deleted successfully.";
+            _statusClass = "alert-success";
+            await LoadAsync(_searchTerm);
+        }
+        else
+        {
+            _statusMessage = "Failed to delete invitation.";
+            _statusClass = "alert-danger";
+        }
     }
 
 }

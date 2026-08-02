@@ -4,17 +4,20 @@ using System.Collections.Generic;
 using HrPlatform.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace HrPlatform.Migrations
+namespace HrPlatform.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260802010005_AddTermsAcceptedToUser")]
+    partial class AddTermsAcceptedToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -761,13 +764,15 @@ namespace HrPlatform.Migrations
                     b.Property<long>("AccidentFreeMiles")
                         .HasColumnType("bigint");
 
-                    b.Property<string>("AddressLine2")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
                     b.Property<string>("AlternatePhone")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
+
+                    b.Property<int>("AvailabilityStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly?>("AvailableFrom")
+                        .HasColumnType("date");
 
                     b.Property<int>("AverageWeeklyMiles")
                         .HasColumnType("integer");
@@ -816,16 +821,14 @@ namespace HrPlatform.Migrations
                     b.Property<bool>("HasMilitaryService")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("IsApplicationCompleted")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<int>("LastWizardStep")
-                        .HasColumnType("integer");
+                    b.Property<string>("LinkedInUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
 
                     b.Property<string>("MiddleName")
                         .HasMaxLength(100)
@@ -856,6 +859,10 @@ namespace HrPlatform.Migrations
 
                     b.PrimitiveCollection<List<string>>("PreferredRegions")
                         .HasColumnType("text[]");
+
+                    b.Property<string>("ProfessionalSummary")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
 
                     b.Property<DateOnly?>("SignatureDate")
                         .HasColumnType("date");
