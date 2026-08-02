@@ -56,6 +56,7 @@ strong, b, h1, h2, h3, h4, h5, h6, .card-title, .form-label {
 /* Premium Card Styling */
 .card {
     background: var(--bg-card);
+    color: var(--text-primary);
     border: 1px solid var(--border-color);
     border-radius: 12px;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
@@ -227,6 +228,11 @@ strong, b, h1, h2, h3, h4, h5, h6, .card-title, .form-label {
     background-color: rgba(239, 68, 68, 0.15);
     color: #fca5a5;
     border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.alert-success {
+    background-color: rgba(16, 185, 129, 0.15);
+    color: #6ee7b7;
+    border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 /* Floating Labels */

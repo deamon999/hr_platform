@@ -52,7 +52,6 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
             .ThenInclude(e => e.TrailerTypes)
             .Include(p => p.Educations)
             .Include(p => p.Skills)
-            .Include(p => p.EquipmentExperience)
             .Include(p => p.Documents)
             .FirstOrDefaultAsync(p => p.UserId == userId);
     }
@@ -67,7 +66,6 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
             .ThenInclude(e => e.TrailerTypes)
             .Include(p => p.Educations)
             .Include(p => p.Skills)
-            .Include(p => p.EquipmentExperience)
             .Include(p => p.Documents)
             .FirstOrDefaultAsync(p => p.Id == id);
     }
@@ -100,7 +98,6 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
             .Include(p => p.EmploymentHistory).ThenInclude(e => e.TrailerTypes)
             .Include(p => p.Educations)
             .Include(p => p.Skills)
-            .Include(p => p.EquipmentExperience)
             .Include(p => p.Documents)
             .FirstOrDefaultAsync(p => p.Id == profile.Id);
 
@@ -148,7 +145,6 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
         }
 
         if (existing.MedicalCard != null && profile.MedicalCard == null) db.Entry(existing.MedicalCard).State = EntityState.Deleted;
-        if (existing.EquipmentExperience != null && profile.EquipmentExperience == null) db.Entry(existing.EquipmentExperience).State = EntityState.Deleted;
 
         profile.UpdatedAt = DateTime.UtcNow;
         db.DriverProfiles.Update(profile);

@@ -18,12 +18,4 @@ public class DriverMedicalCard
     [MaxLength(50)] public string? MedicalExaminerCertNumber { get; set; }
 
     [Required] public SelfCertificationCategory? SelfCertification { get; set; }
-
-    [MaxLength(500)]
-    public string? DocumentBlobPath { get; set; }
-
-    public DateTime? DocumentUploadedAt { get; set; }
-
-    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
-    public bool HasDocument => !string.IsNullOrEmpty(DocumentBlobPath);
 }

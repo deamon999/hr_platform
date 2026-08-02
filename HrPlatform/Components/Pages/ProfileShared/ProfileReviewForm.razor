@@ -71,8 +71,8 @@
                         <span class="fw-medium me-1">Total Experience:</span> @(Profile.YearsOfExperience) years
                     </li>
                     <li class="mb-2 d-flex align-items-center">
-                        <i class="bi @(Profile.EquipmentExperience == null || (Profile.EquipmentExperience.DryVan == 0 && Profile.EquipmentExperience.Reefer == 0 && Profile.EquipmentExperience.Flatbed == 0 && Profile.EquipmentExperience.Tanker == 0) ? "bi-exclamation-circle-fill text-warning" : "bi-check-circle-fill text-success") me-2"></i> 
-                        <span class="fw-medium me-1">Equipment Experience:</span> @(Profile.EquipmentExperience == null || (Profile.EquipmentExperience.DryVan == 0 && Profile.EquipmentExperience.Reefer == 0 && Profile.EquipmentExperience.Flatbed == 0 && Profile.EquipmentExperience.Tanker == 0) ? "None specified" : "Provided")
+                        <i class="bi @(HasEquipmentExperience ? "bi-check-circle-fill text-success" : "bi-exclamation-circle-fill text-warning") me-2"></i>
+                        <span class="fw-medium me-1">Equipment Experience:</span> @(HasEquipmentExperience ? "Provided" : "None specified")
                     </li>
                     <li class="mb-2 d-flex align-items-center text-secondary">
                         <i class="bi bi-info-circle me-2"></i> 
@@ -207,13 +207,13 @@
     <div class="col-12 mt-4 text-center">
         @if (string.IsNullOrWhiteSpace(Profile.ElectronicSignatureName) || Profile.License == null || string.IsNullOrWhiteSpace(Profile.FirstName) || !Profile.EmploymentHistory.Any() || !Profile.Documents.Any(d => d.DocumentType == "CDL License") || !Profile.Documents.Any(d => d.DocumentType == "Medical Card"))
         {
-            <div class="alert alert-danger d-inline-block border-0 shadow-sm rounded-pill px-4">
+            <div class="alert alert-danger d-inline-block shadow-sm rounded-pill px-4">
                 <i class="bi bi-exclamation-triangle-fill me-2"></i> Please complete all required fields before submitting.
             </div>
         }
         else
         {
-            <div class="alert alert-success d-inline-block border-0 shadow-sm rounded-pill px-4 text-dark">
+            <div class="alert alert-success d-inline-block shadow-sm rounded-pill px-4">
                 <i class="bi bi-check-circle-fill me-2"></i> Your profile is complete and ready to submit!
             </div>
         }
@@ -222,4 +222,10 @@
 
 @code {
     [Parameter, EditorRequired] public DriverProfile Profile { get; set; } = default!;
+
+    private bool HasEquipmentExperience =>
+        Profile.DryVanExperience > 0 || Profile.ReeferExperience > 0 || Profile.FlatbedExperience > 0 ||
+        Profile.StepDeckExperience > 0 || Profile.RgnExperience > 0 || Profile.LowboyExperience > 0 ||
+        Profile.TankerExperience > 0 || Profile.CarHaulerExperience > 0 || Profile.PneumaticExperience > 0 ||
+        Profile.DumpExperience > 0;
 }

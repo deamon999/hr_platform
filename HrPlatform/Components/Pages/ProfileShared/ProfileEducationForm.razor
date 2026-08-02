@@ -27,25 +27,21 @@
             <div class="accordion" id="educationAccordion">
                 @foreach (var (edu, index) in Profile.Educations.Select((e, i) => (e, i)))
                 {
-                    <div class="accordion-item border-0 mb-3" style="background-color: #2b2d31; border-radius: 8px; overflow: hidden;">
-                        <h2 class="accordion-header" id="headingEdu@(index)">
+                    <div class="accordion-item border-0 mb-3" @key="edu" style="background-color: #2b2d31; border-radius: 8px; overflow: hidden;">
+                        <h2 class="accordion-header d-flex align-items-center" id="headingEdu@(index)" style="background-color: #2b2d31;">
                             <button class="accordion-button @(index == Profile.Educations.Count - 1 ? "" : "collapsed") shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEdu@(index)" aria-expanded="@(index == Profile.Educations.Count - 1 ? "true" : "false")" aria-controls="collapseEdu@(index)" style="background-color: #2b2d31; color: #e9ecef;">
-                                <div class="d-flex align-items-center w-100 me-3">
-                                    <div class="flex-grow-1">
-                                        <span class="fw-semibold">@(string.IsNullOrWhiteSpace(edu.SchoolName) ? "New Education Record" : edu.SchoolName)</span>
-                                        @if (edu.Level != null)
-                                        {
-                                            <span class="badge bg-secondary ms-2">@(edu.Level.Value.GetDescriptionValue() ?? edu.Level.ToString())</span>
-                                        }
-                                    </div>
-                                    @if (!IsReadOnly)
-                                    {
-                                        <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-3" @onclick="() => RemoveEducation(edu)" @onclick:stopPropagation="true">
-                                            <i class="bi bi-trash3"></i>
-                                        </button>
-                                    }
-                                </div>
+                                <span class="fw-semibold">@(string.IsNullOrWhiteSpace(edu.SchoolName) ? "New Education Record" : edu.SchoolName)</span>
+                                @if (edu.Level != null)
+                                {
+                                    <span class="badge bg-secondary ms-2">@(edu.Level.Value.GetDescriptionValue() ?? edu.Level.ToString())</span>
+                                }
                             </button>
+                            @if (!IsReadOnly)
+                            {
+                                <button type="button" class="btn btn-sm btn-link text-danger px-3" @onclick="() => RemoveEducation(edu)">
+                                    <i class="bi bi-trash3"></i>
+                                </button>
+                            }
                         </h2>
                         <div id="collapseEdu@(index)" class="accordion-collapse collapse @(index == Profile.Educations.Count - 1 ? "show" : "")" aria-labelledby="headingEdu@(index)" data-bs-parent="#educationAccordion">
                             <div class="accordion-body pt-0">

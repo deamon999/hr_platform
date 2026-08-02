@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using HrPlatform.Data.Enums;
 using HrPlatform.Data.Entities;
 
@@ -58,12 +57,24 @@ public class DriverProfile
     public bool CanDriveManual { get; set; }
     public bool WantsToDriveWithPets { get; set; }
     public bool WantsToDriveWithRiders { get; set; }
-    public bool WantsTeamDriving { get; set; }
+    public bool CanDriveInTeam { get; set; }
 
     public int YearsOfExperience { get; set; }
     public int OtrExperience { get; set; }
     public int LocalExperience { get; set; }
     public int OwnerOperatorExperience { get; set; }
+
+    // Equipment Experience (Years)
+    public int DryVanExperience { get; set; }
+    public int ReeferExperience { get; set; }
+    public int FlatbedExperience { get; set; }
+    public int StepDeckExperience { get; set; }
+    public int RgnExperience { get; set; }
+    public int LowboyExperience { get; set; }
+    public int TankerExperience { get; set; }
+    public int CarHaulerExperience { get; set; }
+    public int PneumaticExperience { get; set; }
+    public int DumpExperience { get; set; }
 
     // Safety & Background
     public bool HasLicenseSuspension { get; set; }
@@ -98,8 +109,6 @@ public class DriverProfile
     // Navigation property for skills junction table
     public ICollection<DriverProfileSkill> Skills { get; set; } = [];
 
-    public DriverEquipmentExperience? EquipmentExperience { get; set; }
-
     public ICollection<DocumentFile> Documents { get; set; } = [];
 
     public ICollection<DriverEmployment> EmploymentHistory { get; set; } = [];
@@ -108,95 +117,6 @@ public class DriverProfile
 
     public IEnumerable<TrailerType> AllTrailerTypes =>
         EmploymentHistory.SelectMany(e => e.TrailerTypes.Select(t => t.TrailerType)).Distinct();
-
-    /// <summary>
-    /// Returns a 0-100 completeness score based on required and optional hiring criteria.
-    /// </summary>
-    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
-    public int CompletenessScore
-    {
-        get
-        {
-            int score = 0;
-            
-            // Required items (16 points each, max 80)
-            if (!string.IsNullOrWhiteSpace(FirstName) && !string.IsNullOrWhiteSpace(LastName) && !string.IsNullOrWhiteSpace(PhoneNumber))
-                score += 16;
-            
-            if (License != null && License.ExpiryDate > DateOnly.FromDateTime(DateTime.Today))
-                score += 16;
-                
-            if (MedicalCard != null && MedicalCard.ExpiryDate > DateOnly.FromDateTime(DateTime.Today))
-                score += 16;
-                
-            if (EmploymentHistory.Any())
-                score += 16;
-                
-            if (YearsOfExperience > 0)
-                score += 16;
-
-            // Optional items (5 points each, max 15)
-            if (Skills.Any())
-                score += 5;
-                
-            if (Educations.Any())
-                score += 5;
-
-            return score;
-        }
-    }
-
-    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
-    public string CompletenessLabel => CompletenessScore switch
-    {
-        >= 95 => "Complete",
-        >= 80 => "Good",     // All required fields met
-        >= 50 => "Needs work",
-        _ => "Incomplete"
-    };
-
-    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
-    public string CompletenessBadgeClass => CompletenessScore switch
-    {
-        >= 95 => "bg-success",
-        >= 80 => "bg-info text-dark",
-        >= 50 => "bg-warning text-dark",
-        _ => "bg-danger"
-    };
-
-    [NotMapped]
-    public List<string> MissingFields
-    {
-        get
-        {
-            var missing = new List<string>();
-            
-            // Required Fields
-            if (string.IsNullOrWhiteSpace(FirstName) || string.IsNullOrWhiteSpace(LastName) || string.IsNullOrWhiteSpace(PhoneNumber))
-                missing.Add("Basic Contact Info");
-            
-            if (License == null || License.ExpiryDate <= DateOnly.FromDateTime(DateTime.Today))
-                missing.Add("Valid CDL License");
-
-            if (MedicalCard == null || MedicalCard.ExpiryDate <= DateOnly.FromDateTime(DateTime.Today))
-                missing.Add("Valid DOT Medical Card");
-
-            if (!EmploymentHistory.Any())
-                missing.Add("Employment History");
-
-            if (YearsOfExperience <= 0)
-                missing.Add("Driving Experience");
-
-            // Optional Fields
-            if (!Skills.Any())
-                missing.Add("Skills (Optional)");
-                
-            if (!Educations.Any())
-                missing.Add("Education (Optional)");
-
-            return missing;
-        }
-    }
 
     // Helper methods for managing skills
     public bool HasSkill(string skill) =>

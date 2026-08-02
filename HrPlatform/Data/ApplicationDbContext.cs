@@ -25,7 +25,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<ApplicationMessage> ApplicationMessages => Set<ApplicationMessage>();
     public DbSet<DriverViolation> DriverViolations => Set<DriverViolation>();
     public DbSet<DocumentFile> DocumentFiles { get; set; }
-    public DbSet<DriverEquipmentExperience> DriverEquipmentExperiences => Set<DriverEquipmentExperience>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -91,14 +90,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasForeignKey(v => v.DriverProfileId)
                 .OnDelete(DeleteBehavior.Cascade);
             e.Property(v => v.Type).HasConversion<string>();
-        });
-
-        b.Entity<DriverEquipmentExperience>(e =>
-        {
-            e.HasOne(x => x.DriverProfile)
-                .WithOne(p => p.EquipmentExperience)
-                .HasForeignKey<DriverEquipmentExperience>(x => x.DriverProfileId)
-                .OnDelete(DeleteBehavior.Cascade);
         });
 
         b.Entity<DocumentFile>(e =>

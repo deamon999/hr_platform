@@ -24,14 +24,6 @@ public class DriverLicense
 
     [Required] public DateOnly ExpiryDate { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
 
-    [MaxLength(500)]
-    public string? DocumentBlobPath { get; set; }
-
-    public DateTime? DocumentUploadedAt { get; set; }
-
-    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
-    public bool HasDocument => !string.IsNullOrEmpty(DocumentBlobPath);
-
     // Helper methods for managing endorsements
     public bool HasEndorsement(CdlEndorsement endorsement) =>
         Endorsements.Any(e => e.Endorsement == endorsement);
@@ -52,7 +44,4 @@ public class DriverLicense
             Endorsements.Remove(existing);
         }
     }
-
-    public IEnumerable<CdlEndorsement> GetEndorsementValues() =>
-        Endorsements.Select(e => e.Endorsement);
 }

@@ -50,16 +50,16 @@
     @{
         var equipmentFields = new[]
         {
-            ("Dry Van", nameof(DriverEquipmentExperience.DryVan), Profile.EquipmentExperience.DryVan),
-            ("Reefer", nameof(DriverEquipmentExperience.Reefer), Profile.EquipmentExperience.Reefer),
-            ("Flatbed", nameof(DriverEquipmentExperience.Flatbed), Profile.EquipmentExperience.Flatbed),
-            ("Step Deck", nameof(DriverEquipmentExperience.StepDeck), Profile.EquipmentExperience.StepDeck),
-            ("RGN", nameof(DriverEquipmentExperience.Rgn), Profile.EquipmentExperience.Rgn),
-            ("Lowboy", nameof(DriverEquipmentExperience.Lowboy), Profile.EquipmentExperience.Lowboy),
-            ("Tanker", nameof(DriverEquipmentExperience.Tanker), Profile.EquipmentExperience.Tanker),
-            ("Car Hauler", nameof(DriverEquipmentExperience.CarHauler), Profile.EquipmentExperience.CarHauler),
-            ("Dump", nameof(DriverEquipmentExperience.Dump), Profile.EquipmentExperience.Dump),
-            ("Other", nameof(DriverEquipmentExperience.Pneumatic), Profile.EquipmentExperience.Pneumatic)
+            ("Dry Van", nameof(DriverProfile.DryVanExperience), Profile.DryVanExperience),
+            ("Reefer", nameof(DriverProfile.ReeferExperience), Profile.ReeferExperience),
+            ("Flatbed", nameof(DriverProfile.FlatbedExperience), Profile.FlatbedExperience),
+            ("Step Deck", nameof(DriverProfile.StepDeckExperience), Profile.StepDeckExperience),
+            ("RGN", nameof(DriverProfile.RgnExperience), Profile.RgnExperience),
+            ("Lowboy", nameof(DriverProfile.LowboyExperience), Profile.LowboyExperience),
+            ("Tanker", nameof(DriverProfile.TankerExperience), Profile.TankerExperience),
+            ("Car Hauler", nameof(DriverProfile.CarHaulerExperience), Profile.CarHaulerExperience),
+            ("Dump", nameof(DriverProfile.DumpExperience), Profile.DumpExperience),
+            ("Other", nameof(DriverProfile.PneumaticExperience), Profile.PneumaticExperience)
         };
     }
 
@@ -84,19 +84,14 @@
     [Parameter, EditorRequired] public DriverProfile Profile { get; set; } = default!;
     [Parameter] public bool IsReadOnly { get; set; }
 
-    protected override void OnInitialized()
-    {
-        Profile.EquipmentExperience ??= new DriverEquipmentExperience();
-    }
-    
     private void UpdateEquipment(string propertyName, object? value)
     {
         if (value == null || !int.TryParse(value.ToString(), out int val)) return;
-        
-        var prop = typeof(DriverEquipmentExperience).GetProperty(propertyName);
+
+        var prop = typeof(DriverProfile).GetProperty(propertyName);
         if (prop != null)
         {
-            prop.SetValue(Profile.EquipmentExperience, val);
+            prop.SetValue(Profile, val);
         }
     }
 }

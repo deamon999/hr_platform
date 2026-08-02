@@ -272,12 +272,10 @@
     private DriverProfile? profile;
     private EditContext editContext = default!;
     private bool isNew;
-    private string? successMessage;
     private string userId = default!;
     private string? errorMessage;
     private int activeTab;
     private int maxReachedTab;
-    private string? newSkill;
     private bool showCancelConfirm;
     private bool showSuccessModal;
 
@@ -313,8 +311,7 @@
                 DateOfBirth = Today,
                 FirstName = appUser?.FirstName ?? string.Empty,
                 LastName = appUser?.LastName ?? string.Empty,
-                Email = appUser?.Email ?? string.Empty,
-                EquipmentExperience = new DriverEquipmentExperience()
+                Email = appUser?.Email ?? string.Empty
             };
         }
         else
@@ -336,7 +333,6 @@
             maxReachedTab = existing.IsApplicationCompleted ? tabs.Length - 1 : existing.LastWizardStep;
             activeTab = existing.IsApplicationCompleted ? 0 : existing.LastWizardStep;
             profile = existing;
-            if (profile.EquipmentExperience == null) profile.EquipmentExperience = new DriverEquipmentExperience();
         }
         
         editContext = new EditContext(profile!);

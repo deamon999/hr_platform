@@ -87,11 +87,25 @@
                     <label class="form-check-label" for="chkPets">Willing to Take Pets</label>
                 </div>
                 <div class="form-check custom-checkbox">
-                    <input class="form-check-input" type="checkbox" disabled="@IsReadOnly" 
-                           id="chkRiders" 
+                    <input class="form-check-input" type="checkbox" disabled="@IsReadOnly"
+                           id="chkRiders"
                            checked="@Profile.WantsToDriveWithRiders"
                            @onchange="@(e => Profile.WantsToDriveWithRiders = (bool)(e.Value ?? false))" />
                     <label class="form-check-label" for="chkRiders">Willing to Take a Rider</label>
+                </div>
+                <div class="form-check custom-checkbox">
+                    <input class="form-check-input" type="checkbox" disabled="@IsReadOnly"
+                           id="chkManual"
+                           checked="@Profile.CanDriveManual"
+                           @onchange="@(e => Profile.CanDriveManual = (bool)(e.Value ?? false))" />
+                    <label class="form-check-label" for="chkManual">Can Drive Manual</label>
+                </div>
+                <div class="form-check custom-checkbox">
+                    <input class="form-check-input" type="checkbox" disabled="@IsReadOnly"
+                           id="chkTeam"
+                           checked="@Profile.CanDriveInTeam"
+                           @onchange="@(e => Profile.CanDriveInTeam = (bool)(e.Value ?? false))" />
+                    <label class="form-check-label" for="chkTeam">Can Drive in Team</label>
                 </div>
             </div>
         </div>

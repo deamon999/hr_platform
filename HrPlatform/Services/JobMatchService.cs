@@ -61,7 +61,7 @@ public class JobMatchService : IJobMatchService
 
         // Team Driving (10 points)
         max += 10;
-        if (job.IsTeamDriving == profile.WantsTeamDriving)
+        if (job.IsTeamDriving == profile.CanDriveInTeam)
             score += 10;
 
         // Pets (5 points)
