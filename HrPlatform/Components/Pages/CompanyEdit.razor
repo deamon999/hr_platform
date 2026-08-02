@@ -88,12 +88,12 @@ else
                         <InputNumber class="form-control bg-light border-0" @bind-Value="company.FleetSize" disabled="@isView"/>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold text-secondary small text-uppercase">Home Time Frequency</label>
-                        <InputSelect class="form-select bg-light border-0" @bind-Value="company.HomeTime" disabled="@isView">
+                        <label class="form-label">Typical Route Type</label>
+                        <InputSelect class="form-select bg-light text-dark border-secondary" @bind-Value="company.RouteType" disabled="@isView">
                             <option value="">-- Select --</option>
-                            @foreach (var ht in Enum.GetValues<HrPlatform.Data.Enums.HomeTimeFrequency>())
+                            @foreach (var rt in Enum.GetValues<HrPlatform.Data.Enums.RouteType>())
                             {
-                                <option value="@ht">@ht</option>
+                                <option value="@rt">@rt.ToString()</option>
                             }
                         </InputSelect>
                     </div>

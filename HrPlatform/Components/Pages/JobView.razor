@@ -107,11 +107,11 @@ else
                                 <span class="fw-bold">@job.RequiredTrailerType.Value.ToString()</span>
                             </li>
                         }
-                        @if (job.HomeTime.HasValue)
+                        @if (job.RouteType.HasValue)
                         {
                             <li class="mb-3 d-flex justify-content-between align-items-center">
-                                <span class="text-secondary">Home Time</span>
-                                <span class="fw-bold">@job.HomeTime.Value.ToString()</span>
+                                <span class="text-secondary">Route Type</span>
+                                <span class="fw-bold">@job.RouteType.Value.ToString()</span>
                             </li>
                         }
                     </ul>
@@ -183,11 +183,11 @@ else
                                     </span>
                                 </div>
                             }
-                            @if (job.Company.HomeTime.HasValue)
+                            @if (job.Company.RouteType.HasValue)
                             {
                                 <div class="col-auto">
                                     <span class="badge bg-info text-dark">
-                                        Home: @job.Company.HomeTime
+                                        Route: @job.Company.RouteType
                                     </span>
                                 </div>
                             }

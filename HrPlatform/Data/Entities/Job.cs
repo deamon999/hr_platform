@@ -31,7 +31,7 @@ public class Job
     public TrailerType? RequiredTrailerType { get; set; }
     public int MinYearsExperience { get; set; }
 
-    public HomeTimeFrequency? HomeTime { get; set; }
+    public RouteType? RouteType { get; set; }
     public decimal? SignOnBonus { get; set; }
     public bool RequiresManualTransmission { get; set; }
     public bool AllowsPets { get; set; }

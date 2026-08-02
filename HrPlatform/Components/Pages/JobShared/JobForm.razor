@@ -130,12 +130,12 @@
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label fw-medium text-secondary small text-uppercase">Home Time</label>
-                        <InputSelect TValue="HomeTimeFrequency?" class="form-select bg-light border-0 shadow-sm" @bind-Value="Job.HomeTime">
-                            <option value="">-- select --</option>
-                            @foreach (var ht in Enum.GetValues<HomeTimeFrequency>())
+                        <label class="form-label fw-semibold text-secondary small text-uppercase">Route Type</label>
+                        <InputSelect TValue="RouteType?" class="form-select bg-light border-0 shadow-sm" @bind-Value="Job.RouteType">
+                            <option value="">-- Any --</option>
+                            @foreach (var rt in Enum.GetValues<RouteType>())
                             {
-                                <option value="@ht">@ht.ToString()</option>
+                                <option value="@rt">@rt.ToString()</option>
                             }
                         </InputSelect>
                     </div>

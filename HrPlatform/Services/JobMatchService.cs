@@ -47,10 +47,10 @@ public class JobMatchService : IJobMatchService
         }
 
         // Home Time (15 points)
-        if (job.HomeTime.HasValue && profile.PreferredHomeTime.HasValue)
+        if (job.RouteType.HasValue && profile.PreferredRouteType.HasValue)
         {
             max += 15;
-            if (job.HomeTime.Value == profile.PreferredHomeTime.Value)
+            if (job.RouteType.Value == profile.PreferredRouteType.Value)
                 score += 15;
         }
 

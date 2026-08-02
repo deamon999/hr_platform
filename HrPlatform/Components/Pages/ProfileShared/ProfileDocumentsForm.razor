@@ -8,7 +8,7 @@
     <div class="alert alert-info border-0 shadow-sm rounded-3 mb-4 d-flex align-items-center bg-light">
         <i class="bi bi-info-circle-fill fs-4 me-3 text-primary"></i>
         <div>
-            <strong>Required Documents:</strong> Please upload a copy of your CDL and DOT Medical Card (if you haven't already). You may also upload any additional certifications, training records, or TWIC cards here.
+            <strong>Optional Documents:</strong> You may upload any additional certifications, training records, or TWIC cards here.
         </div>
     </div>
 
@@ -22,7 +22,7 @@
     else
     {
         <div class="row g-4 mb-4">
-            @foreach (var doc in Profile.Documents)
+            @foreach (var doc in OtherDocs)
             {
                 <div class="col-md-6">
                     <div class="d-flex align-items-center gap-3 bg-light p-3 rounded-3 shadow-none border">
@@ -32,7 +32,7 @@
                             <small class="text-muted">@doc.DocumentType • @doc.UploadedAt.ToLocalTime().ToString("g")</small>
                         </div>
                         <div class="d-flex align-items-center">
-                            @if (!string.IsNullOrEmpty(doc.Id))
+                            @if (!string.IsNullOrEmpty(doc.Id) && !doc.IsUnsaved)
                             {
                                 <button type="button" @onclick="() => PreviewDocument(doc)" class="btn btn-sm btn-outline-primary rounded-pill px-3 me-2" title="View Document">
                                     <i class="bi bi-eye"></i>
@@ -58,8 +58,6 @@
                     <div class="col-md-4">
                         <label class="form-label fw-semibold text-secondary small text-uppercase">Document Type *</label>
                         <select class="form-select bg-white border-0 shadow-sm" @bind="newDocType">
-                            <option value="CDL">CDL / Driver License</option>
-                            <option value="Medical Card">DOT Medical Card</option>
                             <option value="TWIC">TWIC Card</option>
                             <option value="Training">Training Certificate</option>
                             <option value="Other">Other</option>
@@ -112,7 +110,9 @@
     [Parameter, EditorRequired] public DriverProfile Profile { get; set; } = default!;
     [Parameter] public bool IsReadOnly { get; set; }
 
-    private string newDocType = "CDL";
+    private IEnumerable<HrPlatform.Data.Entities.DocumentFile> OtherDocs => Profile.Documents.Where(d => d.DocumentType != "CDL License" && d.DocumentType != "Medical Card");
+
+    private string newDocType = "TWIC";
     private bool showPreviewModal;
     private HrPlatform.Data.Entities.DocumentFile? previewDoc;
 
@@ -144,7 +144,8 @@
             FileName = file.Name,
             ContentType = file.ContentType,
             Data = ms.ToArray(),
-            UploadedAt = DateTime.UtcNow
+            UploadedAt = DateTime.UtcNow,
+            IsUnsaved = true
         };
 
         Profile.Documents.Add(docFile);

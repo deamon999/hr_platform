@@ -6,13 +6,24 @@
 <div>
     <h6 class="fw-bold text-warning mb-4">License Suspensions</h6>
     <div class="row g-4 mb-5">
-        <div class="col-md-8">
+        <div class="col-md-4">
             <label class="form-label fw-semibold text-secondary small">Has your license ever been suspended or revoked?</label>
             <InputSelect disabled="@IsReadOnly" class="form-select bg-dark text-white border-secondary" @bind-Value="Profile.HasLicenseSuspension">
                 <option value="true">Yes</option>
                 <option value="false">No</option>
             </InputSelect>
         </div>
+        @if (Profile.HasLicenseSuspension)
+        {
+            <div class="col-md-4">
+                <label class="form-label fw-semibold text-secondary small">Date</label>
+                <InputDate disabled="@IsReadOnly" class="form-control bg-dark text-white border-secondary" @bind-Value="Profile.LicenseSuspensionDate" />
+            </div>
+            <div class="col-md-12 mt-3">
+                <label class="form-label fw-semibold text-secondary small">Reason</label>
+                <InputTextArea disabled="@IsReadOnly" class="form-control bg-dark text-white border-secondary" rows="3" placeholder="Reason for suspension" @bind-Value="Profile.LicenseSuspensionReason" />
+            </div>
+        }
     </div>
 
     <h6 class="fw-bold text-warning mb-4">Drug & Alcohol History</h6>

@@ -41,6 +41,24 @@
 
 <div>
     <hr/>
+    @if (profile is not null && isOwner)
+    {
+        <div class="d-flex justify-content-between align-items-center mb-3 mt-3">
+            <div>
+                <h5 class="mb-1 fw-bold">Availability Status</h5>
+                <small class="text-secondary">Let managers know if you are actively looking for jobs.</small>
+            </div>
+            <div>
+                <select class="form-select border-0 shadow-sm" style="min-width: 260px; background-color: #2b2d31; color: #e9ecef;" value="@profile.AvailabilityStatus" @onchange="UpdateAvailabilityStatusAsync">
+                    @foreach (var status in Enum.GetValues<AvailabilityStatus>())
+                    {
+                        <option value="@status">@(status.GetDescriptionValue() ?? status.ToString())</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <hr/>
+    }
 
     @if (profile is null)
     {
@@ -71,36 +89,6 @@
     }
     else
     {
-        @if (!isAdminOrManager)
-        {
-            <div class="mb-3">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <h4 class="text-muted">Profile completeness</h4>
-                    <span class="badge @profile.CompletenessBadgeClass">
-                        @profile.CompletenessLabel (@profile.CompletenessScore%)
-                    </span>
-                </div>
-                <div class="progress" style="height:6px">
-                    <div class="progress-bar @profile.CompletenessBadgeClass"
-                         style="width:@(profile.CompletenessScore)%">
-                    </div>
-                </div>
-                @if (profile.MissingFields.Any() && isOwner)
-                {
-                    <div class="mt-2">
-                        <span class="text-muted small d-block mb-1">Missing information:</span>
-                        <div class="d-flex flex-wrap gap-1">
-                            @foreach (var field in profile.MissingFields)
-                            {
-                                <span class="badge bg-secondary">@field</span>
-                            }
-                        </div>
-                    </div>
-                }
-            </div>
-            <hr/>
-        }
-
         <div class="row g-4">
             <div class="col-lg-3 mb-4 mb-lg-0">
                 <div class="card shadow-sm border-0 app-card">
@@ -148,18 +136,15 @@
                                 <HrPlatform.Components.Pages.ProfileShared.ProfileSafetyForm Profile="profile" IsReadOnly="true" />
                             </div>
                             <div class="@(activeTab == 5 ? "" : "d-none")">
-                                <HrPlatform.Components.Pages.ProfileShared.ProfileDocumentsForm Profile="profile" IsReadOnly="true" />
-                            </div>
-                            <div class="@(activeTab == 6 ? "" : "d-none")">
                                 <HrPlatform.Components.Pages.ProfileShared.ProfilePreferencesForm Profile="profile" IsReadOnly="true" />
                             </div>
-                            <div class="@(activeTab == 7 ? "" : "d-none")">
+                            <div class="@(activeTab == 6 ? "" : "d-none")">
                                 <HrPlatform.Components.Pages.ProfileShared.ProfileEducationForm Profile="profile" IsReadOnly="true" />
                             </div>
-                            <div class="@(activeTab == 8 ? "" : "d-none")">
-                                <HrPlatform.Components.Pages.ProfileShared.ProfileCertificationsForm Profile="profile" IsReadOnly="true" />
+                            <div class="@(activeTab == 7 ? "" : "d-none")">
+                                <HrPlatform.Components.Pages.ProfileShared.ProfileDocumentsForm Profile="profile" IsReadOnly="true" />
                             </div>
-                            <div class="@(activeTab == 9 ? "" : "d-none")">
+                            <div class="@(activeTab == 8 ? "" : "d-none")">
                                 <HrPlatform.Components.Pages.ProfileShared.ProfileConsentsForm Profile="profile" IsReadOnly="true" />
                             </div>
                         </EditForm>
@@ -228,7 +213,7 @@
     private int activeTab;
 
     private static readonly string[] tabs =
-        ["Personal Information", "CDL License & Medical", "Driving Experience", "Employment History", "Safety History", "Documents", "Preferences", "Education", "Certifications", "Consents & Authorizations"];
+        ["Personal Information", "CDL License & Medical", "Driving Experience", "Employment History", "Safety History", "Preferences", "Education", "Other Documents", "Consents & Authorizations"];
 
     protected override async Task OnInitializedAsync()
     {
@@ -249,9 +234,22 @@
 
         if (profile is not null)
         {
-            trailerTypes = profile.AllTrailerTypes?.ToList() ?? new List<TrailerType>();
             isOwner = profile.UserId == currentUserId;
-            canDelete = auth.User.IsInRole(RoleConstants.Admin) || isOwner;
+            canDelete = isOwner || isAdminOrManager;
+
+            activeTab = 0;
+            trailerTypes = profile.AllTrailerTypes.ToList();
+        }
+    }
+
+    private async Task UpdateAvailabilityStatusAsync(ChangeEventArgs e)
+    {
+        if (profile != null && Enum.TryParse<AvailabilityStatus>(e.Value?.ToString(), out var status))
+        {
+            profile.AvailabilityStatus = status;
+            var auth = await AuthState.GetAuthenticationStateAsync();
+            var currentUserId = auth.User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+            await ProfileSvc.UpdateAsync(profile, currentUserId);
         }
     }
 
@@ -290,7 +288,7 @@
     {
         if (profile is not null)
         {
-            Nav.NavigateTo($"/profiles/edit/{profile.Id}");
+            Nav.NavigateTo($"/profiles/edit/{profile.Id}", forceLoad: true);
         }
     }
 

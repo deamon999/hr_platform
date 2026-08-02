@@ -50,8 +50,7 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
             .Include(p => p.MedicalCard)
             .Include(p => p.EmploymentHistory)
             .ThenInclude(e => e.TrailerTypes)
-            .Include(p => p.EducationHistory)
-            .Include(p => p.Certifications)
+            .Include(p => p.Educations)
             .Include(p => p.Skills)
             .Include(p => p.EquipmentExperience)
             .Include(p => p.Documents)
@@ -66,8 +65,7 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
             .Include(p => p.MedicalCard)
             .Include(p => p.EmploymentHistory)
             .ThenInclude(e => e.TrailerTypes)
-            .Include(p => p.EducationHistory)
-            .Include(p => p.Certifications)
+            .Include(p => p.Educations)
             .Include(p => p.Skills)
             .Include(p => p.EquipmentExperience)
             .Include(p => p.Documents)
@@ -100,8 +98,7 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
             .Include(p => p.License).ThenInclude(l => l.Endorsements)
             .Include(p => p.MedicalCard)
             .Include(p => p.EmploymentHistory).ThenInclude(e => e.TrailerTypes)
-            .Include(p => p.EducationHistory)
-            .Include(p => p.Certifications)
+            .Include(p => p.Educations)
             .Include(p => p.Skills)
             .Include(p => p.EquipmentExperience)
             .Include(p => p.Documents)
@@ -111,6 +108,12 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
             throw new InvalidOperationException("Profile not found");
         if (existing.UserId != currentUserId)
             throw new UnauthorizedAccessException("Only the profile owner may update the profile.");
+
+        // Prune empty UI entries before tracking updates
+        foreach (var emp in profile.EmploymentHistory.Where(e => string.IsNullOrWhiteSpace(e.CompanyName)).ToList()) {
+            profile.EmploymentHistory.Remove(emp);
+            db.Entry(emp).State = EntityState.Detached;
+        }
 
         // Find and explicitly delete orphaned items
         var incomingJobs = profile.EmploymentHistory.Select(e => e.Id).ToHashSet();
@@ -125,16 +128,6 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
             }
         }
         
-        var incomingEdu = profile.EducationHistory.Select(e => e.Id).ToHashSet();
-        foreach (var edu in existing.EducationHistory) {
-            if (!incomingEdu.Contains(edu.Id)) db.Entry(edu).State = EntityState.Deleted;
-        }
-
-        var incomingCerts = profile.Certifications.Select(e => e.Id).ToHashSet();
-        foreach (var cert in existing.Certifications) {
-            if (!incomingCerts.Contains(cert.Id)) db.Entry(cert).State = EntityState.Deleted;
-        }
-
         var incomingSkills = profile.Skills.Select(e => e.Id).ToHashSet();
         foreach (var skill in existing.Skills) {
             if (!incomingSkills.Contains(skill.Id)) db.Entry(skill).State = EntityState.Deleted;

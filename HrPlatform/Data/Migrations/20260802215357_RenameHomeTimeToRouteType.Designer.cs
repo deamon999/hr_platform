@@ -4,17 +4,20 @@ using System.Collections.Generic;
 using HrPlatform.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace HrPlatform.Migrations
+namespace HrPlatform.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260802215357_RenameHomeTimeToRouteType")]
+    partial class RenameHomeTimeToRouteType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -707,9 +710,6 @@ namespace HrPlatform.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
-                    b.Property<int>("AvailabilityStatus")
-                        .HasColumnType("integer");
-
                     b.Property<DateOnly?>("AvailableStartDate")
                         .HasColumnType("date");
 
@@ -724,6 +724,9 @@ namespace HrPlatform.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<bool>("ConsentEmployment")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ConsentFCRA")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("ConsentMVR")

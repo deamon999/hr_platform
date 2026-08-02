@@ -4,7 +4,6 @@
 @using HrPlatform.Services
 @using System.Security.Claims
 
-@inject IDocumentStorageService StorageSvc
 @inject IDriverProfileService ProfileService
 @inject AuthenticationStateProvider AuthState
 @inject NavigationManager Nav
@@ -90,11 +89,20 @@
         <div class="col-md-6">
             <div class="p-3 border border-secondary rounded-3 bg-dark">
                 <label class="form-label fw-semibold text-secondary small mb-3"><i class="bi bi-file-earmark-text me-1"></i> CDL Document</label>
-                @if (Profile.License.HasDocument)
+                @if (CdlDocument != null)
                 {
                     <div class="d-flex align-items-center justify-content-between">
                         <span class="text-success small fw-medium"><i class="bi bi-check-circle-fill me-1"></i> Uploaded</span>
-                        <a class="btn btn-sm text-primary fw-medium text-decoration-none p-0" href="@licenseUrl" target="_blank">View</a>
+                        <div>
+                            @if (!string.IsNullOrEmpty(CdlDocument.Id) && !CdlDocument.IsUnsaved)
+                            {
+                                <button type="button" class="btn btn-sm text-primary fw-medium text-decoration-none p-0 me-3" @onclick="() => PreviewDocument(CdlDocument)">View</button>
+                            }
+                            @if (!IsReadOnly)
+                            {
+                                <button type="button" class="btn btn-sm text-danger fw-medium text-decoration-none p-0" @onclick="DeleteLicenseDocument">Remove</button>
+                            }
+                        </div>
                     </div>
                 }
                 else if (!IsReadOnly)
@@ -111,11 +119,20 @@
         <div class="col-md-6">
             <div class="p-3 border border-secondary rounded-3 bg-dark">
                 <label class="form-label fw-semibold text-secondary small mb-3"><i class="bi bi-file-earmark-medical me-1"></i> Medical Card</label>
-                @if (Profile.MedicalCard.HasDocument)
+                @if (MedicalCardDocument != null)
                 {
                     <div class="d-flex align-items-center justify-content-between">
                         <span class="text-success small fw-medium"><i class="bi bi-check-circle-fill me-1"></i> Uploaded</span>
-                        <a class="btn btn-sm text-primary fw-medium text-decoration-none p-0" href="@medicalCardUrl" target="_blank">View</a>
+                        <div>
+                            @if (!string.IsNullOrEmpty(MedicalCardDocument.Id) && !MedicalCardDocument.IsUnsaved)
+                            {
+                                <button type="button" class="btn btn-sm text-primary fw-medium text-decoration-none p-0 me-3" @onclick="() => PreviewDocument(MedicalCardDocument)">View</button>
+                            }
+                            @if (!IsReadOnly)
+                            {
+                                <button type="button" class="btn btn-sm text-danger fw-medium text-decoration-none p-0" @onclick="DeleteMedicalCardDocument">Remove</button>
+                            }
+                        </div>
                     </div>
                 }
                 else if (!IsReadOnly)
@@ -131,26 +148,53 @@
     </div>
 }
 
+@if (showPreviewModal && previewDoc != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg bg-dark">
+                <div class="modal-header border-secondary border-bottom">
+                    <h5 class="modal-title text-white">@previewDoc.FileName</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="ClosePreview"></button>
+                </div>
+                <div class="modal-body p-0" style="height: 70vh;">
+                    @if (previewDoc.ContentType.StartsWith("image/"))
+                    {
+                        <div class="w-100 h-100 d-flex justify-content-center align-items-center bg-black">
+                            <img src="/api/documents/@previewDoc.Id" alt="@previewDoc.FileName" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+                        </div>
+                    }
+                    else
+                    {
+                        <iframe src="/api/documents/@previewDoc.Id" style="width: 100%; height: 100%; border: none;"></iframe>
+                    }
+                </div>
+                <div class="modal-footer border-secondary border-top">
+                    <a href="/api/documents/@previewDoc.Id?download=true" class="btn btn-primary rounded-pill px-4">
+                        <i class="bi bi-download me-2"></i> Download
+                    </a>
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" @onclick="ClosePreview">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     [Parameter, EditorRequired] public DriverProfile Profile { get; set; } = default!;
     [Parameter] public bool IsReadOnly { get; set; }
     
-    private string? licenseUrl;
-    private string? medicalCardUrl;
+    private HrPlatform.Data.Entities.DocumentFile? CdlDocument => Profile.Documents.FirstOrDefault(d => d.DocumentType == "CDL License");
+    private HrPlatform.Data.Entities.DocumentFile? MedicalCardDocument => Profile.Documents.FirstOrDefault(d => d.DocumentType == "Medical Card");
+    
+    private bool showPreviewModal;
+    private HrPlatform.Data.Entities.DocumentFile? previewDoc;
 
     protected override void OnInitialized()
     {
         Profile.License ??= new DriverLicense();
         Profile.MedicalCard ??= new DriverMedicalCard();
-    }
-
-    protected override async Task OnParametersSetAsync()
-    {
-        if (Profile.License?.HasDocument == true)
-            licenseUrl = await StorageSvc.GetSignedUrlAsync(Profile.License.DocumentBlobPath!);
-            
-        if (Profile.MedicalCard?.HasDocument == true)
-            medicalCardUrl = await StorageSvc.GetSignedUrlAsync(Profile.MedicalCard.DocumentBlobPath!);
+        Profile.Documents ??= new List<HrPlatform.Data.Entities.DocumentFile>();
     }
 
     private void ToggleEndorsement(CdlEndorsement endorsement, bool add)
@@ -163,59 +207,73 @@
 
     private async Task UploadLicenseDocumentAsync(InputFileChangeEventArgs e)
     {
-        if (Profile?.License is null) return;
         var file = e.File;
         if (file.Size > 5 * 1024 * 1024) return;
 
-        await using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
-        var folder = $"licenses/{Profile.UserId}";
-        Profile.License.DocumentBlobPath = await StorageSvc.UploadAsync(stream, file.Name, file.ContentType, folder);
-        Profile.License.DocumentUploadedAt = DateTime.UtcNow;
-        await SaveProfileAsync();
-        licenseUrl = await StorageSvc.GetSignedUrlAsync(Profile.License.DocumentBlobPath);
+        using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+
+        var existing = CdlDocument;
+        if (existing != null) Profile.Documents.Remove(existing);
+
+        Profile.Documents.Add(new HrPlatform.Data.Entities.DocumentFile
+        {
+            DriverProfileId = Profile.Id,
+            DocumentType = "CDL License",
+            FileName = file.Name,
+            ContentType = file.ContentType,
+            Data = ms.ToArray(),
+            UploadedAt = DateTime.UtcNow,
+            IsUnsaved = true
+        });
     }
 
-    private async Task DeleteLicenseDocumentAsync()
+    private void DeleteLicenseDocument()
     {
-        if (Profile?.License?.DocumentBlobPath is null) return;
-        await StorageSvc.DeleteAsync(Profile.License.DocumentBlobPath);
-        Profile.License.DocumentBlobPath = null;
-        Profile.License.DocumentUploadedAt = null;
-        licenseUrl = null;
-        await SaveProfileAsync();
+        var existing = CdlDocument;
+        if (existing != null) Profile.Documents.Remove(existing);
     }
 
     private async Task UploadMedicalCardDocumentAsync(InputFileChangeEventArgs e)
     {
-        if (Profile?.MedicalCard is null) return;
         var file = e.File;
         if (file.Size > 5 * 1024 * 1024) return;
 
-        await using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
-        var folder = $"medical/{Profile.UserId}";
-        Profile.MedicalCard.DocumentBlobPath = await StorageSvc.UploadAsync(stream, file.Name, file.ContentType, folder);
-        Profile.MedicalCard.DocumentUploadedAt = DateTime.UtcNow;
-        await SaveProfileAsync();
-        medicalCardUrl = await StorageSvc.GetSignedUrlAsync(Profile.MedicalCard.DocumentBlobPath);
-    }
+        using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
 
-    private async Task DeleteMedicalCardDocumentAsync()
-    {
-        if (Profile?.MedicalCard?.DocumentBlobPath is null) return;
-        await StorageSvc.DeleteAsync(Profile.MedicalCard.DocumentBlobPath);
-        Profile.MedicalCard.DocumentBlobPath = null;
-        Profile.MedicalCard.DocumentUploadedAt = null;
-        medicalCardUrl = null;
-        await SaveProfileAsync();
-    }
+        var existing = MedicalCardDocument;
+        if (existing != null) Profile.Documents.Remove(existing);
 
-    private async Task SaveProfileAsync()
-    {
-        var auth = await AuthState.GetAuthenticationStateAsync();
-        var currentUserId = auth.User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
-        if (Profile.Id > 0) 
+        Profile.Documents.Add(new HrPlatform.Data.Entities.DocumentFile
         {
-            await ProfileService.UpdateAsync(Profile, currentUserId);
-        }
+            DriverProfileId = Profile.Id,
+            DocumentType = "Medical Card",
+            FileName = file.Name,
+            ContentType = file.ContentType,
+            Data = ms.ToArray(),
+            UploadedAt = DateTime.UtcNow,
+            IsUnsaved = true
+        });
+    }
+
+    private void DeleteMedicalCardDocument()
+    {
+        var existing = MedicalCardDocument;
+        if (existing != null) Profile.Documents.Remove(existing);
+    }
+    
+    private void PreviewDocument(HrPlatform.Data.Entities.DocumentFile doc)
+    {
+        previewDoc = doc;
+        showPreviewModal = true;
+    }
+
+    private void ClosePreview()
+    {
+        showPreviewModal = false;
+        previewDoc = null;
     }
 }

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using HrPlatform.Data.Models;
 
 namespace HrPlatform.Data.Entities;
@@ -21,4 +22,6 @@ public class DocumentFile
     [MaxLength(50)] public string? DocumentType { get; set; }
 
     [MaxLength(2000)] public string? FilePath { get; set; }
+
+    [NotMapped] public bool IsUnsaved { get; set; } = false;
 }

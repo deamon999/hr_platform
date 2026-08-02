@@ -4,17 +4,20 @@ using System.Collections.Generic;
 using HrPlatform.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace HrPlatform.Migrations
+namespace HrPlatform.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260802192357_RevertEducationToMany")]
+    partial class RevertEducationToMany
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -365,6 +368,9 @@ namespace HrPlatform.Migrations
                     b.Property<bool>("HiringNewGrads")
                         .HasColumnType("boolean");
 
+                    b.Property<int?>("HomeTime")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -376,9 +382,6 @@ namespace HrPlatform.Migrations
                     b.Property<string>("RegistrationNumber")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
-
-                    b.Property<int?>("RouteType")
-                        .HasColumnType("integer");
 
                     b.Property<bool>("SignOnBonus")
                         .HasColumnType("boolean");
@@ -418,6 +421,7 @@ namespace HrPlatform.Migrations
                         .HasColumnType("character varying(20)");
 
                     b.Property<string>("Level")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("SchoolName")
@@ -707,9 +711,6 @@ namespace HrPlatform.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
-                    b.Property<int>("AvailabilityStatus")
-                        .HasColumnType("integer");
-
                     b.Property<DateOnly?>("AvailableStartDate")
                         .HasColumnType("date");
 
@@ -724,6 +725,9 @@ namespace HrPlatform.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<bool>("ConsentEmployment")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ConsentFCRA")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("ConsentMVR")
@@ -813,14 +817,14 @@ namespace HrPlatform.Migrations
                     b.PrimitiveCollection<List<string>>("PreferredFreight")
                         .HasColumnType("text[]");
 
+                    b.Property<int?>("PreferredHomeTime")
+                        .HasColumnType("integer");
+
                     b.Property<string>("PreferredPosition")
                         .HasColumnType("text");
 
                     b.PrimitiveCollection<List<string>>("PreferredRegions")
                         .HasColumnType("text[]");
-
-                    b.Property<int?>("PreferredRouteType")
-                        .HasColumnType("integer");
 
                     b.Property<DateOnly?>("SignatureDate")
                         .HasColumnType("date");
@@ -917,6 +921,9 @@ namespace HrPlatform.Migrations
                     b.Property<string>("EmploymentType")
                         .HasColumnType("text");
 
+                    b.Property<int?>("HomeTime")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
@@ -951,9 +958,6 @@ namespace HrPlatform.Migrations
 
                     b.Property<bool>("RequiresManualTransmission")
                         .HasColumnType("boolean");
-
-                    b.Property<int?>("RouteType")
-                        .HasColumnType("integer");
 
                     b.Property<decimal?>("SignOnBonus")
                         .HasColumnType("numeric");

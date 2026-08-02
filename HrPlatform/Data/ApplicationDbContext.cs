@@ -14,7 +14,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<DriverMedicalCard> DriverMedicalCards => Set<DriverMedicalCard>();
     public DbSet<DriverEmployment> DriverEmployments => Set<DriverEmployment>();
     public DbSet<DriverEducation> DriverEducations => Set<DriverEducation>();
-    public DbSet<DriverCertification> DriverCertifications => Set<DriverCertification>();
     public DbSet<DriverLicenseEndorsement> DriverLicenseEndorsements => Set<DriverLicenseEndorsement>();
     public DbSet<DriverEmploymentTrailerType> DriverEmploymentTrailerTypes => Set<DriverEmploymentTrailerType>();
     public DbSet<DriverProfileSkill> DriverProfileSkills => Set<DriverProfileSkill>();
@@ -54,6 +53,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             e.Ignore(p => p.AllTrailerTypes);
         });
 
+        b.Entity<DriverEducation>(e =>
+        {
+            e.Property(p => p.Level).HasConversion<string>();
+        });
+
         b.Entity<DriverLicense>(e =>
         {
             e.HasOne(l => l.DriverProfile)
@@ -78,24 +82,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             e.HasOne(em => em.DriverProfile)
                 .WithMany(p => p.EmploymentHistory)
                 .HasForeignKey(em => em.DriverProfileId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
-
-        b.Entity<DriverEducation>(e =>
-        {
-            e.HasOne(ed => ed.DriverProfile)
-                .WithMany(p => p.EducationHistory)
-                .HasForeignKey(ed => ed.DriverProfileId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            e.Property(ed => ed.Level).HasConversion<string>();
-        });
-
-        b.Entity<DriverCertification>(e =>
-        {
-            e.HasOne(c => c.DriverProfile)
-                .WithMany(p => p.Certifications)
-                .HasForeignKey(c => c.DriverProfileId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

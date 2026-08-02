@@ -4,17 +4,20 @@ using System.Collections.Generic;
 using HrPlatform.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace HrPlatform.Migrations
+namespace HrPlatform.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260802172703_RemovePreferredEquipment")]
+    partial class RemovePreferredEquipment
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -365,6 +368,9 @@ namespace HrPlatform.Migrations
                     b.Property<bool>("HiringNewGrads")
                         .HasColumnType("boolean");
 
+                    b.Property<int?>("HomeTime")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -376,9 +382,6 @@ namespace HrPlatform.Migrations
                     b.Property<string>("RegistrationNumber")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
-
-                    b.Property<int?>("RouteType")
-                        .HasColumnType("integer");
 
                     b.Property<bool>("SignOnBonus")
                         .HasColumnType("boolean");
@@ -398,6 +401,50 @@ namespace HrPlatform.Migrations
                     b.ToTable("Companies");
                 });
 
+            modelBuilder.Entity("HrPlatform.Data.Models.DriverCertification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CertificationNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("DocumentBlobPath")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("DocumentUploadedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DriverProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly?>("ExpiryDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("IssuedDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("IssuingAuthority")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DriverProfileId");
+
+                    b.ToTable("DriverCertifications");
+                });
+
             modelBuilder.Entity("HrPlatform.Data.Models.DriverEducation", b =>
                 {
                     b.Property<int>("Id")
@@ -413,16 +460,23 @@ namespace HrPlatform.Migrations
                     b.Property<int>("DriverProfileId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("GraduationYear")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<string>("Level")
-                        .HasColumnType("text");
-
-                    b.Property<string>("SchoolName")
+                    b.Property<string>("FieldOfStudy")
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)");
+
+                    b.Property<bool>("Graduated")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateOnly?>("GraduationDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("InstitutionName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Level")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("State")
                         .HasMaxLength(50)
@@ -707,9 +761,6 @@ namespace HrPlatform.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
-                    b.Property<int>("AvailabilityStatus")
-                        .HasColumnType("integer");
-
                     b.Property<DateOnly?>("AvailableStartDate")
                         .HasColumnType("date");
 
@@ -724,6 +775,9 @@ namespace HrPlatform.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<bool>("ConsentEmployment")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ConsentFCRA")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("ConsentMVR")
@@ -777,12 +831,6 @@ namespace HrPlatform.Migrations
                     b.Property<int>("LastWizardStep")
                         .HasColumnType("integer");
 
-                    b.Property<DateOnly?>("LicenseSuspensionDate")
-                        .HasColumnType("date");
-
-                    b.Property<string>("LicenseSuspensionReason")
-                        .HasColumnType("text");
-
                     b.Property<int>("LocalExperience")
                         .HasColumnType("integer");
 
@@ -813,14 +861,14 @@ namespace HrPlatform.Migrations
                     b.PrimitiveCollection<List<string>>("PreferredFreight")
                         .HasColumnType("text[]");
 
+                    b.Property<int?>("PreferredHomeTime")
+                        .HasColumnType("integer");
+
                     b.Property<string>("PreferredPosition")
                         .HasColumnType("text");
 
                     b.PrimitiveCollection<List<string>>("PreferredRegions")
                         .HasColumnType("text[]");
-
-                    b.Property<int?>("PreferredRouteType")
-                        .HasColumnType("integer");
 
                     b.Property<DateOnly?>("SignatureDate")
                         .HasColumnType("date");
@@ -917,6 +965,9 @@ namespace HrPlatform.Migrations
                     b.Property<string>("EmploymentType")
                         .HasColumnType("text");
 
+                    b.Property<int?>("HomeTime")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
@@ -951,9 +1002,6 @@ namespace HrPlatform.Migrations
 
                     b.Property<bool>("RequiresManualTransmission")
                         .HasColumnType("boolean");
-
-                    b.Property<int?>("RouteType")
-                        .HasColumnType("integer");
 
                     b.Property<decimal?>("SignOnBonus")
                         .HasColumnType("numeric");
@@ -1259,10 +1307,21 @@ namespace HrPlatform.Migrations
                     b.Navigation("Company");
                 });
 
+            modelBuilder.Entity("HrPlatform.Data.Models.DriverCertification", b =>
+                {
+                    b.HasOne("HrPlatform.Data.Models.DriverProfile", "DriverProfile")
+                        .WithMany("Certifications")
+                        .HasForeignKey("DriverProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DriverProfile");
+                });
+
             modelBuilder.Entity("HrPlatform.Data.Models.DriverEducation", b =>
                 {
                     b.HasOne("HrPlatform.Data.Models.DriverProfile", "DriverProfile")
-                        .WithMany("Educations")
+                        .WithMany("EducationHistory")
                         .HasForeignKey("DriverProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1515,9 +1574,11 @@ namespace HrPlatform.Migrations
 
             modelBuilder.Entity("HrPlatform.Data.Models.DriverProfile", b =>
                 {
+                    b.Navigation("Certifications");
+
                     b.Navigation("Documents");
 
-                    b.Navigation("Educations");
+                    b.Navigation("EducationHistory");
 
                     b.Navigation("EmploymentHistory");
 

@@ -28,7 +28,7 @@ public class Company
     public string? Description { get; set; }
     public string? WebsiteUrl { get; set; }
     public int? FleetSize { get; set; }
-    public HrPlatform.Data.Enums.HomeTimeFrequency? HomeTime { get; set; }
+    public HrPlatform.Data.Enums.RouteType? RouteType { get; set; }
     public bool PaidCdlTraining { get; set; }
     public bool SignOnBonus { get; set; }
     public bool BenefitsOffered { get; set; }

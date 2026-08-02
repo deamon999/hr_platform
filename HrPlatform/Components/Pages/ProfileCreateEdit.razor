@@ -30,12 +30,23 @@
             <!-- Sidebar Progress -->
             <div class="col-lg-3 p-4" style="background-color: var(--bg-card); border-right: 1px solid var(--border-color);">
                 <div class="mb-4">
-                    <h5 class="text-secondary fw-bold text-uppercase mb-4" style="font-size: 0.8rem; letter-spacing: 1px;">Application Progress</h5>
+                    @if (!profile!.IsApplicationCompleted)
+                    {
+                        <h5 class="text-secondary fw-bold text-uppercase mb-2" style="font-size: 0.8rem; letter-spacing: 1px;">Application Progress</h5>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small class="text-muted fw-medium">@(Math.Min(((activeTab + 1) * 100) / 10, 100))% Complete</small>
+                        </div>
+                        <div class="progress mb-4" style="height: 6px; background-color: rgba(255,255,255,0.1);">
+                            <div class="progress-bar bg-primary" style="width: @(Math.Min(((activeTab + 1) * 100) / 10, 100))%; transition: width 0.3s ease;"></div>
+                        </div>
+                    }
+
                     <ul class="nav flex-column gap-3 wizard-steps">
                         @foreach (var (label, index) in tabs.Select((l, i) => (l, i)))
                         {
-                            var locked = isNew && index > maxReachedTab;
-                            var completed = isNew && index < maxReachedTab;
+                            var locked = !profile!.IsApplicationCompleted && index > maxReachedTab;
+                            var completed = profile!.IsApplicationCompleted || index < maxReachedTab;
                             var active = activeTab == index;
 
                             <li class="nav-item">
@@ -93,6 +104,13 @@
                     </div>
                     
                     <div class="px-5 py-4 flex-grow-1 overflow-auto">
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="alert alert-danger shadow-sm rounded-3 mb-4 d-flex align-items-center">
+                                <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+                                <div>@errorMessage</div>
+                            </div>
+                        }
                         <ValidationSummary class="text-danger mb-4"/>
 
                         <div class="@(activeTab == 0 ? "" : "d-none")">
@@ -111,41 +129,24 @@
                             <HrPlatform.Components.Pages.ProfileShared.ProfileSafetyForm Profile="profile" IsReadOnly="false" />
                         </div>
                         <div class="@(activeTab == 5 ? "" : "d-none")">
-                            <HrPlatform.Components.Pages.ProfileShared.ProfileDocumentsForm Profile="profile" IsReadOnly="false" />
-                        </div>
-                        <div class="@(activeTab == 6 ? "" : "d-none")">
                             <HrPlatform.Components.Pages.ProfileShared.ProfilePreferencesForm Profile="profile" IsReadOnly="false" />
                         </div>
-                        <div class="@(activeTab == 7 ? "" : "d-none")">
+                        <div class="@(activeTab == 6 ? "" : "d-none")">
                             <HrPlatform.Components.Pages.ProfileShared.ProfileEducationForm Profile="profile" IsReadOnly="false" />
                         </div>
-                        <div class="@(activeTab == 8 ? "" : "d-none")">
-                            <HrPlatform.Components.Pages.ProfileShared.ProfileCertificationsForm Profile="profile" IsReadOnly="false" />
+                        <div class="@(activeTab == 7 ? "" : "d-none")">
+                            <HrPlatform.Components.Pages.ProfileShared.ProfileDocumentsForm Profile="profile" IsReadOnly="false" />
                         </div>
-                        <div class="@(activeTab == 9 ? "" : "d-none")">
+                        <div class="@(activeTab == 8 ? "" : "d-none")">
                             <HrPlatform.Components.Pages.ProfileShared.ProfileConsentsForm Profile="profile" IsReadOnly="false" />
                         </div>
-                        <div class="@(activeTab == 10 ? "" : "d-none")">
+                        <div class="@(activeTab == 9 ? "" : "d-none")">
                             <HrPlatform.Components.Pages.ProfileShared.ProfileReviewForm Profile="profile" />
-                        </div>
-                        <div class="@(activeTab == 11 ? "" : "d-none")">
-                            <!-- Application Submitted Success -->
-                            <div class="text-center py-5">
-                                <i class="bi bi-check-circle-fill text-primary" style="font-size: 4rem;"></i>
-                                <h2 class="mt-4 mb-3 fw-bold">Application Submitted!</h2>
-                                <p class="text-secondary mb-5">Thank you! Your application has been submitted successfully.<br/>You can now apply to jobs that match your profile.</p>
-                                <div class="d-flex justify-content-center gap-3">
-                                    <button type="button" class="btn btn-outline-primary px-4 py-2" @onclick="CancelEdit">View My Profile</button>
-                                    <a href="/jobs" class="btn btn-primary px-4 py-2">Browse Jobs</a>
-                                </div>
-                            </div>
                         </div>
                     </div>
 
                     <!-- Bottom Nav Bar -->
-                    @if (activeTab < 11)
-                    {
-                        <div class="px-5 py-4 border-top d-flex justify-content-between align-items-center bg-white" style="border-color: var(--border-color) !important;">
+                    <div class="px-5 py-4 border-top d-flex justify-content-between align-items-center bg-white" style="border-color: var(--border-color) !important;">
                             @if (activeTab > 0)
                             {
                                 <button type="button" class="btn btn-outline-secondary px-4" @onclick="GoPrevious">
@@ -157,7 +158,13 @@
                                 <div></div>
                             }
 
-                            @if (activeTab < 10)
+                            @if (profile!.IsApplicationCompleted)
+                            {
+                                <button type="button" class="btn btn-primary px-4 fw-medium" @onclick="SaveAndExitAsync">
+                                    Save
+                                </button>
+                            }
+                            else if (activeTab < 9)
                             {
                                 <div class="d-flex gap-3">
                                     <button type="button" class="btn btn-outline-primary px-4 fw-medium" @onclick="SaveAndExitAsync">
@@ -168,19 +175,18 @@
                                     </button>
                                 </div>
                             }
-                            else if (activeTab == 10)
+                            else if (activeTab == 9)
                             {
                                 <div class="d-flex gap-3">
                                     <button type="button" class="btn btn-outline-primary px-4 fw-medium" @onclick="SaveAndExitAsync">
                                         Save & Exit
                                     </button>
                                     <button type="button" class="btn btn-primary px-5 fw-bold" @onclick="SubmitApplicationAsync">
-                                        Submit Application <i class="bi bi-check-circle ms-2"></i>
+                                        Submit Profile <i class="bi bi-check-circle ms-2"></i>
                                     </button>
                                 </div>
                             }
                         </div>
-                    }
                 </EditForm>
             </div>
         </div>
@@ -237,6 +243,26 @@
             </div>
         }
     }
+
+    <!-- Success Modal -->
+    @if (showSuccessModal)
+    {
+        <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); backdrop-filter: blur(5px);">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg" style="background-color: var(--bg-card); color: var(--text-color);">
+                    <div class="modal-body text-center py-5">
+                        <i class="bi bi-check-circle-fill text-primary" style="font-size: 4rem;"></i>
+                        <h2 class="mt-4 mb-3 fw-bold text-dark">Application Submitted!</h2>
+                        <p class="text-secondary mb-5">Thank you! Your profile has been submitted successfully.<br/>You can now apply to jobs that match your profile.</p>
+                        <div class="d-flex justify-content-center gap-3">
+                            <button type="button" class="btn btn-outline-primary px-4 py-2" @onclick="GoToProfile">View My Profile</button>
+                            <a href="/jobs" class="btn btn-primary px-4 py-2">Browse Jobs</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
 @code {
@@ -248,15 +274,17 @@
     private bool isNew;
     private string? successMessage;
     private string userId = default!;
+    private string? errorMessage;
     private int activeTab;
     private int maxReachedTab;
     private string? newSkill;
     private bool showCancelConfirm;
+    private bool showSuccessModal;
 
     private static DateOnly Today => DateOnly.FromDateTime(DateTime.Today);
 
     private static readonly string[] tabs =
-        ["Personal Information", "CDL License & Medical", "Driving Experience", "Employment History", "Safety History", "Documents", "Preferences", "Education", "Certifications", "Consents & Authorizations", "Review & Submit", "Application Submitted"];
+        ["Personal Information", "CDL License & Medical", "Driving Experience", "Employment History", "Safety History", "Preferences", "Education", "Other Documents", "Consents & Authorizations", "Review & Submit"];
 
     protected override async Task OnInitializedAsync()
     {
@@ -298,6 +326,13 @@
             }
 
             isNew = false;
+            
+            // Clamp LastWizardStep in case tabs were removed
+            if (existing.LastWizardStep >= tabs.Length)
+            {
+                existing.LastWizardStep = tabs.Length - 1;
+            }
+            
             maxReachedTab = existing.IsApplicationCompleted ? tabs.Length - 1 : existing.LastWizardStep;
             activeTab = existing.IsApplicationCompleted ? 0 : existing.LastWizardStep;
             profile = existing;
@@ -309,10 +344,24 @@
 
     private void ActivateTab(int index)
     {
-        if (!profile!.IsApplicationCompleted && index > maxReachedTab)
-            return;
+        try
+        {
+            errorMessage = null;
+            if (!profile!.IsApplicationCompleted && index > maxReachedTab)
+                return;
 
-        activeTab = index;
+            if (activeTab == 1 && index > activeTab && (!profile.Documents.Any(d => d.DocumentType == "CDL License") || !profile.Documents.Any(d => d.DocumentType == "Medical Card")))
+            {
+                errorMessage = "CDL License and DOT Medical Card documents are required before proceeding.";
+                return;
+            }
+
+            activeTab = index;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error in ActivateTab: {ex.Message}";
+        }
     }
 
     private void GoNext()
@@ -334,9 +383,16 @@
 
     private async Task SaveAndContinueAsync()
     {
-        if (editContext.Validate())
+        errorMessage = null;
+        if (activeTab == 1 && (!profile!.Documents.Any(d => d.DocumentType == "CDL License") || !profile.Documents.Any(d => d.DocumentType == "Medical Card")))
         {
-            if (activeTab < 10)
+            errorMessage = "CDL License and DOT Medical Card documents are required before proceeding.";
+            return;
+        }
+
+        if (ValidateProfileSafe())
+        {
+            if (activeTab < 9)
             {
                 var nextTab = activeTab + 1;
                 if (nextTab > maxReachedTab) maxReachedTab = nextTab;
@@ -345,36 +401,82 @@
             
             await SaveProfileToDbAsync();
             
-            if (activeTab < 10)
+            if (activeTab < 9)
             {
                 activeTab++;
             }
         }
     }
 
+    private bool ValidateProfileSafe()
+    {
+        var tempLicense = profile!.License;
+        if (tempLicense != null && tempLicense.Id == 0 && string.IsNullOrWhiteSpace(tempLicense.LicenseNumber))
+            profile.License = null;
+
+        var tempMedical = profile.MedicalCard;
+        if (tempMedical != null && tempMedical.Id == 0 && tempMedical.ExpiryDate == default && string.IsNullOrWhiteSpace(tempMedical.MedicalExaminerName))
+            profile.MedicalCard = null;
+
+        bool isValid = editContext.Validate();
+
+        foreach (var edu in profile.Educations)
+        {
+            if (string.IsNullOrWhiteSpace(edu.SchoolName) || 
+                string.IsNullOrWhiteSpace(edu.City) || 
+                string.IsNullOrWhiteSpace(edu.State) || 
+                edu.Level == null)
+            {
+                isValid = false;
+                if (string.IsNullOrWhiteSpace(errorMessage))
+                {
+                    errorMessage = "Please complete all required fields (Level, School Name, City, State) for your added Education records.";
+                }
+            }
+        }
+
+        profile.License = tempLicense;
+        profile.MedicalCard = tempMedical;
+
+        return isValid;
+    }
+
     private async Task SaveAndExitAsync()
     {
-        if (editContext.Validate())
+        try
         {
-            if (activeTab < 10)
-            {
-                var nextTab = activeTab + 1;
-                if (nextTab > maxReachedTab) maxReachedTab = nextTab;
-                if (nextTab > profile!.LastWizardStep) profile.LastWizardStep = nextTab;
-            }
+            errorMessage = null;
 
-            await SaveProfileToDbAsync();
-            Nav.NavigateTo(ReturnUrl ?? "/jobs");
+            if (ValidateProfileSafe())
+            {
+                try
+                {
+                    await SaveProfileToDbAsync();
+                    Nav.NavigateTo(ReturnUrl ?? "/my-profile");
+                }
+                catch (Exception ex)
+                {
+                    errorMessage = "An error occurred while saving the profile: " + ex.Message;
+                }
+            }
+            else
+            {
+                errorMessage = "Validation failed. Please fill in all required fields.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Critical Error in Save: {ex.Message}";
         }
     }
 
     private async Task SubmitApplicationAsync()
     {
-        if (editContext.Validate())
+        if (ValidateProfileSafe())
         {
             profile!.IsApplicationCompleted = true;
             await SaveProfileToDbAsync();
-            activeTab = 11;
+            showSuccessModal = true;
             StateHasChanged();
         }
     }
@@ -419,18 +521,31 @@
         if (licenseWasEmpty) profile.License = new DriverLicense();
         if (medicalCardWasEmpty) profile.MedicalCard = new DriverMedicalCard();
         
+        // Reset IsUnsaved for all documents since they are now saved
+        foreach (var doc in profile.Documents)
+        {
+            doc.IsUnsaved = false;
+        }
+        
         // Mark form as unmodified so we don't prompt on exit
         editContext.MarkAsUnmodified();
     }
     private void CancelEdit()
     {
-        if (editContext.IsModified())
+        try
         {
-            showCancelConfirm = true;
+            if (editContext.IsModified())
+            {
+                showCancelConfirm = true;
+            }
+            else
+            {
+                ConfirmCancel();
+            }
         }
-        else
+        catch (Exception ex)
         {
-            ConfirmCancel();
+            errorMessage = $"Error in CancelEdit: {ex.Message}";
         }
     }
 
@@ -440,6 +555,11 @@
             Nav.NavigateTo("/jobs");
         else
             Nav.NavigateTo(ReturnUrl ?? $"/profiles/{profile!.Id}");
+    }
+
+    private void GoToProfile()
+    {
+        Nav.NavigateTo($"/profiles/{profile!.Id}");
     }
 }
 

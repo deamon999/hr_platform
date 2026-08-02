@@ -16,6 +16,8 @@ public class DriverProfile
 
     public int LastWizardStep { get; set; } = 0;
     
+    public AvailabilityStatus AvailabilityStatus { get; set; } = AvailabilityStatus.ActivelyLooking;
+    
     public bool IsApplicationCompleted { get; set; } = false;
 
     [Required] [MaxLength(100)] public string FirstName { get; set; } = default!;
@@ -46,11 +48,12 @@ public class DriverProfile
     [MaxLength(20)] public string? ZipCode { get; set; }
 
     // Trucking Lifestyle & Preferences
-    public HomeTimeFrequency? PreferredHomeTime { get; set; }
+    public RouteType? PreferredRouteType { get; set; }
     public string? PreferredPosition { get; set; }
     public List<string>? PreferredFreight { get; set; } = new();
     public List<string>? PreferredRegions { get; set; } = new();
     public string? MinimumWeeklyPay { get; set; }
+    public DateOnly? AvailableStartDate { get; set; }
     
     public bool CanDriveManual { get; set; }
     public bool WantsToDriveWithPets { get; set; }
@@ -64,9 +67,13 @@ public class DriverProfile
 
     // Safety & Background
     public bool HasLicenseSuspension { get; set; }
+    public DateOnly? LicenseSuspensionDate { get; set; }
+    public string? LicenseSuspensionReason { get; set; }
     public bool HasFailedDrugTest { get; set; }
     public bool HasRefusedDrugTest { get; set; }
     public bool HasCompletedSAPProgram { get; set; }
+
+    public ICollection<DriverEducation> Educations { get; set; } = [];
 
     // Military Service
     public bool HasMilitaryService { get; set; }
@@ -74,7 +81,6 @@ public class DriverProfile
     public int? MilitaryYears { get; set; }
 
     // Consents & Authorizations
-    public bool ConsentFCRA { get; set; }
     public bool ConsentPSP { get; set; }
     public bool ConsentMVR { get; set; }
     public bool ConsentClearinghouse { get; set; }
@@ -85,9 +91,9 @@ public class DriverProfile
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-    [ValidateComplexType] public DriverLicense? License { get; set; }
+    public DriverLicense? License { get; set; }
 
-    [ValidateComplexType] public DriverMedicalCard? MedicalCard { get; set; }
+    public DriverMedicalCard? MedicalCard { get; set; }
 
     // Navigation property for skills junction table
     public ICollection<DriverProfileSkill> Skills { get; set; } = [];
@@ -96,13 +102,9 @@ public class DriverProfile
 
     public ICollection<DocumentFile> Documents { get; set; } = [];
 
-    [ValidateComplexType] public ICollection<DriverEmployment> EmploymentHistory { get; set; } = [];
+    public ICollection<DriverEmployment> EmploymentHistory { get; set; } = [];
 
-    [ValidateComplexType] public ICollection<DriverEducation> EducationHistory { get; set; } = [];
-
-    [ValidateComplexType] public ICollection<DriverCertification> Certifications { get; set; } = [];
-
-    [ValidateComplexType] public ICollection<DriverViolation> ViolationHistory { get; set; } = [];
+    public ICollection<DriverViolation> ViolationHistory { get; set; } = [];
 
     public IEnumerable<TrailerType> AllTrailerTypes =>
         EmploymentHistory.SelectMany(e => e.TrailerTypes.Select(t => t.TrailerType)).Distinct();
@@ -137,10 +139,7 @@ public class DriverProfile
             if (Skills.Any())
                 score += 5;
                 
-            if (Certifications.Any())
-                score += 5;
-                
-            if (EducationHistory.Any())
+            if (Educations.Any())
                 score += 5;
 
             return score;
@@ -189,13 +188,10 @@ public class DriverProfile
                 missing.Add("Driving Experience");
 
             // Optional Fields
-            if (!Certifications.Any())
-                missing.Add("Certifications (Optional)");
-                
             if (!Skills.Any())
                 missing.Add("Skills (Optional)");
                 
-            if (!EducationHistory.Any())
+            if (!Educations.Any())
                 missing.Add("Education (Optional)");
 
             return missing;
