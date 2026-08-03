@@ -379,28 +379,39 @@
 
     private async Task SaveAndContinueAsync()
     {
-        errorMessage = null;
-        if (activeTab == 1 && (!profile!.Documents.Any(d => d.DocumentType == "CDL License") || !profile.Documents.Any(d => d.DocumentType == "Medical Card")))
+        try
         {
-            errorMessage = "CDL License and DOT Medical Card documents are required before proceeding.";
-            return;
-        }
+            errorMessage = null;
+            if (activeTab == 1 && (!profile!.Documents.Any(d => d.DocumentType == "CDL License") || !profile.Documents.Any(d => d.DocumentType == "Medical Card")))
+            {
+                errorMessage = "CDL License and DOT Medical Card documents are required before proceeding.";
+                return;
+            }
 
-        if (ValidateProfileSafe())
+            if (ValidateProfileSafe())
+            {
+                if (activeTab < 9)
+                {
+                    var nextTab = activeTab + 1;
+                    if (nextTab > maxReachedTab) maxReachedTab = nextTab;
+                    if (nextTab > profile!.LastWizardStep) profile.LastWizardStep = nextTab;
+                }
+                
+                await SaveProfileToDbAsync();
+                
+                if (activeTab < 9)
+                {
+                    activeTab++;
+                }
+            }
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException ex) when (ex.InnerException?.Message.Contains("IX_DriverLicenses_LicenseNumber") == true)
         {
-            if (activeTab < 9)
-            {
-                var nextTab = activeTab + 1;
-                if (nextTab > maxReachedTab) maxReachedTab = nextTab;
-                if (nextTab > profile!.LastWizardStep) profile.LastWizardStep = nextTab;
-            }
-            
-            await SaveProfileToDbAsync();
-            
-            if (activeTab < 9)
-            {
-                activeTab++;
-            }
+            errorMessage = "This CDL License Number is already registered in the system.";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "An error occurred while saving the profile: " + ex.Message;
         }
     }
 
@@ -411,7 +422,7 @@
             profile.License = null;
 
         var tempMedical = profile.MedicalCard;
-        if (tempMedical != null && tempMedical.Id == 0 && tempMedical.ExpiryDate == default && string.IsNullOrWhiteSpace(tempMedical.MedicalExaminerName))
+        if (tempMedical != null && tempMedical.Id == 0 && tempMedical.SelfCertification == null && string.IsNullOrWhiteSpace(tempMedical.MedicalExaminerName))
             profile.MedicalCard = null;
 
         bool isValid = editContext.Validate();
@@ -468,12 +479,23 @@
 
     private async Task SubmitApplicationAsync()
     {
-        if (ValidateProfileSafe())
+        try
         {
-            profile!.IsApplicationCompleted = true;
-            await SaveProfileToDbAsync();
-            showSuccessModal = true;
-            StateHasChanged();
+            if (ValidateProfileSafe())
+            {
+                profile!.IsApplicationCompleted = true;
+                await SaveProfileToDbAsync();
+                showSuccessModal = true;
+                StateHasChanged();
+            }
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException ex) when (ex.InnerException?.Message.Contains("IX_DriverLicenses_LicenseNumber") == true)
+        {
+            errorMessage = "This CDL License Number is already registered in the system.";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "An error occurred while submitting the profile: " + ex.Message;
         }
     }
 
@@ -496,7 +518,7 @@
         }
         
         bool medicalCardWasEmpty = false;
-        if (profile.MedicalCard != null && profile.MedicalCard.Id == 0 && profile.MedicalCard.ExpiryDate == default && string.IsNullOrWhiteSpace(profile.MedicalCard.MedicalExaminerName))
+        if (profile.MedicalCard != null && profile.MedicalCard.Id == 0 && profile.MedicalCard.SelfCertification == null && string.IsNullOrWhiteSpace(profile.MedicalCard.MedicalExaminerName))
         {
             profile.MedicalCard = null;
             medicalCardWasEmpty = true;
