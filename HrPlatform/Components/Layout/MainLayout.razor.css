@@ -27,7 +27,7 @@ main {
     text-decoration: none;
 }
 
-.top-row ::deep a:hover, .top-row ::deep .btn-link:hover {
+.top-row ::deep a:hover > span:not(.bi), .top-row ::deep .btn-link:hover > span:not(.bi) {
     text-decoration: underline;
 }
 

@@ -13,6 +13,20 @@
     <button type="button" class="btn btn-primary" @onclick="GoToCreate">Create Company</button>
 </div>
 
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-3">
+    <div class="d-flex flex-wrap align-items-center gap-3">
+        <div class="d-flex align-items-center gap-2">
+            <input type="text" class="form-control form-control-sm" style="width: 250px;" placeholder="Search company name..." @bind="searchName" @bind:after="ResetPageAndLoad" />
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <select class="form-select form-select-sm w-auto" style="min-width: 200px;" @bind="sortBy" @bind:after="ResetPageAndLoad">
+                <option value="name">Sort: Name</option>
+                <option value="date">Sort: Date Registered</option>
+            </select>
+        </div>
+    </div>
+</div>
+
 @if (paginationResult is null)
 {
     <p>Loading...</p>
@@ -110,6 +124,8 @@ else
 @code {
     private PaginationResult<Company>? paginationResult;
     private Company? deleteTarget;
+    private string? searchName;
+    private string sortBy = "name";
 
     // Pagination State
     private int currentPage = 1;
@@ -120,10 +136,16 @@ else
         await LoadAsync();
     }
 
+    private async Task ResetPageAndLoad()
+    {
+        currentPage = 1;
+        await LoadAsync();
+    }
+
     private async Task LoadAsync()
     {
         // Calling your paged service
-        paginationResult = await CompanySvc.GetPagedAsync(currentPage, PageSize);
+        paginationResult = await CompanySvc.GetPagedAsync(currentPage, PageSize, searchName, sortBy);
     }
 
     private async Task ChangePage(int page)

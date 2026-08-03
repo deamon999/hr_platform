@@ -28,10 +28,9 @@
 
 <div class="d-flex flex-wrap gap-3 mb-3 align-items-center">
     <div class="d-flex flex-wrap align-items-center gap-2">
-        <label class="form-label mb-0">Availability:</label>
-        <select class="form-select form-select-sm w-auto"
+        <select class="form-select form-select-sm w-auto" style="min-width: 160px;"
                 @bind="profileSearch.Availability" @bind:after="ResetPageAndLoad">
-            <option value="">All</option>
+            <option value="">Any Availability</option>
             @foreach (var s in Enum.GetValues<AvailabilityStatus>())
             {
                 <option value="@s">@s.GetDescriptionValue()</option>
@@ -42,7 +41,7 @@
                placeholder="Search name..."
                @bind="profileSearch.Name"
                @bind:after="ResetPageAndLoad"/>
-        <select class="form-select form-select-sm w-auto"
+        <select class="form-select form-select-sm w-auto" style="min-width: 160px;"
                 @bind="profileSearch.CdlClass" @bind:after="ResetPageAndLoad">
             <option value="">Any CDL class</option>
             @foreach (var c in Enum.GetValues<CdlClass>())
@@ -50,7 +49,7 @@
                 <option value="@c">@c.GetDescriptionValue()</option>
             }
         </select>
-        <select class="form-select form-select-sm w-auto"
+        <select class="form-select form-select-sm w-auto" style="min-width: 160px;"
                 @bind="profileSearch.RequiredEndorsement" @bind:after="LoadAsync">
             <option value="">Any endorsement</option>
             @foreach (var e in Enum.GetValues<CdlEndorsement>())

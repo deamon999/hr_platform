@@ -20,33 +20,29 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-3">
     <div class="d-flex flex-wrap align-items-center gap-3">
         <div class="d-flex align-items-center gap-2">
-            <label class="form-label mb-0">Status:</label>
-            <select class="form-select form-select-sm w-auto" @bind="filter" @bind:after="ResetPageAndLoad">
-                <option value="all">All</option>
+            <select class="form-select form-select-sm w-auto" style="min-width: 160px;" @bind="filter" @bind:after="ResetPageAndLoad">
+                <option value="all">Any Status</option>
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
             </select>
         </div>
 
         <div class="d-flex align-items-center gap-2">
-            <label class="form-label mb-0">CDL Class:</label>
-            <select class="form-select form-select-sm w-auto" @bind="filterCdlClass" @bind:after="ResetPageAndLoad">
-                <option value="">Any</option>
+            <select class="form-select form-select-sm w-auto" style="min-width: 160px;" @bind="filterCdlClass" @bind:after="ResetPageAndLoad">
+                <option value="">Any CDL Class</option>
                 @foreach (var c in Enum.GetValues<CdlClass>())
                 { <option value="@c">CDL-@c</option> }
             </select>
         </div>
 
         <div class="d-flex align-items-center gap-2">
-            <label class="form-label mb-0">Min Pay:</label>
-            <input type="number" class="form-control form-control-sm" style="max-width:100px" placeholder="$" @bind="filterMinPay" @bind:after="ResetPageAndLoad"/>
+            <input type="number" class="form-control form-control-sm" style="max-width:130px" placeholder="$ Min Pay" @bind="filterMinPay" @bind:after="ResetPageAndLoad"/>
         </div>
 
         <div class="d-flex align-items-center gap-2">
-            <label class="form-label mb-0">Sort:</label>
-            <select class="form-select form-select-sm w-auto" @bind="sortBy" @bind:after="ResetPageAndLoad">
-                <option value="date">Date Posted</option>
-                <option value="pay">Pay Rate</option>
+            <select class="form-select form-select-sm w-auto" style="min-width: 180px;" @bind="sortBy" @bind:after="ResetPageAndLoad">
+                <option value="date">Sort: Date Posted</option>
+                <option value="pay">Sort: Pay Rate</option>
             </select>
         </div>
     </div>

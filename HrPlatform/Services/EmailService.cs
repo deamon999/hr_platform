@@ -1,5 +1,6 @@
-using System.Net;
-using System.Net.Mail;
+using MailKit.Net.Smtp;
+using MailKit.Security;
+using MimeKit;
 
 #pragma warning disable SYSLIB0014
 
@@ -21,8 +22,7 @@ public class EmailService : IEmailService
         _port = int.TryParse(configuration["Smtp:Port"], out var port) ? port : 587;
         _username = configuration["Smtp:Username"] ?? "";
         _password = configuration["Smtp:Password"] ?? "";
-        _enableSsl = bool.TryParse(configuration["Smtp:EnableSsl"], out var ssl) ? ssl : true;
-        
+
         _fromEmail = configuration["Smtp:FromEmail"] ?? "noreply@example.com";
         _fromName = configuration["Smtp:FromName"] ?? "CDL Pool";
     }
@@ -30,31 +30,32 @@ public class EmailService : IEmailService
     public async Task SendEmailAsync(string email, string? userName,
         string subject, string htmlContent)
     {
-        using var client = new SmtpClient(_host, _port);
-        client.Credentials = new NetworkCredential(_username, _password);
-        client.EnableSsl = _enableSsl;
+        using var client = new SmtpClient();
+        await client.ConnectAsync(_host, _port, SecureSocketOptions.StartTls);
+        await client.AuthenticateAsync(_username, _password);
 
-        var mailMessage = new MailMessage
-        {
-            From = new MailAddress(_fromEmail, _fromName),
-            Subject = subject,
-            Body = htmlContent,
-            IsBodyHtml = true
-        };
-
+        var mimeMessage = new MimeMessage();
+        mimeMessage.From.Add(new MailboxAddress(_fromName, _fromEmail));
         if (string.IsNullOrEmpty(userName))
-            mailMessage.To.Add(new MailAddress(email));
+            mimeMessage.To.Add(new MailboxAddress("Guest", email));
         else
-            mailMessage.To.Add(new MailAddress(email, userName));
+            mimeMessage.To.Add(new MailboxAddress(userName, email));
+        mimeMessage.Subject = subject;
+        mimeMessage.Body = new TextPart("html") { Text = htmlContent };
+
 
         try
         {
-            await client.SendMailAsync(mailMessage);
+            await client.SendAsync(mimeMessage);
             Console.WriteLine($"Successfully sent email to {email}");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error sending email to {email}: {ex.Message}");
+        }
+        finally
+        {
+            client.Disconnect(true);
         }
     }
 }

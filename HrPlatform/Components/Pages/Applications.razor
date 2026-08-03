@@ -26,12 +26,11 @@
 
 <div class="d-flex flex-wrap gap-3 mb-3 align-items-center">
     <div class="d-flex align-items-center gap-2">
-        <label class="form-label mb-0">Sort by:</label>
-        <select class="form-select form-select-sm w-auto" @bind="sortBy" @bind:after="HandleSortChange">
-            <option value="date">Date Applied</option>
-            <option value="status">Status</option>
-            <option value="driver">Driver Name</option>
-            <option value="job">Job Title</option>
+        <select class="form-select form-select-sm w-auto" style="min-width: 180px;" @bind="sortBy" @bind:after="HandleSortChange">
+            <option value="date">Sort: Date Applied</option>
+            <option value="status">Sort: Status</option>
+            <option value="driver">Sort: Driver Name</option>
+            <option value="job">Sort: Job Title</option>
         </select>
     </div>
 </div>

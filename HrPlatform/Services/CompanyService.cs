@@ -12,9 +12,25 @@ public class CompanyService(ApplicationDbContext db) : ICompanyService
         return await db.Companies.OrderBy(c => c.Name).ToListAsync();
     }
 
-    public async Task<PaginationResult<Company>> GetPagedAsync(int pageNumber = 1, int pageSize = 10)
+    public async Task<PaginationResult<Company>> GetPagedAsync(int pageNumber = 1, int pageSize = 10, string? searchName = null, string sortBy = "name")
     {
-        var companies = await db.Companies.OrderBy(c => c.Name).ToListAsync();
+        var query = db.Companies.AsQueryable();
+        if (!string.IsNullOrWhiteSpace(searchName))
+        {
+            var lowerSearch = searchName.ToLower();
+            query = query.Where(c => c.Name.ToLower().Contains(lowerSearch));
+        }
+        
+        if (sortBy == "date")
+        {
+            query = query.OrderByDescending(c => c.DateRegistered);
+        }
+        else
+        {
+            query = query.OrderBy(c => c.Name);
+        }
+        
+        var companies = await query.ToListAsync();
         return companies.Paginate(pageNumber, pageSize);
     }
 
