@@ -102,6 +102,13 @@ public class AdminUserService : IAdminUserService
             _context.Invitations.RemoveRange(userInvitations);
         }
 
+        // Explicitly delete associated driver profile if it exists
+        var driverProfile = await _context.DriverProfiles.FirstOrDefaultAsync(dp => dp.UserId == user.Id);
+        if (driverProfile != null)
+        {
+            _context.DriverProfiles.Remove(driverProfile);
+        }
+
         _context.Users.Remove(user);
         await _context.SaveChangesAsync();
     }
