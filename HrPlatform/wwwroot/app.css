@@ -288,3 +288,48 @@ strong, b, h1, h2, h3, h4, h5, h6, .card-title, .form-label {
 .text-primary {
     color: var(--accent-primary) !important;
 }
+
+/* Pagination Styling for Dark Theme */
+.pagination {
+    --bs-pagination-bg: var(--bg-card);
+    --bs-pagination-border-color: var(--border-color);
+    --bs-pagination-color: var(--text-primary);
+    --bs-pagination-hover-bg: rgba(255, 255, 255, 0.05);
+    --bs-pagination-hover-color: var(--accent-primary);
+    --bs-pagination-hover-border-color: var(--border-color);
+    --bs-pagination-focus-bg: rgba(255, 255, 255, 0.08);
+    --bs-pagination-focus-color: var(--accent-hover);
+    
+    --bs-pagination-active-bg: var(--accent-primary);
+    --bs-pagination-active-border-color: var(--accent-primary);
+    --bs-pagination-active-color: var(--bg-dark);
+    
+    --bs-pagination-disabled-bg: rgba(255, 255, 255, 0.02);
+    --bs-pagination-disabled-color: var(--text-secondary);
+    --bs-pagination-disabled-border-color: var(--border-color);
+}
+
+.page-link {
+    background-color: var(--bs-pagination-bg);
+    border-color: var(--bs-pagination-border-color);
+    color: var(--bs-pagination-color);
+}
+
+.page-link:hover {
+    background-color: var(--bs-pagination-hover-bg);
+    border-color: var(--bs-pagination-hover-border-color);
+    color: var(--bs-pagination-hover-color);
+}
+
+.page-item.active .page-link {
+    background-color: var(--bs-pagination-active-bg);
+    border-color: var(--bs-pagination-active-border-color);
+    color: var(--bs-pagination-active-color);
+    font-weight: 600;
+}
+
+.page-item.disabled .page-link {
+    background-color: var(--bs-pagination-disabled-bg);
+    border-color: var(--bs-pagination-disabled-border-color);
+    color: var(--bs-pagination-disabled-color);
+}

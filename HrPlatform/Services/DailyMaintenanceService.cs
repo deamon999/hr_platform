@@ -1,11 +1,11 @@
-﻿using HrPlatform.Data;
+using HrPlatform.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace HrPlatform.Services;
 
-public class CredentialExpiryService(
+public class DailyMaintenanceService(
     IServiceProvider services,
-    ILogger<CredentialExpiryService> logger) : BackgroundService
+    ILogger<DailyMaintenanceService> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
@@ -16,11 +16,14 @@ public class CredentialExpiryService(
         {
             try
             {
-                await RunChecksAsync();
+                logger.LogInformation("Starting daily maintenance tasks...");
+                await CheckCredentialExpiriesAsync();
+                await CleanUnconfirmedUsersAsync();
+                logger.LogInformation("Daily maintenance tasks completed.");
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Credential expiry check failed");
+                logger.LogError(ex, "Daily maintenance tasks failed");
             }
 
             // Run once per day at next midnight
@@ -30,7 +33,33 @@ public class CredentialExpiryService(
         }
     }
 
-    private async Task RunChecksAsync()
+    private async Task CleanUnconfirmedUsersAsync()
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var adminUserService = scope.ServiceProvider.GetRequiredService<IAdminUserService>();
+
+        var cutoffDate = DateTime.UtcNow.AddHours(-24);
+
+        var unconfirmedUsers = await db.Users
+            .Where(u => !u.EmailConfirmed && u.TermsAcceptedDate <= cutoffDate)
+            .ToListAsync();
+
+        if (unconfirmedUsers.Count > 0)
+        {
+            logger.LogInformation("Found {Count} unconfirmed users older than 24 hours. Initiating cleanup...", unconfirmedUsers.Count);
+            
+            foreach (var user in unconfirmedUsers)
+            {
+                logger.LogInformation("Deleting unconfirmed user {UserId} ({Email}) created on {Date}", 
+                    user.Id, user.Email, user.TermsAcceptedDate);
+                
+                await adminUserService.DeleteAsync(user.Id);
+            }
+        }
+    }
+
+    private async Task CheckCredentialExpiriesAsync()
     {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -94,8 +123,8 @@ public class CredentialExpiryService(
                                                                      <strong>{expiry:MMMM dd, yyyy}</strong> ({days} days from today).</p>
                                                                      <p>Log in to update your license details once renewed so your
                                                                      profile stays visible to recruiters.</p>
-                                                                     <p><a href=\"#\" style=\"background:#0d6efd;color:#fff;
-                                                                        padding:10px 20px;text-decoration:none;border-radius:4px;\">
+                                                                     <p><a href="#" style="background:#0d6efd;color:#fff;
+                                                                        padding:10px 20px;text-decoration:none;border-radius:4px;">
                                                                         Update My Profile</a></p>
                                                                      """;
 
@@ -106,8 +135,8 @@ public class CredentialExpiryService(
                                                     <strong>{expiry:MMMM dd, yyyy}</strong> ({days} days).</p>
                                                     <p>An expired medical card disqualifies you from commercial driving.
                                                     Schedule your physical now and update your card details afterward.</p>
-                                                    <p><a href=\"#\" style=\"background:#dc3545;color:#fff;
-                                                       padding:10px 20px;text-decoration:none;border-radius:4px;\">
+                                                    <p><a href="#" style="background:#dc3545;color:#fff;
+                                                       padding:10px 20px;text-decoration:none;border-radius:4px;">
                                                        Update Medical Card</a></p>
                                                     """;
 }

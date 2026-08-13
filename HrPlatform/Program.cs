@@ -69,8 +69,8 @@ builder.Services.AddScoped<IApplicationMessageService, ApplicationMessageService
         
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<IDocumentStorageService, DatabaseDocumentStorageService>();
-        // Background worker
-        builder.Services.AddHostedService<CredentialExpiryService>();
+        // Register background job
+        builder.Services.AddHostedService<DailyMaintenanceService>();
         var app = builder.Build();
 
         using (var scope = app.Services.CreateScope())

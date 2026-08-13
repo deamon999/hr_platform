@@ -20,11 +20,21 @@ else if (!pagedUsers.Any() && string.IsNullOrEmpty(_searchTerm))
 }
 else
 {
-    <div class="mb-3" style="max-width:450px">
-        <input class="form-control"
-               placeholder="Search by email or user name or company name"
-               value="@_searchTerm"
-               @oninput="HandleSearchInput"/>
+    <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+        <div style="max-width:450px; flex: 1;">
+            <input class="form-control"
+                   placeholder="Search by email or user name or company name"
+                   value="@_searchTerm"
+                   @oninput="HandleSearchInput"/>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="text-secondary small fw-medium text-nowrap d-none d-md-inline">Items per page:</span>
+            <select class="form-select form-select-sm border-0 bg-white shadow-sm" style="width: 70px;" @bind="PageSize" @bind:after="OnPageSizeChanged">
+                <option value="10">10</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+        </div>
     </div>
 
     @if (_statusMessage is not null)
@@ -174,9 +184,23 @@ else
     private int? companyId;
 
     // Pagination State
-    private int currentPage = 1;
-    private const int PageSize = 10;
+    [SupplyParameterFromQuery(Name = "page")]
+    public int currentPage { get; set; } = 1;
+
+    [SupplyParameterFromQuery(Name = "size")]
+    public int PageSize { get; set; } = 10;
+    
     private int totalPages = 1;
+
+    private void OnPageSizeChanged()
+    {
+        var url = Nav.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            { "page", null }, // reset to page 1
+            { "size", PageSize == 10 ? null : PageSize }
+        });
+        Nav.NavigateTo(url);
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -194,8 +218,13 @@ else
                 companyId = parsedCompanyId;
             }
         }
+    }
 
-        await LoadAsync(null);
+    protected override async Task OnParametersSetAsync()
+    {
+        if (currentPage < 1) currentPage = 1;
+        if (PageSize < 1) PageSize = 10;
+        await LoadAsync(_searchTerm);
     }
 
     private async Task LoadAsync(string? searchTerm)
@@ -253,11 +282,15 @@ else
         await LoadAsync(_searchTerm);
     }
 
-    private async Task ChangePage(int page)
+    private void ChangePage(int page)
     {
         if (page < 1 || page > totalPages) return;
-        currentPage = page;
-        await LoadAsync(_searchTerm);
+        var url = Nav.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            { "page", page == 1 ? null : page },
+            { "size", PageSize == 10 ? null : PageSize }
+        });
+        Nav.NavigateTo(url);
     }
 
     private void GoToView(string id)

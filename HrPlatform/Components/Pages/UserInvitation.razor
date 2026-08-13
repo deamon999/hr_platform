@@ -9,6 +9,7 @@
 @attribute [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.Manager}")]
 @inject ICompanyService CompanyService
 @inject IInvitationService InvitationService
+@inject IJSRuntime JSRuntime
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthState
 @inject RoleManager<IdentityRole> RoleManager
@@ -255,9 +256,9 @@
         }
     }
 
-    private void GoToInvitations()
+    private async Task GoToInvitations()
     {
-        Nav.NavigateTo("/users?Tab=invitations");
+        await JSRuntime.InvokeVoidAsync("history.back");
     }
 
 }

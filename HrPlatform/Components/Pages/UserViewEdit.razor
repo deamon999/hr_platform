@@ -10,6 +10,7 @@
 @inject AuthenticationStateProvider AuthState
 @inject NavigationManager Nav
 @inject IAdminUserService UserService
+@inject IJSRuntime JSRuntime
 
 <PageTitle>User Management</PageTitle>
 
@@ -161,9 +162,9 @@ else
         isLoading = false;
     }
 
-    private void GoToUsers()
+    private async Task GoToUsers()
     {
-        Nav.NavigateTo("/users");
+        await JSRuntime.InvokeVoidAsync("history.back");
     }
 
     private async Task UpdateAsync()
