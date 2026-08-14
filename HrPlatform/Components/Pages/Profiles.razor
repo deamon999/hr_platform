@@ -29,37 +29,43 @@
 <div class="d-flex flex-wrap gap-3 mb-3 align-items-center">
     <div class="d-flex flex-wrap align-items-center gap-2">
         <select class="form-select form-select-sm w-auto" style="min-width: 160px;"
-                @bind="profileSearch.Availability" @bind:after="ResetPageAndLoad">
+                @bind="searchAvailString" @bind:after="ResetPageAndLoad">
             <option value="">Any Availability</option>
             @foreach (var s in Enum.GetValues<AvailabilityStatus>())
             {
-                <option value="@s">@s.GetDescriptionValue()</option>
+                <option value="@s.ToString()">@s.GetDescriptionValue()</option>
             }
         </select>
         <input class="form-control form-control-sm"
                style="max-width:200px"
                placeholder="Search name..."
-               @bind="profileSearch.Name"
+               @bind="searchName"
                @bind:after="ResetPageAndLoad"/>
         <select class="form-select form-select-sm w-auto" style="min-width: 160px;"
-                @bind="profileSearch.CdlClass" @bind:after="ResetPageAndLoad">
+                @bind="searchCdlString" @bind:after="ResetPageAndLoad">
             <option value="">Any CDL class</option>
             @foreach (var c in Enum.GetValues<CdlClass>())
             {
-                <option value="@c">@c.GetDescriptionValue()</option>
+                <option value="@c.ToString()">@c.GetDescriptionValue()</option>
             }
         </select>
         <select class="form-select form-select-sm w-auto" style="min-width: 160px;"
-                @bind="profileSearch.RequiredEndorsement" @bind:after="LoadAsync">
+                @bind="searchEndString" @bind:after="ResetPageAndLoad">
             <option value="">Any endorsement</option>
             @foreach (var e in Enum.GetValues<CdlEndorsement>())
             {
-                <option value="@e">@e.GetDescriptionValue()</option>
+                <option value="@e.ToString()">@e.GetDescriptionValue()</option>
             }
         </select>
         <button class="btn btn-sm btn-outline-secondary" title="Clear all filters" @onclick="ClearFilters">
             Clear
         </button>
+        <span class="text-secondary small fw-medium text-nowrap d-none d-md-inline ms-2">Items per page:</span>
+        <select class="form-select form-select-sm border-0 bg-white shadow-sm" style="width: 70px;" @bind="PageSize" @bind:after="ResetPageAndLoad">
+            <option value="10">10</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+        </select>
     </div>
 </div>
 
@@ -171,9 +177,25 @@ else
     // Filter by Status
     private ProfileSearch? profileSearch = new ProfileSearch();
 
+    [SupplyParameterFromQuery(Name = "q")]
+    public string? searchName { get; set; }
+
+    [SupplyParameterFromQuery(Name = "avail")]
+    public string? searchAvailString { get; set; }
+
+    [SupplyParameterFromQuery(Name = "cdl")]
+    public string? searchCdlString { get; set; }
+
+    [SupplyParameterFromQuery(Name = "end")]
+    public string? searchEndString { get; set; }
+
     // Pagination State
-    private int currentPage = 1;
-    private const int PageSize = 10;
+    [SupplyParameterFromQuery(Name = "page")]
+    public int currentPage { get; set; } = 1;
+
+    [SupplyParameterFromQuery(Name = "size")]
+    public int PageSize { get; set; } = 10;
+
     private int totalPages = 1;
 
     protected override async Task OnInitializedAsync()
@@ -181,22 +203,35 @@ else
         var auth = await AuthState.GetAuthenticationStateAsync();
         isAdmin = auth.User.IsInRole(RoleConstants.Admin);
         currentUserId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (currentPage < 1) currentPage = 1;
+        if (PageSize < 1) PageSize = 10;
+
+        profileSearch!.Name = searchName;
+        
+        if (Enum.TryParse<AvailabilityStatus>(searchAvailString, out var a)) profileSearch.Availability = a; else profileSearch.Availability = null;
+        if (Enum.TryParse<CdlClass>(searchCdlString, out var c)) profileSearch.CdlClass = c; else profileSearch.CdlClass = null;
+        if (Enum.TryParse<CdlEndorsement>(searchEndString, out var e)) profileSearch.RequiredEndorsement = e; else profileSearch.RequiredEndorsement = null;
 
         await LoadAsync();
     }
 
     // Helper to reset to page 1 when filtering/sorting changes
-    private async Task ResetPageAndLoad()
+    private void ResetPageAndLoad()
     {
-        currentPage = 1;
-        await LoadAsync();
+        ChangePage(1);
     }
 
-    private async Task ClearFilters()
+    private void ClearFilters()
     {
-        // Reset the search model to defaults and reload
-        profileSearch = new ProfileSearch();
-        await ResetPageAndLoad();
+        searchName = null;
+        searchAvailString = null;
+        searchCdlString = null;
+        searchEndString = null;
+        ResetPageAndLoad();
     }
 
     private async Task LoadAsync()
@@ -255,11 +290,18 @@ else
         if (currentPage > totalPages) currentPage = totalPages;
     }
 
-    private async Task ChangePage(int page)
+    private void ChangePage(int page)
     {
-        if (page < 1 || page > totalPages) return;
-        currentPage = page;
-        await LoadAsync();
+        var uri = Nav.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            ["page"] = page,
+            ["size"] = PageSize,
+            ["q"] = string.IsNullOrWhiteSpace(searchName) ? null : searchName,
+            ["avail"] = searchAvailString,
+            ["cdl"] = searchCdlString,
+            ["end"] = searchEndString
+        });
+        Nav.NavigateTo(uri);
     }
 
     private void GoToView(int id)

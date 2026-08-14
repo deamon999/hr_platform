@@ -28,10 +28,10 @@
         </div>
 
         <div class="d-flex align-items-center gap-2">
-            <select class="form-select form-select-sm w-auto" style="min-width: 160px;" @bind="filterCdlClass" @bind:after="ResetPageAndLoad">
+            <select class="form-select form-select-sm w-auto" style="min-width: 160px;" @bind="filterCdlClassString" @bind:after="ResetPageAndLoad">
                 <option value="">Any CDL Class</option>
                 @foreach (var c in Enum.GetValues<CdlClass>())
-                { <option value="@c">CDL-@c</option> }
+                { <option value="@c.ToString()">CDL-@c</option> }
             </select>
         </div>
 
@@ -47,7 +47,7 @@
         </div>
     </div>
 
-    <div class="d-flex gap-2">
+    <div class="d-flex flex-wrap align-items-center gap-2">
         @if (isDriver && driverProfile != null)
         {
             <button class="btn btn-sm @(matchProfile ? "btn-primary" : "btn-outline-primary")" @onclick="ToggleMatchProfile">
@@ -57,6 +57,13 @@
         <button class="btn btn-sm btn-outline-secondary" @onclick="ResetFilters">
             Reset Filters
         </button>
+        
+        <span class="text-secondary small fw-medium text-nowrap d-none d-md-inline ms-2">Items per page:</span>
+        <select class="form-select form-select-sm border-0 bg-white shadow-sm" style="width: 70px;" @bind="PageSize" @bind:after="ResetPageAndLoad">
+            <option value="10">10</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+        </select>
     </div>
 </div>
 
@@ -208,16 +215,29 @@ else
     private PaginationResult<Job>? paginationResult;
 
     // Filtering & Sorting State
-    private string filter = "all";
-    private string sortBy = "date";
-    private CdlClass? filterCdlClass;
-    private decimal? filterMinPay;
-    private bool matchProfile;
+    [SupplyParameterFromQuery(Name = "filter")]
+    public string filter { get; set; } = "all";
+
+    [SupplyParameterFromQuery(Name = "sort")]
+    public string sortBy { get; set; } = "date";
+
+    [SupplyParameterFromQuery(Name = "cdl")]
+    public string? filterCdlClassString { get; set; }
+
+    [SupplyParameterFromQuery(Name = "min")]
+    public decimal? filterMinPay { get; set; }
+
+    [SupplyParameterFromQuery(Name = "match")]
+    public bool matchProfile { get; set; }
+
     private DriverProfile? driverProfile;
 
     // Pagination State
-    private int currentPage = 1;
-    private const int PageSize = 10;
+    [SupplyParameterFromQuery(Name = "page")]
+    public int currentPage { get; set; } = 1;
+
+    [SupplyParameterFromQuery(Name = "size")]
+    public int PageSize { get; set; } = 10;
 
     // Component State
     private Job? deleteTarget;
@@ -236,48 +256,65 @@ else
         {
             driverProfile = await ProfileSvc.GetByUserIdAsync(currentUserId);
         }
-
-        await LoadAsync();
     }
 
-    private async Task ResetPageAndLoad()
+    protected override async Task OnParametersSetAsync()
     {
-        // Drop down to page 1 if a sort/filter changes
-        currentPage = 1;
+        if (currentPage < 1) currentPage = 1;
+        if (PageSize < 1) PageSize = 10;
         await LoadAsync();
     }
 
-    private async Task ResetFilters()
+    private void ResetPageAndLoad()
+    {
+        ChangePage(1);
+    }
+
+    private void ResetFilters()
     {
         filter = "all";
         sortBy = "date";
-        filterCdlClass = null;
+        filterCdlClassString = null;
         filterMinPay = null;
         matchProfile = false;
-        await ResetPageAndLoad();
+        ResetPageAndLoad();
     }
 
-    private async Task ToggleMatchProfile()
+    private void ToggleMatchProfile()
     {
         matchProfile = !matchProfile;
-        await ResetPageAndLoad();
+        ResetPageAndLoad();
     }
 
     private async Task LoadAsync()
     {
+        CdlClass? parsedCdl = null;
+        if (Enum.TryParse<CdlClass>(filterCdlClassString, out var p))
+        {
+            parsedCdl = p;
+        }
+
         paginationResult = await JobSvc.GetPagedAsync(
             currentPage, PageSize, filter, sortBy,
-            cdlClass: filterCdlClass,
+            cdlClass: parsedCdl,
             minPay: filterMinPay,
             matchProfileOnly: matchProfile,
             driverProfile: driverProfile);
     }
 
-    private async Task ChangePage(int page)
+    private void ChangePage(int page)
     {
-        if (page < 1 || page > (paginationResult?.TotalPages ?? 1)) return;
-        currentPage = page;
-        await LoadAsync();
+        var uri = Nav.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            ["page"] = page,
+            ["size"] = PageSize,
+            ["filter"] = filter == "all" ? null : filter,
+            ["sort"] = sortBy == "date" ? null : sortBy,
+            ["cdl"] = filterCdlClassString,
+            ["min"] = filterMinPay,
+            ["match"] = matchProfile ? true : (bool?)null
+        });
+        Nav.NavigateTo(uri);
     }
 
     private async Task ToggleActiveAsync(int jobId, bool currentActive)

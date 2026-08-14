@@ -13,17 +13,21 @@
     <button type="button" class="btn btn-primary" @onclick="GoToCreate">Create Company</button>
 </div>
 
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-3">
-    <div class="d-flex flex-wrap align-items-center gap-3">
-        <div class="d-flex align-items-center gap-2">
-            <input type="text" class="form-control form-control-sm" style="width: 250px;" placeholder="Search company name..." @bind="searchName" @bind:after="ResetPageAndLoad" />
-        </div>
-        <div class="d-flex align-items-center gap-2">
-            <select class="form-select form-select-sm w-auto" style="min-width: 200px;" @bind="sortBy" @bind:after="ResetPageAndLoad">
-                <option value="name">Sort: Name</option>
-                <option value="date">Sort: Date Registered</option>
-            </select>
-        </div>
+<div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+    <div class="d-flex flex-wrap align-items-center gap-2" style="flex: 1;">
+        <input type="text" class="form-control form-control-sm" style="width: 250px;" placeholder="Search company name..." @bind="searchName" @bind:after="ResetPageAndLoad" />
+        <select class="form-select form-select-sm w-auto" style="min-width: 200px;" @bind="sortBy" @bind:after="ResetPageAndLoad">
+            <option value="name">Sort: Name</option>
+            <option value="date">Sort: Date Registered</option>
+        </select>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="text-secondary small fw-medium text-nowrap d-none d-md-inline">Items per page:</span>
+        <select class="form-select form-select-sm border-0 bg-white shadow-sm" style="width: 70px;" @bind="PageSize" @bind:after="ResetPageAndLoad">
+            <option value="10">10</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+        </select>
     </div>
 </div>
 
@@ -124,22 +128,29 @@ else
 @code {
     private PaginationResult<Company>? paginationResult;
     private Company? deleteTarget;
-    private string? searchName;
-    private string sortBy = "name";
+    [SupplyParameterFromQuery(Name = "q")]
+    public string? searchName { get; set; }
+
+    [SupplyParameterFromQuery(Name = "sort")]
+    public string sortBy { get; set; } = "name";
 
     // Pagination State
-    private int currentPage = 1;
-    private const int PageSize = 10;
+    [SupplyParameterFromQuery(Name = "page")]
+    public int currentPage { get; set; } = 1;
 
-    protected override async Task OnInitializedAsync()
+    [SupplyParameterFromQuery(Name = "size")]
+    public int PageSize { get; set; } = 10;
+
+    protected override async Task OnParametersSetAsync()
     {
+        if (currentPage < 1) currentPage = 1;
+        if (PageSize < 1) PageSize = 10;
         await LoadAsync();
     }
 
-    private async Task ResetPageAndLoad()
+    private void ResetPageAndLoad()
     {
-        currentPage = 1;
-        await LoadAsync();
+        ChangePage(1);
     }
 
     private async Task LoadAsync()
@@ -148,13 +159,16 @@ else
         paginationResult = await CompanySvc.GetPagedAsync(currentPage, PageSize, searchName, sortBy);
     }
 
-    private async Task ChangePage(int page)
+    private void ChangePage(int page)
     {
-        // Prevent out-of-bounds clicks
-        if (page < 1 || page > (paginationResult?.TotalPages ?? 1)) return;
-
-        currentPage = page;
-        await LoadAsync();
+        var uri = Nav.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            ["page"] = page,
+            ["size"] = PageSize,
+            ["q"] = string.IsNullOrWhiteSpace(searchName) ? null : searchName,
+            ["sort"] = sortBy == "name" ? null : sortBy
+        });
+        Nav.NavigateTo(uri);
     }
 
     private void GoToCreate()

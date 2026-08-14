@@ -7,12 +7,22 @@
 @inject ICompanyService CompanyService
 
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
-    <div class="w-100" style="max-width: 350px;">
-        <input class="form-control"
-               placeholder="Search by email, phone, or company"
-               value="@_searchTerm"
-               @oninput="HandleSearchInput"
-               disabled="@isLoading" />
+    <div class="d-flex justify-content-between align-items-center gap-2 w-100" style="max-width: 600px;">
+        <div style="flex: 1;">
+            <input class="form-control"
+                   placeholder="Search by email, phone, or company"
+                   @bind="_searchTerm"
+                   @bind:after="ResetPageAndLoad"
+                   disabled="@isLoading" />
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="text-secondary small fw-medium text-nowrap d-none d-md-inline">Items per page:</span>
+            <select class="form-select border-0 bg-white shadow-sm" style="width: 75px;" @bind="PageSize" @bind:after="ResetPageAndLoad">
+                <option value="10">10</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+        </div>
     </div>
     <button type="button" class="btn btn-primary px-4" @onclick="GoToInvite">+ Invite User</button>
 </div>
@@ -157,21 +167,32 @@ else
     private List<Invitation> pagedInvitations = new();
 
     // UI State
-    private string _searchTerm = string.Empty;
+    [SupplyParameterFromQuery(Name = "q")]
+    public string? _searchTerm { get; set; } = string.Empty;
+
     private string? _statusMessage;
     private string _statusClass = "alert-success";
     private bool isLoading = true;
     private List<Company> _companies = new();
 
     // Pagination State
-    private int currentPage = 1;
-    private const int PageSize = 10;
+    [SupplyParameterFromQuery(Name = "page")]
+    public int currentPage { get; set; } = 1;
+
+    [SupplyParameterFromQuery(Name = "size")]
+    public int PageSize { get; set; } = 10;
     private int totalPages = 1;
 
     protected override async Task OnInitializedAsync()
     {
         _companies = await CompanyService.GetAllAsync();
-        await LoadAsync(null);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (currentPage < 1) currentPage = 1;
+        if (PageSize < 1) PageSize = 10;
+        await LoadAsync(_searchTerm);
     }
 
     private string GetCompanyName(int? companyId)
@@ -235,18 +256,20 @@ else
         };
     }
 
-    private async Task HandleSearchInput(ChangeEventArgs e)
+    private void ResetPageAndLoad()
     {
-        _searchTerm = e.Value?.ToString() ?? string.Empty;
-        currentPage = 1; // Always reset to page 1 when modifying search filter
-        await LoadAsync(_searchTerm);
+        ChangePage(1);
     }
 
-    private async Task ChangePage(int page)
+    private void ChangePage(int page)
     {
-        if (page < 1 || page > totalPages) return;
-        currentPage = page;
-        await LoadAsync(_searchTerm);
+        var uri = Nav.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            ["page"] = page,
+            ["size"] = PageSize,
+            ["q"] = string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm
+        });
+        Nav.NavigateTo(uri);
     }
 
     private void GoToInvite()

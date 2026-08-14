@@ -14,9 +14,19 @@
 
 <PageTitle>My Job Invitations</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="mb-0">Job Invitations</h3>
-    <span class="badge ">@(_paginationResult?.TotalCount ?? 0) invitation(s)</span>
+<div class="d-flex justify-content-between align-items-center gap-2 mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <h3 class="mb-0">Job Invitations</h3>
+        <span class="badge ">@(_paginationResult?.TotalCount ?? 0) invitation(s)</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="text-secondary small fw-medium text-nowrap d-none d-md-inline">Items per page:</span>
+        <select class="form-select border-0 bg-white shadow-sm" style="width: 75px;" @bind="PageSize" @bind:after="OnPageSizeChanged">
+            <option value="10">10</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+        </select>
+    </div>
 </div>
 
 @if (_loading || _paginationResult is null)
@@ -144,14 +154,23 @@ else
     private string? _userId;
 
     // Pagination State
-    private int currentPage = 1;
-    private const int PageSize = 10;
+    [SupplyParameterFromQuery(Name = "page")]
+    public int currentPage { get; set; } = 1;
+
+    [SupplyParameterFromQuery(Name = "size")]
+    public int PageSize { get; set; } = 10;
 
     protected override async Task OnInitializedAsync()
     {
         var auth = await AuthStateProvider.GetAuthenticationStateAsync();
         _userId = auth.User.FindFirst(
             System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (currentPage < 1) currentPage = 1;
+        if (PageSize < 1) PageSize = 10;
 
         if (_userId is not null)
             await LoadInvitations();
@@ -164,11 +183,19 @@ else
         _paginationResult = await JobInvitationService.GetForDriverPagedAsync(_userId!, currentPage, PageSize);
     }
 
-    private async Task ChangePage(int page)
+    private void OnPageSizeChanged()
     {
-        if (page < 1 || page > (_paginationResult?.TotalPages ?? 1)) return;
-        currentPage = page;
-        await LoadInvitations();
+        ChangePage(1);
+    }
+
+    private void ChangePage(int page)
+    {
+        var uri = Nav.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            ["page"] = page,
+            ["size"] = PageSize
+        });
+        Nav.NavigateTo(uri);
     }
 
     private async Task Respond(JobInvitation inv, JobInvitationStatus status)

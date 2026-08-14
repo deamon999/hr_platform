@@ -7,6 +7,7 @@
 @inject IJobMatchService JobMatchService
 @inject AuthenticationStateProvider AuthState
 @inject IApplicationMessageService MessageService
+@inject NavigationManager Nav
 
 <PageTitle>Applications</PageTitle>
 
@@ -24,13 +25,21 @@
     </div>
 </div>
 
-<div class="d-flex flex-wrap gap-3 mb-3 align-items-center">
-    <div class="d-flex align-items-center gap-2">
+<div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+    <div style="flex: 1;">
         <select class="form-select form-select-sm w-auto" style="min-width: 180px;" @bind="sortBy" @bind:after="HandleSortChange">
             <option value="date">Sort: Date Applied</option>
             <option value="status">Sort: Status</option>
             <option value="driver">Sort: Driver Name</option>
             <option value="job">Sort: Job Title</option>
+        </select>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="text-secondary small fw-medium text-nowrap d-none d-md-inline">Items per page:</span>
+        <select class="form-select form-select-sm border-0 bg-white shadow-sm" style="width: 70px;" @bind="PageSize" @bind:after="OnPageSizeChanged">
+            <option value="10">10</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
         </select>
     </div>
 </div>
@@ -295,8 +304,12 @@ else
     private JobApplication? withdrawTarget;
 
     // Pagination State
-    private int currentPage = 1;
-    private const int PageSize = 10;
+    [SupplyParameterFromQuery(Name = "page")]
+    public int currentPage { get; set; } = 1;
+
+    [SupplyParameterFromQuery(Name = "size")]
+    public int PageSize { get; set; } = 10;
+
     private int totalPages = 1;
 
     protected override async Task OnInitializedAsync()
@@ -315,14 +328,23 @@ else
         {
             currentCompanyId = parsedCompanyId;
         }
+    }
 
+    protected override async Task OnParametersSetAsync()
+    {
+        if (currentPage < 1) currentPage = 1;
+        if (PageSize < 1) PageSize = 10;
         await LoadAsync();
     }
 
-    private async Task HandleSortChange()
+    private void HandleSortChange()
     {
-        currentPage = 1; // Drop to page 1 when sort order changes
-        await LoadAsync();
+        ChangePage(1);
+    }
+
+    private void OnPageSizeChanged()
+    {
+        ChangePage(1);
     }
 
     private async Task LoadAsync()
@@ -362,11 +384,14 @@ else
         }
     }
 
-    private async Task ChangePage(int page)
+    private void ChangePage(int page)
     {
-        if (page < 1 || page > totalPages) return;
-        currentPage = page;
-        await LoadAsync();
+        var uri = Nav.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            ["page"] = page,
+            ["size"] = PageSize
+        });
+        Nav.NavigateTo(uri);
     }
 
     private static string StatusBadge(ApplicationStatus s)
