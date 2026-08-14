@@ -25,6 +25,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<ApplicationMessage> ApplicationMessages => Set<ApplicationMessage>();
     public DbSet<DriverViolation> DriverViolations => Set<DriverViolation>();
     public DbSet<DocumentFile> DocumentFiles { get; set; }
+    public DbSet<Lead> Leads { get; set; }
+    public DbSet<LeadNote> LeadNotes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -241,6 +243,33 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             e.Property(x => x.Status)
                 .HasConversion<string>()
                 .HasMaxLength(20);
+        });
+
+        b.Entity<Lead>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasOne(x => x.Company)
+                .WithMany()
+                .HasForeignKey(x => x.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.ConvertedUser)
+                .WithMany()
+                .HasForeignKey(x => x.ConvertedUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+            e.Property(x => x.Status).HasConversion<string>();
+        });
+
+        b.Entity<LeadNote>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasOne(x => x.Lead)
+                .WithMany(l => l.Notes)
+                .HasForeignKey(x => x.LeadId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.AuthorUser)
+                .WithMany()
+                .HasForeignKey(x => x.AuthorUserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

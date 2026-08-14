@@ -149,18 +149,18 @@ else
 {
     <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
         <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirm Delete</h5>
+            <div class="modal-content bg-dark border-secondary">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-light">Confirm Delete</h5>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body text-light">
                     <p>
                         Are you sure you want to permanently delete
                         <strong>@deleteTarget.Username</strong>?
                     </p>
                     <p class=" small mb-0">This action cannot be undone.</p>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer border-secondary">
                     <button class="btn btn-secondary" @onclick="() => deleteTarget = null">Cancel</button>
                     <button class="btn btn-danger" @onclick="DeleteConfirmedAsync">Delete</button>
                 </div>

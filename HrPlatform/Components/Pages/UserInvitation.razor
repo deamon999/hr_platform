@@ -184,9 +184,7 @@
         }
         else
         {
-            _roles = _roles
-                .Where(r => !r.Equals(RoleConstants.Admin))
-                .ToList()!;
+            // Admins can invite anyone, including other Admins
         }
     }
 

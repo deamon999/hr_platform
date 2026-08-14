@@ -66,6 +66,8 @@ builder.Services.AddScoped<IApplicationMessageService, ApplicationMessageService
         builder.Services.AddScoped<IInvitationService, InvitationService>();
         builder.Services.AddScoped<IJobInvitationService, JobInvitationService>();
         builder.Services.AddScoped<IDashboardService, DashboardService>();
+        builder.Services.AddScoped<ILeadService, LeadService>();
+        builder.Services.AddScoped<ILeadNoteService, LeadNoteService>();
         
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<IDocumentStorageService, DatabaseDocumentStorageService>();
