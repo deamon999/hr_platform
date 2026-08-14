@@ -10,6 +10,7 @@ public class Job
     [Required] [MaxLength(150)] public string Title { get; set; } = default!;
 
     // link to Company
+    [Range(1, int.MaxValue, ErrorMessage = "Please select a company")]
     public int CompanyId { get; set; }
     public Company? Company { get; set; }
 
@@ -39,6 +40,7 @@ public class Job
     public bool IsTeamDriving { get; set; }
 
     public bool IsActive { get; set; } = true;
+    public bool IsConfidential { get; set; } = false;
 
     public DateTime PostedAt { get; set; } = DateTime.UtcNow;
     public EmploymentType? EmploymentType { get; set; }

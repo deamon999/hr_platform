@@ -68,7 +68,7 @@ else
                                         <div class="d-flex justify-content-between align-items-start mb-2">
                                             <h5 class="fw-bold mb-0 text-dark">@app.Job.Title</h5>
                                         </div>
-                                        <h6 class="text-primary mb-3">@(app.Job.Company?.Name ?? "Unknown Company")</h6>
+                                        <h6 class="text-primary mb-3">@DisplayCompanyName(app.Job)</h6>
                                         
                                         <div class="mb-3">
                                             <div class="fw-bold text-dark"><i class="bi bi-person"></i> @app.User.FirstName @app.User.LastName</div>
@@ -286,6 +286,7 @@ else
 
 @code {
     private List<JobApplication>? pagedApps;
+    private bool isAdmin;
     private Dictionary<int, int> unreadCounts = new();
     private string sortBy = "date";
     private int? reviewing;
@@ -317,6 +318,7 @@ else
         var auth = await AuthState.GetAuthenticationStateAsync();
         var user = auth.User;
 
+        isAdmin = user.IsInRole(RoleConstants.Admin);
         isManager = user.IsInRole(RoleConstants.Manager);
         isDriver = user.IsInRole(RoleConstants.Driver);
 
@@ -328,6 +330,12 @@ else
         {
             currentCompanyId = parsedCompanyId;
         }
+    }
+
+    private string DisplayCompanyName(Job job)
+    {
+        if (job.IsConfidential && !isAdmin) return "CDL Pool Client";
+        return job.Company?.Name ?? "Unknown Company";
     }
 
     protected override async Task OnParametersSetAsync()

@@ -39,7 +39,7 @@ else
                 }
                 else
                 {
-                    <text>Manager: @(_application.Job.Company?.Name ?? "Company")</text>
+                    <text>Manager: @DisplayCompanyName(_application.Job)</text>
                 }
             </h5>
         </div>
@@ -91,15 +91,30 @@ else
     private string _newMessage = "";
     private string? _currentUserId;
     private bool _isManager;
+    private bool isApplicant;
+    private bool isAdmin;
     private bool _isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
         var auth = await AuthState.GetAuthenticationStateAsync();
+        isAdmin = auth.User.IsInRole(RoleConstants.Admin);
         var user = auth.User;
         _currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        _isManager = user.IsInRole(RoleConstants.Manager) || user.IsInRole(RoleConstants.Admin);
+        isApplicant = user.IsInRole(RoleConstants.Driver);
+        _isManager = user.IsInRole(RoleConstants.Manager) || isAdmin;
+    }
 
+    private string DisplayCompanyName(Job job)
+    {
+        if (job.IsConfidential && !isAdmin) return "CDL Pool Client";
+        return job.Company?.Name ?? "Company";
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        var user = auth.User;
         _application = await AppService.GetAsync(ApplicationId);
 
         if (_application == null)
@@ -109,9 +124,9 @@ else
         }
 
         // Validate access
-        if (_isManager)
+        if (_isManager && !isAdmin)
         {
-            var companyIdStr = user.FindFirst("companyId")?.Value;
+            var companyIdStr = user.FindFirst(ClaimTypes.GroupSid)?.Value ?? user.FindFirst("companyId")?.Value;
             if (int.TryParse(companyIdStr, out var companyId))
             {
                 if (_application.Job.CompanyId != companyId)
@@ -120,7 +135,7 @@ else
                 }
             }
         }
-        else if (_application.UserId != _currentUserId)
+        else if (isApplicant && _application.UserId != _currentUserId)
         {
             _application = null; // Deny access
         }

@@ -88,7 +88,7 @@ else
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h4 class="fw-bold mb-0 text-dark">@rowJob.Title</h4>
                                 </div>
-                                <h6 class="text-primary mb-2">@(rowJob.Company?.Name ?? "Unknown Company")</h6>
+                                <h6 class="text-primary mb-2">@DisplayCompanyName(rowJob)</h6>
                                 <div class="text-secondary small mb-3">
                                     <span class="me-3"><i class="bi bi-geo-alt"></i> @(rowJob.City != null ? $"{rowJob.City}, {rowJob.State}" : rowJob.State)</span>
                                     <span class="me-3"><i class="bi bi-clock"></i> Posted @rowJob.PostedAt.ToLocalTime().ToString("MMM dd, yyyy")</span>
@@ -244,18 +244,26 @@ else
     private bool IsPostJobVisible;
     private int? togglingJobId;
     private bool isDriver;
+    private bool isAdmin;
 
     protected override async Task OnInitializedAsync()
     {
         var user = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
-        isDriver = user.IsInRole("Driver");
+        isAdmin = user.IsInRole(RoleConstants.Admin);
+        var currentUserId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        isDriver = user.IsInRole(RoleConstants.Driver);
         IsPostJobVisible = (user.IsInRole("Manager") && user.FindFirst("companyId") != null) || user.IsInRole("Admin");
 
-        var currentUserId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         if (isDriver && currentUserId != null)
         {
             driverProfile = await ProfileSvc.GetByUserIdAsync(currentUserId);
         }
+    }
+
+    private string DisplayCompanyName(Job job)
+    {
+        if (job.IsConfidential && !isAdmin) return "CDL Pool Client";
+        return job.Company?.Name ?? "Unknown Company";
     }
 
     protected override async Task OnParametersSetAsync()

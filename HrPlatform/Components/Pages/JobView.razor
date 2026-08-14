@@ -34,7 +34,7 @@ else
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-3">
                 <div>
                     <h1 class="fw-bold mb-2 text-dark">@job.Title</h1>
-                    <h5 class="text-primary mb-3">@(job.Company?.Name ?? "Unknown Company")</h5>
+                    <h5 class="text-primary mb-3">@DisplayCompanyName(job)</h5>
                     <div class="d-flex flex-wrap gap-3 text-secondary">
                         <span class="d-flex align-items-center gap-1">
                             <i class="bi bi-geo-alt"></i> @(job.City != null ? $"{job.City}, {job.State}" : job.State) @job.ZipCode
@@ -163,7 +163,7 @@ else
 
     <AuthorizeView Roles="Driver">
         <Authorized>
-            @if (job.Company != null)
+            @if (job.Company != null && (!job.IsConfidential || isAdmin))
             {
                 <div class="card mb-4 shadow-sm">
                     <div class="card-header">
@@ -322,7 +322,7 @@ else
 
                             <div class="col-md-6">
                                 <label class="form-label">Company</label>
-                                <input class="form-control" value="@Display(job.Company?.Name)" disabled/>
+                                <input class="form-control" value="@DisplayCompanyName(job)" disabled/>
                             </div>
 
                             <div class="col-md-6">
@@ -382,6 +382,7 @@ else
     private string? error;
     private bool isAuthenticated;
     private bool isDriver;
+    private bool isAdmin;
 
     protected override async Task OnInitializedAsync()
     {
@@ -391,6 +392,7 @@ else
         var user = auth.User;
         isAuthenticated = user.Identity?.IsAuthenticated == true;
         isDriver = isAuthenticated && user.IsInRole(RoleConstants.Driver);
+        isAdmin = isAuthenticated && user.IsInRole(RoleConstants.Admin);
 
         if (isDriver)
         {
@@ -454,6 +456,12 @@ else
     private void GoToInvite()
     {
         Nav.NavigateTo($"/jobs/invite/{Id}");
+    }
+
+    private string DisplayCompanyName(Job job)
+    {
+        if (job.IsConfidential && !isAdmin) return "CDL Pool Client";
+        return job.Company?.Name ?? "Unknown Company";
     }
 
     private static string Display(string? value)

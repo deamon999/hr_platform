@@ -70,7 +70,7 @@ else
                                     
                                     <div class="mb-3 text-secondary small">
                                         <div class="d-flex align-items-center gap-3 mb-1">
-                                            <span><i class="bi bi-building"></i> @(inv.Job.Company?.Name ?? "—")</span>
+                                            <span><i class="bi bi-building"></i> @DisplayCompanyName(inv.Job)</span>
                                         </div>
                                     </div>
 
@@ -159,12 +159,21 @@ else
 
     [SupplyParameterFromQuery(Name = "size")]
     public int PageSize { get; set; } = 10;
+    
+    private string currentUserId = string.Empty;
+    private bool isAdmin;
 
     protected override async Task OnInitializedAsync()
     {
         var auth = await AuthStateProvider.GetAuthenticationStateAsync();
-        _userId = auth.User.FindFirst(
-            System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        isAdmin = auth.User.IsInRole(RoleConstants.Admin);
+        currentUserId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
+    }
+
+    private string DisplayCompanyName(Job job)
+    {
+        if (job.IsConfidential && !isAdmin) return "CDL Pool Client";
+        return job.Company?.Name ?? "—";
     }
 
     protected override async Task OnParametersSetAsync()

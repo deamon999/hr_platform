@@ -17,7 +17,7 @@
                         <ValidationMessage For="() => Job.Title" class="text-danger small mt-1" />
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-medium text-secondary small text-uppercase">Company</label>
+                        <label class="form-label fw-medium text-secondary small text-uppercase">Company <span class="text-danger">*</span></label>
                         <InputSelect class="form-select bg-light border-0 shadow-sm" @bind-Value="Job.CompanyId" disabled="@IsCompanySelectionDisabled">
                             <option value="">-- select company --</option>
                             @if (Companies != null)
@@ -28,6 +28,7 @@
                                 }
                             }
                         </InputSelect>
+                        <ValidationMessage For="() => Job.CompanyId" class="text-danger small mt-1" />
                     </div>
 
                     <div class="col-md-5">
@@ -235,13 +236,25 @@
     </div>
     
     <div class="col-12">
-        <div class="card shadow-sm border-0 border-start border-4 border-primary bg-light">
+        <div class="card shadow-sm border-0 border-start border-4 border-primary bg-light mb-3">
             <div class="card-body py-3">
                 <div class="form-check form-switch p-0 d-flex align-items-center gap-3">
                     <InputCheckbox class="form-check-input m-0" style="width: 3em; height: 1.5em; cursor: pointer;" @bind-Value="Job.IsActive" id="isActive" />
                     <div>
                         <label class="form-check-label fw-bold cursor-pointer" for="isActive">Job Posting Active</label>
                         <div class="text-muted small">When active, this job is visible to all candidates on the board.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm border-0 border-start border-4 border-warning bg-light">
+            <div class="card-body py-3">
+                <div class="form-check form-switch p-0 d-flex align-items-center gap-3">
+                    <InputCheckbox class="form-check-input m-0" style="width: 3em; height: 1.5em; cursor: pointer;" @bind-Value="Job.IsConfidential" id="isConfidential" />
+                    <div>
+                        <label class="form-check-label fw-bold cursor-pointer" for="isConfidential">Confidential Posting</label>
+                        <div class="text-muted small">When enabled, the company name is hidden from drivers and public users, displaying as "CDL Pool Client".</div>
                     </div>
                 </div>
             </div>
