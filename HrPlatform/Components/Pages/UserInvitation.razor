@@ -161,14 +161,18 @@
         var user = auth.User;
         _isManager = user.IsInRole(RoleConstants.Manager);
         
-        if (Id.HasValue && _isManager)
+        if (Id.HasValue)
         {
             _model.JobId = Id.Value;
             _roles = _roles
                 .Where(r => r.Equals(RoleConstants.Driver, StringComparison.OrdinalIgnoreCase))
                 .ToList()!;
             _model.Role = RoleConstants.Driver;
-            _model.CompanyId = Convert.ToInt32(user.FindFirstValue("companyId"));
+            
+            if (_isManager)
+            {
+                _model.CompanyId = Convert.ToInt32(user.FindFirstValue("companyId"));
+            }
         }
         else if (!Id.HasValue && user.IsInRole(RoleConstants.Manager))
         {
@@ -202,13 +206,16 @@
                 {
                     _model.CompanyId = userCompanyId;
                 }
+            }
 
-                if (_model.CompanyId is null)
-                {
-                    _errorMessage = "Please select a company for the manager invitation.";
-                    return;
-                }
+            if (_model.Role == RoleConstants.Manager && _model.CompanyId is null)
+            {
+                _errorMessage = "Please select a company for the manager invitation.";
+                return;
+            }
 
+            if (_model.CompanyId.HasValue)
+            {
                 var companyExists = await CompanyService.GetByIdAsync(_model.CompanyId.Value);
                 if (companyExists == null)
                 {
