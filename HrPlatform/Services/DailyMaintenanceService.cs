@@ -10,7 +10,7 @@ public class DailyMaintenanceService(
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
         // Wait for app to fully start
-        await Task.Delay(TimeSpan.FromMinutes(1), ct);
+        await Task.Delay(TimeSpan.FromSeconds(5), ct);
 
         while (!ct.IsCancellationRequested)
         {
@@ -99,7 +99,7 @@ public class DailyMaintenanceService(
             if (user?.Email is null) continue;
 
             int daysLeft = lic.ExpiryDate.DayNumber - today.DayNumber;
-            var name = $"{user.FirstName} {user.LastName}".Trim();
+            var name = $"{lic.DriverProfile.FirstName} {lic.DriverProfile.LastName}".Trim();
 
             await email.SendEmailAsync(
                 user.Email, name,
@@ -124,7 +124,7 @@ public class DailyMaintenanceService(
             if (user?.Email is null) continue;
 
             int daysLeft = card.ExpiryDate.DayNumber - today.DayNumber;
-            var name = $"{user.FirstName} {user.LastName}".Trim();
+            var name = $"{card.DriverProfile.FirstName} {card.DriverProfile.LastName}".Trim();
 
             await email.SendEmailAsync(
                 user.Email, name,
