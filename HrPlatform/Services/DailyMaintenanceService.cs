@@ -17,13 +17,30 @@ public class DailyMaintenanceService(
             try
             {
                 logger.LogInformation("Starting daily maintenance tasks...");
-                await CheckCredentialExpiriesAsync();
-                await CleanUnconfirmedUsersAsync();
+                
+                try 
+                {
+                    await CheckCredentialExpiriesAsync();
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "CheckCredentialExpiriesAsync failed");
+                }
+
+                try 
+                {
+                    await CleanUnconfirmedUsersAsync();
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "CleanUnconfirmedUsersAsync failed");
+                }
+
                 logger.LogInformation("Daily maintenance tasks completed.");
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Daily maintenance tasks failed");
+                logger.LogError(ex, "Daily maintenance tasks loop encountered an unexpected error");
             }
 
             // Run once per day at next midnight
