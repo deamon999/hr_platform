@@ -168,6 +168,7 @@ else
         var auth = await AuthStateProvider.GetAuthenticationStateAsync();
         isAdmin = auth.User.IsInRole(RoleConstants.Admin);
         currentUserId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
+        _userId = currentUserId;
     }
 
     private string DisplayCompanyName(Job job)

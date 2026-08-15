@@ -68,7 +68,7 @@ else
                                 <label class="form-label fw-semibold text-secondary small text-uppercase">Company</label>
                                 <InputSelect class="form-select bg-light border-0" @bind-Value="model.CompanyId" disabled="@IsViewMode">
                                     <option value="">-- none --</option>
-                                    @foreach (var c in companies)
+                                    @foreach (var c in companies!)
                                     {
                                         <option value="@c.Id">@c.Name</option>
                                     }
@@ -107,7 +107,7 @@ else
 </style>
 
 @code {
-    [Parameter] public string Id { get; set; }
+    [Parameter] public string Id { get; set; } = null!;
     private bool isLoading = true;
     private bool IsViewMode = false;
     private bool isAdmin = false;
@@ -127,7 +127,7 @@ else
 
         // load roles synchronously from RoleManager (store may not support EF async here)
         roles = RoleManager.Roles
-            .Where(r => !r.NormalizedName.Equals("ADMIN"))
+            .Where(r => r.NormalizedName != "ADMIN")
             .Select(r => r.Name)
             .ToList();
 
@@ -222,7 +222,7 @@ else
         }
 
 
-        GoToUsers();
+        _ = GoToUsers();
     }
 
 }

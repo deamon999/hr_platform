@@ -1,4 +1,4 @@
-﻿using brevo_csharp.Api;
+using brevo_csharp.Api;
 using brevo_csharp.Model;
 using Task = System.Threading.Tasks.Task;
 
@@ -10,7 +10,7 @@ public class SmsService : ISmsService
 
     public SmsService(IConfiguration configuration)
     {
-        _apiKey = configuration["Brevo:ApiKey"];
+        _apiKey = configuration["Brevo:ApiKey"] ?? string.Empty;
         brevo_csharp.Client.Configuration.Default.ApiKey["api-key"] = _apiKey;
     }
 

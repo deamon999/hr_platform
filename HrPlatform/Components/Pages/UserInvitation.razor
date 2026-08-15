@@ -148,7 +148,7 @@
     private bool _sending;
     private List<Company> _companies = new();
     private List<string> _roles = new();
-    private AuthenticationState auth;
+    private AuthenticationState auth = default!;
     private bool _isManager;
 
     protected override async Task OnInitializedAsync()
@@ -249,7 +249,7 @@
 
             await InvitationService.CreateAsync(invitation);
             _model = new();
-            GoToInvitations();
+            await GoToInvitations();
         }
         catch (Exception ex)
         {

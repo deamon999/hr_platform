@@ -210,7 +210,7 @@
             }
 
             _invitation.IsUsed = true;
-            await InvitationService.MarkUsedAsync(Token);
+            await InvitationService.MarkUsedAsync(Token!);
         }
         else
         {

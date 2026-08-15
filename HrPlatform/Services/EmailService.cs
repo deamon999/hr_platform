@@ -8,7 +8,7 @@ namespace HrPlatform.Services;
 
 public class EmailService : IEmailService
 {
-    private readonly bool _enableSsl;
+
     private readonly string _fromEmail;
     private readonly string _fromName;
     private readonly string _host;

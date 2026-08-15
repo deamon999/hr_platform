@@ -115,7 +115,7 @@ else
                                     <div class="d-flex flex-wrap gap-2 text-secondary small">
 
                                         <span class="badge bg-light text-dark rounded-pill px-3 py-2 border"><i class="bi bi-briefcase me-1"></i> @p.YearsOfExperience yrs exp</span>
-                                        <span class="badge bg-light text-dark rounded-pill px-3 py-2 border"><i class="bi bi-file-earmark-text me-1"></i> @p.User.Applications.Count Apps</span>
+                                        <span class="badge bg-light text-dark rounded-pill px-3 py-2 border"><i class="bi bi-file-earmark-text me-1"></i> @(p.User?.Applications?.Count ?? 0) Apps</span>
                                     </div>
                                 </div>
                                 
@@ -175,7 +175,7 @@ else
     private string? currentUserId;
 
     // Filter by Status
-    private ProfileSearch? profileSearch = new ProfileSearch();
+    private ProfileSearch profileSearch = new();
 
     [SupplyParameterFromQuery(Name = "q")]
     public string? searchName { get; set; }
@@ -210,7 +210,7 @@ else
         if (currentPage < 1) currentPage = 1;
         if (PageSize < 1) PageSize = 10;
 
-        profileSearch!.Name = searchName;
+        profileSearch.Name = searchName;
         
         if (Enum.TryParse<AvailabilityStatus>(searchAvailString, out var a)) profileSearch.Availability = a; else profileSearch.Availability = null;
         if (Enum.TryParse<CdlClass>(searchCdlString, out var c)) profileSearch.CdlClass = c; else profileSearch.CdlClass = null;

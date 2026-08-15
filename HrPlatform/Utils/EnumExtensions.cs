@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using HrPlatform.Data.Enums;
 
 namespace HrPlatform.Utils;
@@ -11,7 +11,7 @@ public static class EnumExtensions
     /// <typeparam name="T">The type of the enum.</typeparam>
     /// <param name="enumValue">The specific enum value to check.</param>
     /// <returns>The string description, or null if no description is found.</returns>
-    public static string GetDescriptionValue<T>(this T enumValue) where T : struct, Enum
+    public static string? GetDescriptionValue<T>(this T enumValue) where T : struct, Enum
     {
         // 1. Get the Type of the enum (e.g., typeof(EmploymentType))
         var type = typeof(T);

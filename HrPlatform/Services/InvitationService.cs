@@ -154,7 +154,7 @@ public class InvitationService : IInvitationService
             }
             else
             {
-                await _smsService.SendDriverInviteAsync(invitation.Phone, null, null, link.AbsolutePath);
+                await _smsService.SendDriverInviteAsync(invitation.Phone, string.Empty, string.Empty, link.AbsolutePath);
             }
 
             return InviteResult.Ok(existing: false);

@@ -218,17 +218,17 @@ else
                     <div class="row g-3 mb-3">
                         <div class="col-md-3">
                             <label class="form-label">Job ID</label>
-                            <input class="form-control" value="#@appliedApp.Job.Title" disabled/>
+                            <input class="form-control" value="#@appliedApp?.Job?.Title" disabled/>
                         </div>
 
                         <div class="col-md-3">
                             <label class="form-label">Date Submitted</label>
-                            <input class="form-control" value="@appliedApp.AppliedAt.ToLocalTime().ToString("MM/dd/yyyy h:mm tt")" disabled/>
+                            <input class="form-control" value="@appliedApp?.AppliedAt.ToLocalTime().ToString("MM/dd/yyyy h:mm tt")" disabled/>
                         </div>
 
                         <div class="col-md-3">
                             <label class="form-label">Status</label>
-                            <input class="form-control" value="@appliedApp.Status" disabled/>
+                            <input class="form-control" value="@appliedApp?.Status" disabled/>
                         </div>
                     </div>
 

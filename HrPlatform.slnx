@@ -1,3 +1,4 @@
 <Solution>
-    <Project Path="HrPlatform/HrPlatform.csproj"/>
+    <Project Path="HrPlatform.Tests/HrPlatform.Tests.csproj" />
+    <Project Path="HrPlatform/HrPlatform.csproj" />
 </Solution>

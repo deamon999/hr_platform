@@ -50,7 +50,7 @@ public class DailyMaintenanceService(
         }
     }
 
-    private async Task CleanUnconfirmedUsersAsync()
+    public async Task CleanUnconfirmedUsersAsync()
     {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -76,7 +76,7 @@ public class DailyMaintenanceService(
         }
     }
 
-    private async Task CheckCredentialExpiriesAsync()
+    public async Task CheckCredentialExpiriesAsync()
     {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -99,7 +99,7 @@ public class DailyMaintenanceService(
             if (user?.Email is null) continue;
 
             int daysLeft = lic.ExpiryDate.DayNumber - today.DayNumber;
-            var name = $"{lic.DriverProfile.FirstName} {lic.DriverProfile.LastName}".Trim();
+            var name = $"{lic.DriverProfile?.FirstName} {lic.DriverProfile?.LastName}".Trim();
 
             await email.SendEmailAsync(
                 user.Email, name,
@@ -124,7 +124,7 @@ public class DailyMaintenanceService(
             if (user?.Email is null) continue;
 
             int daysLeft = card.ExpiryDate.DayNumber - today.DayNumber;
-            var name = $"{card.DriverProfile.FirstName} {card.DriverProfile.LastName}".Trim();
+            var name = $"{card.DriverProfile?.FirstName} {card.DriverProfile?.LastName}".Trim();
 
             await email.SendEmailAsync(
                 user.Email, name,

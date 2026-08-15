@@ -73,9 +73,9 @@ public class AdminUserService : IAdminUserService
         return new UserViewModel
         {
             UserId = user.Id,
-            Username = user.UserName,
-            Email = user.Email,
-            Phone = user.PhoneNumber,
+            Username = user.UserName ?? string.Empty,
+            Email = user.Email ?? string.Empty,
+            Phone = user.PhoneNumber ?? string.Empty,
             CompanyId = user.CompanyId,
             CompanyName = user.Company?.Name,
             IsConfirmed = user.EmailConfirmed,
@@ -124,9 +124,9 @@ public class AdminUserService : IAdminUserService
             userList.Add(new UserViewModel
             {
                 UserId = user.Id,
-                Username = user.UserName,
-                Email = user.Email,
-                Phone = user.PhoneNumber,
+                Username = user.UserName ?? string.Empty,
+                Email = user.Email ?? string.Empty,
+                Phone = user.PhoneNumber ?? string.Empty,
                 CompanyId = user.CompanyId,
                 CompanyName = user.Company?.Name,
                 IsConfirmed = user.EmailConfirmed,

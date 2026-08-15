@@ -64,10 +64,11 @@ else
         companies = await JobSvc.GetCompaniesAsync();
         var auth = await AuthState.GetAuthenticationStateAsync();
         var user = auth.User;
-        if (user.FindFirst("companyId") != null)
+        var companyClaim = user.FindFirst("companyId");
+        if (companyClaim != null)
         {
             isCompanySelectionDisabled = true;
-            job.CompanyId = Convert.ToInt32(user.FindFirst("companyId").Value);
+            job.CompanyId = Convert.ToInt32(companyClaim.Value);
         }
     }
 

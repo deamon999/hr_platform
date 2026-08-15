@@ -12,9 +12,9 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
     {
         IQueryable<DriverProfile> q = db.DriverProfiles
             .Include(p => p.License)
-            .ThenInclude(l => l.Endorsements)
+            .ThenInclude(l => l!.Endorsements)
             .Include(p => p.User)
-            .ThenInclude(u => u.Applications);
+            .ThenInclude(u => u!.Applications);
 
         // Availability status removed from DriverProfile temporarily
 
@@ -46,10 +46,10 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
     {
         return await db.DriverProfiles
             .Include(p => p.License)
-            .ThenInclude(l => l.Endorsements)
+            .ThenInclude(l => l!.Endorsements)
             .Include(p => p.MedicalCard)
             .Include(p => p.EmploymentHistory)
-            .ThenInclude(e => e.TrailerTypes)
+            .ThenInclude(e => e!.TrailerTypes)
             .Include(p => p.Educations)
             .Include(p => p.Skills)
             .Include(p => p.Documents)
@@ -60,10 +60,10 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
     {
         return await db.DriverProfiles
             .Include(p => p.License)
-            .ThenInclude(l => l.Endorsements)
+            .ThenInclude(l => l!.Endorsements)
             .Include(p => p.MedicalCard)
             .Include(p => p.EmploymentHistory)
-            .ThenInclude(e => e.TrailerTypes)
+            .ThenInclude(e => e!.TrailerTypes)
             .Include(p => p.Educations)
             .Include(p => p.Skills)
             .Include(p => p.Documents)
@@ -79,7 +79,7 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
         int pageSize = 10)
     {
         IQueryable<DriverProfile> queryable = GetBaseQuery(profileSearch);
-        queryable = queryable.Where(p => p.User.Applications.Any(a => a.Job.CompanyId == companyId));
+        queryable = queryable.Where(p => p.User != null && p.User.Applications.Any(a => a.Job != null && a.Job.CompanyId == companyId));
         return await queryable.PaginateAsync(pageNumber, pageSize);
     }
 
@@ -93,9 +93,9 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
     public async Task UpdateAsync(DriverProfile profile, string currentUserId)
     {
         var existing = await db.DriverProfiles.AsNoTracking()
-            .Include(p => p.License).ThenInclude(l => l.Endorsements)
+            .Include(p => p.License).ThenInclude(l => l!.Endorsements)
             .Include(p => p.MedicalCard)
-            .Include(p => p.EmploymentHistory).ThenInclude(e => e.TrailerTypes)
+            .Include(p => p.EmploymentHistory).ThenInclude(e => e!.TrailerTypes)
             .Include(p => p.Educations)
             .Include(p => p.Skills)
             .Include(p => p.Documents)

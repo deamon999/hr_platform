@@ -157,7 +157,7 @@ else
     private int companyId;
     private bool isNew;
     private bool isView;
-    private ClaimsPrincipal user;
+    private ClaimsPrincipal user = default!;
 
     private string Title => isView ? "Company Details" : (isNew ? "Create Company" : "Edit Company");
 
@@ -185,7 +185,7 @@ else
         {
             if (companyId == 0)
             {
-                string companyClaim = user.FindFirst("companyId")?.Value;
+                string? companyClaim = user.FindFirst("companyId")?.Value;
                 if (!string.IsNullOrEmpty(companyClaim))
                 {
                     companyId = int.Parse(companyClaim);
@@ -201,7 +201,7 @@ else
                     return;
                 }
 
-                string companyClaim = user.FindFirst("companyId")?.Value;
+                string? companyClaim = user.FindFirst("companyId")?.Value;
                 if (companyClaim != null && int.TryParse(companyClaim, out int userCompanyId))
                 {
                     if (companyId != 0 && companyId != userCompanyId)
@@ -231,7 +231,7 @@ else
             if (!user.IsInRole(RoleConstants.Admin))
             {
                 if (user.IsInRole(RoleConstants.Driver)) return;
-                string companyClaim = user.FindFirst("companyId")?.Value;
+                string? companyClaim = user.FindFirst("companyId")?.Value;
                 if (companyClaim != null && int.TryParse(companyClaim, out int userCompanyId))
                 {
                     if (company!.Id != userCompanyId) return;

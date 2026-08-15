@@ -1,4 +1,4 @@
-﻿@page "/Account/Manage"
+@page "/Account/Manage"
 @using System.ComponentModel.DataAnnotations
 
 @inject UserManager<ApplicationUser> UserManager
@@ -80,7 +80,7 @@
         {
             int companyId = user.CompanyId.Value;
             var company = await CompanyService.GetByIdAsync(companyId);
-            companyName = company.Name;
+            companyName = company?.Name;
         }
 
         phoneNumber = user.PhoneNumber;
