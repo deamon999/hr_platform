@@ -13,7 +13,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
-namespace HrPlatform.Tests
+namespace HrPlatform.Tests.Services
 {
     public class DailyMaintenanceServiceTests
     {

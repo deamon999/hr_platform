@@ -484,7 +484,7 @@ else
             var note = new LeadNote
             {
                 LeadId = inviteTargetLead.Id,
-                AuthorUserId = currentUserId,
+                AuthorUserId = currentUserId ?? string.Empty,
                 Content = $"System: {message}."
             };
             await LeadNoteService.CreateAsync(note);
