@@ -1,0 +1,162 @@
+@using HrPlatform.Data.Entities
+@using HrPlatform.Data.Enums
+@using HrPlatform.Services
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Security.Claims
+
+@inject ILeadService LeadService
+@inject AuthenticationStateProvider AuthStateProvider
+
+<div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.5); z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark border-secondary text-light shadow-lg">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title fw-bold">@(Lead?.Id == 0 ? "New Lead" : "Edit Lead")</h5>
+                <button type="button" class="btn-close btn-close-white" @onclick="CloseAsync"></button>
+            </div>
+            <div class="modal-body p-4">
+                
+                @if (!string.IsNullOrEmpty(_errorMessage))
+                {
+                    <div class="alert alert-danger">@_errorMessage</div>
+                }
+
+                <EditForm Model="editModel" OnValidSubmit="SaveLeadAsync">
+                    <DataAnnotationsValidator />
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">First Name</label>
+                            <InputText @bind-Value="editModel.FirstName" class="form-control bg-dark text-light border-secondary" />
+                            <ValidationMessage For="() => editModel.FirstName" class="text-danger small" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Last Name</label>
+                            <InputText @bind-Value="editModel.LastName" class="form-control bg-dark text-light border-secondary" />
+                            <ValidationMessage For="() => editModel.LastName" class="text-danger small" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Email</label>
+                            <InputText @bind-Value="editModel.Email" class="form-control bg-dark text-light border-secondary" type="email" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Phone</label>
+                            <InputText @bind-Value="editModel.Phone" class="form-control bg-dark text-light border-secondary" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold mb-2">Trailer Types</label>
+                            <div class="d-flex flex-wrap gap-3">
+                                @foreach (var tt in Enum.GetValues<TrailerType>())
+                                {
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="modal_tt_@tt" 
+                                               checked="@editModel.TrailerTypes.Contains(tt)" 
+                                               @onchange="@((ChangeEventArgs e) => ToggleTrailerType(tt, e.Value))" />
+                                        <label class="form-check-label small" for="modal_tt_@tt">@tt.ToString()</label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-secondary" @onclick="CloseAsync">Cancel</button>
+                        <button type="submit" class="btn btn-primary" disabled="@isSaving">
+                            @(isSaving ? "Saving..." : "Save Lead")
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Lead? Lead { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<bool> OnLeadSaved { get; set; }
+
+    private Lead editModel = new();
+    private bool isSaving;
+    private string _errorMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Lead != null && Lead.Id > 0)
+        {
+            editModel = new Lead
+            {
+                Id = Lead.Id,
+                FirstName = Lead.FirstName,
+                LastName = Lead.LastName,
+                Email = Lead.Email,
+                Phone = Lead.Phone,
+                AddedByUserId = Lead.AddedByUserId,
+                CompanyId = Lead.CompanyId,
+                Status = Lead.Status,
+                TrailerTypes = new List<TrailerType>(Lead.TrailerTypes)
+            };
+        }
+        else
+        {
+            var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+            var currentUserId = auth.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            editModel = new Lead 
+            { 
+                AddedByUserId = currentUserId,
+                CompanyId = Lead?.CompanyId
+            };
+        }
+    }
+
+    private async Task SaveLeadAsync()
+    {
+        isSaving = true;
+        _errorMessage = "";
+        try
+        {
+            if (editModel.Id == 0)
+            {
+                await LeadService.CreateAsync(editModel);
+                await OnLeadSaved.InvokeAsync(true);
+            }
+            else
+            {
+                if (Lead != null)
+                {
+                    Lead.FirstName = editModel.FirstName;
+                    Lead.LastName = editModel.LastName;
+                    Lead.Email = editModel.Email;
+                    Lead.Phone = editModel.Phone;
+                    Lead.TrailerTypes = editModel.TrailerTypes;
+                    await LeadService.UpdateAsync(Lead);
+                }
+                await OnLeadSaved.InvokeAsync(false);
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = "Failed to save lead: " + ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void ToggleTrailerType(TrailerType tt, object? checkedValue)
+    {
+        bool isChecked = checkedValue is bool b && b;
+        if (isChecked && !editModel.TrailerTypes.Contains(tt))
+        {
+            editModel.TrailerTypes.Add(tt);
+        }
+        else if (!isChecked && editModel.TrailerTypes.Contains(tt))
+        {
+            editModel.TrailerTypes.Remove(tt);
+        }
+    }
+
+    private async Task CloseAsync()
+    {
+        await OnClose.InvokeAsync();
+    }
+}

@@ -1,4 +1,4 @@
-﻿namespace HrPlatform.Data.Enums;
+namespace HrPlatform.Data.Enums;
 
 public enum TrailerType
 {
@@ -12,5 +12,7 @@ public enum TrailerType
     Triples,
     CarHauler,
     Intermodal,
+    RGN,
+    Conestoga,
     Other
 }

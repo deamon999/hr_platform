@@ -5,30 +5,52 @@
 @using HrPlatform.Data.Enums
 @using HrPlatform.Models
 @using HrPlatform.Services
+@using HrPlatform.Utils
 @using System.Security.Claims
 
 @attribute [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.Manager}")]
 
 @inject ILeadService LeadService
 @inject ICompanyService CompanyService
+@inject ILeadNoteService LeadNoteService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 @inject IJSRuntime JSRuntime
 
-<PageTitle>Leads CRM</PageTitle>
+<PageTitle>Leads</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">Leads</h2>
-    <button type="button" class="btn btn-primary px-4" @onclick="OpenAddLeadDrawer">+ Add Lead</button>
+    <button type="button" class="btn btn-primary px-4" @onclick="OpenAddLeadModal">+ Add Lead</button>
 </div>
 
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
-    <div class="d-flex flex-grow-1" style="max-width: 600px;">
-        <input class="form-control"
-               placeholder="Search leads by name, email, phone, or source"
-               @bind="_searchTerm"
-               @bind:after="ResetPageAndLoad"
-               disabled="@isLoading" />
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+    <div class="d-flex flex-column flex-md-row flex-grow-1 gap-2" style="max-width: 800px;">
+        <div class="input-group shadow-sm flex-grow-1">
+            <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-search"></i></span>
+            <input class="form-control bg-dark text-light border-secondary border-start-0 ps-0 shadow-none"
+                   placeholder="Search..."
+                   @bind="_searchTerm"
+                   @bind:after="ResetPageAndLoad"
+                   disabled="@isLoading" />
+        </div>
+               
+        <select class="form-select shadow-sm bg-dark text-light border-secondary" style="min-width: 140px; max-width: 250px;" @bind="_filterStatusStr" @bind:after="ResetPageAndLoad">
+            <option value="">All Statuses</option>
+            <option value="Actionable">Actionable</option>
+            @foreach (var status in Enum.GetValues<LeadStatus>().Where(s => s != LeadStatus.Contacted && s != LeadStatus.Invited && s != LeadStatus.Converted))
+            {
+                <option value="@status">@(status.GetDescriptionValue() ?? status.ToString())</option>
+            }
+        </select>
+        
+        <select class="form-select shadow-sm bg-dark text-light border-secondary" style="min-width: 140px; max-width: 250px;" @bind="_filterUserId" @bind:after="ResetPageAndLoad">
+            <option value="">All Users</option>
+            @foreach (var u in _users)
+            {
+                <option value="@u.Id">@u.Email</option>
+            }
+        </select>
     </div>
     <div class="d-flex align-items-center gap-2">
         <span class="text-secondary small fw-medium text-nowrap d-none d-md-inline">Items per page:</span>
@@ -53,113 +75,114 @@ else if (!pagedLeads.Any() && string.IsNullOrEmpty(_searchTerm))
 }
 else
 {
-    <!-- Desktop Table View -->
-    <div class="card shadow-sm border-0 d-none d-md-block">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Contact Info</th>
-                        <th>Source</th>
-                        <th>Status</th>
-                        <th>Added On</th>
-                        <th class="text-end">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var lead in pagedLeads)
-                    {
-                        <tr style="cursor:pointer;" @onclick="() => OpenLeadDrawer(lead)">
-                            <td>
-                                <div class="fw-bold">@lead.FirstName @lead.LastName</div>
-                            </td>
-                            <td>
-                                @if (!string.IsNullOrEmpty(lead.Email))
-                                {
-                                    <div class="small"><i class="bi bi-envelope text-secondary"></i> @lead.Email</div>
-                                }
-                                @if (!string.IsNullOrEmpty(lead.Phone))
-                                {
-                                    <div class="small"><i class="bi bi-telephone text-secondary"></i> @lead.Phone</div>
-                                }
-                            </td>
-                            <td>
-                                <span class="badge border">@lead.Source</span>
-                            </td>
-                            <td @onclick:stopPropagation="true">
-                                <select class="form-select form-select-sm border-0 fw-bold @GetStatusClass(lead.Status)" 
-                                        style="min-width: 140px; width: auto;"
-                                        value="@lead.Status.ToString()"
-                                        @onchange="@(async (ChangeEventArgs e) => await UpdateStatusAsync(lead, e.Value?.ToString()))">
-                                    @foreach (var status in Enum.GetValues<LeadStatus>())
-                                    {
-                                        <option value="@status">@status.ToString()</option>
-                                    }
-                                </select>
-                            </td>
-                            <td>
-                                <div class="small text-secondary">@lead.CreatedAt.ToString("MMM dd, yyyy")</div>
-                            </td>
-                            <td class="text-end" @onclick:stopPropagation="true">
-                                <button class="btn btn-sm btn-outline-danger border-0" @onclick="() => ConfirmDelete(lead)">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Mobile Card View -->
-    <div class="d-block d-md-none">
-        <div class="row g-3">
-            @foreach (var lead in pagedLeads)
-            {
-                <div class="col-12">
-                    <div class="card shadow-sm border border-secondary bg-dark text-light" style="cursor:pointer;" @onclick="() => OpenLeadDrawer(lead)">
-                        <div class="card-body p-3">
+    <!-- Responsive Card List -->
+    <div class="row g-3">
+        @foreach (var lead in pagedLeads)
+        {
+            <div class="col-12">
+                <div class="card shadow-sm border bg-dark text-light" style="cursor:pointer; @GetCardStyle(lead.Status)" @onclick="() => OpenLeadDrawer(lead, false)">
+                    <div class="card-body p-3 d-flex flex-column flex-lg-row align-items-lg-stretch gap-3">
+                        
+                        <!-- Col 1: Identity & Mobile Actions -->
+                        <div class="d-flex flex-column" style="min-width: 220px;">
                             <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h5 class="fw-bold mb-0">@lead.FirstName @lead.LastName</h5>
-                                <button class="btn btn-sm btn-outline-danger border-0 p-1" @onclick="() => ConfirmDelete(lead)" @onclick:stopPropagation="true">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                            
-                            <div class="mb-3">
-                                @if (!string.IsNullOrEmpty(lead.Email))
-                                {
-                                    <div class="small mb-1"><i class="bi bi-envelope text-secondary me-2"></i>@lead.Email</div>
-                                }
-                                @if (!string.IsNullOrEmpty(lead.Phone))
-                                {
-                                    <div class="small"><i class="bi bi-telephone text-secondary me-2"></i>@lead.Phone</div>
-                                }
-                            </div>
-                            
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span class="badge border border-secondary text-light">@lead.Source</span>
-                                <div class="small text-secondary">Added: @lead.CreatedAt.ToString("MMM dd, yyyy")</div>
-                            </div>
-                            
-                            <div @onclick:stopPropagation="true">
-                                <select class="form-select form-select-sm border-0 fw-bold @GetStatusClass(lead.Status) w-100" 
-                                        value="@lead.Status.ToString()"
-                                        @onchange="@(async (ChangeEventArgs e) => await UpdateStatusAsync(lead, e.Value?.ToString()))">
-                                    @foreach (var status in Enum.GetValues<LeadStatus>())
+                                <h5 class="fw-bold mb-0">
+                                    @lead.FirstName @lead.LastName
+                                    @if(IsLeadRegistered(lead))
                                     {
-                                        <option value="@status">@status.ToString()</option>
+                                        <span class="badge bg-success bg-opacity-25 text-success border border-success ms-2" style="font-size: 0.65rem; vertical-align: middle;">Registered</span>
                                     }
-                                </select>
+                                </h5>
+                                <div class="d-lg-none" @onclick:stopPropagation="true">
+                                    @if (lead.Status != LeadStatus.Hired)
+                                    {
+                                        <button class="btn btn-sm btn-outline-primary border-0 p-1 me-1" @onclick="() => OpenInviteModal(lead)"><i class="bi bi-envelope-paper"></i></button>
+                                    }
+                                    <button class="btn btn-sm btn-outline-secondary border-0 p-1 me-1" @onclick="() => OpenLeadDrawer(lead, true)"><i class="bi bi-pencil"></i></button>
+                                    <button class="btn btn-sm btn-outline-danger border-0 p-1" @onclick="() => ConfirmDelete(lead)"><i class="bi bi-trash"></i></button>
+                                </div>
+                            </div>
+                            @if (!string.IsNullOrEmpty(lead.Email))
+                            {
+                                <div class="small mb-1"><i class="bi bi-envelope text-secondary me-2"></i>@lead.Email</div>
+                            }
+                            @if (!string.IsNullOrEmpty(lead.Phone))
+                            {
+                                <div class="small"><i class="bi bi-telephone text-secondary me-2"></i>@lead.Phone</div>
+                            }
+                        </div>
+                        
+                        <!-- Col 2: Details -->
+                        <div class="flex-grow-1 d-flex flex-column justify-content-center gap-2">
+                            @if(lead.TrailerTypes.Any())
+                            {
+                                <div class="d-flex flex-wrap gap-1">
+                                    @foreach(var tt in lead.TrailerTypes)
+                                    {
+                                        <span class="badge bg-secondary">@tt.ToString()</span>
+                                    }
+                                </div>
+                            }
+                            <div class="text-secondary small">
+                                <i class="bi bi-chat-square-text me-1"></i> @lead.Notes.Count Notes
                             </div>
                         </div>
+                        
+                        <!-- Col 3: Status & Reminder -->
+                        <div class="d-flex flex-column justify-content-center" style="min-width: 220px; max-width: 300px;">
+                            <select class="form-select form-select-sm border-0 fw-bold mb-1 @GetStatusClass(lead.Status) w-100" 
+                                    value="@lead.Status.ToString()"
+                                    @onclick:stopPropagation="true"
+                                    @onchange="@(async (ChangeEventArgs e) => await UpdateStatusAsync(lead, e.Value?.ToString()))">
+                                @foreach (var status in Enum.GetValues<LeadStatus>().Where(s => s != LeadStatus.Contacted && s != LeadStatus.Invited && s != LeadStatus.Converted))
+                                {
+                                    <option value="@status">@(status.GetDescriptionValue() ?? status.ToString())</option>
+                                }
+                            </select>
+                            @if (lead.Status != LeadStatus.Hired && lead.Status != LeadStatus.NotInterested && (lead.Status == LeadStatus.NeedsToBeContacted || lead.ReminderDate.HasValue))
+                            {
+                                var isDue = lead.ReminderDate.HasValue && lead.ReminderDate.Value.Date <= DateTime.UtcNow.Date;
+                                var colorClass = isDue ? "text-danger fw-bold" : "text-secondary";
+                                <div class="d-flex align-items-center px-1 mt-1 @colorClass" @onclick:stopPropagation="true">
+                                    <i class="bi bi-bell-fill small me-1"></i>
+                                    <input type="date" class="form-control form-control-sm border-0 bg-transparent px-1 py-0 shadow-none @colorClass" style="max-width: 130px; font-size: 0.75rem;" 
+                                           value="@lead.ReminderDate?.ToString("yyyy-MM-dd")" 
+                                           @onchange="@(async (ChangeEventArgs e) => await UpdateReminderDateAsync(lead, e.Value?.ToString()))" />
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Col 4: Desktop Actions & Meta -->
+                        <div class="d-flex flex-column justify-content-between align-items-lg-end" style="min-width: 180px;">
+                            <div class="d-none d-lg-block mb-3" @onclick:stopPropagation="true">
+                                @if (lead.Status != LeadStatus.Hired)
+                                {
+                                    <button class="btn btn-sm btn-outline-primary border-0 p-1 me-1" title="Invite to CDL Pool" @onclick="() => OpenInviteModal(lead)">
+                                        <i class="bi bi-envelope-paper"></i>
+                                    </button>
+                                }
+                                <button class="btn btn-sm btn-outline-secondary border-0 p-1 me-1" title="Edit" @onclick="() => OpenLeadDrawer(lead, true)">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger border-0 p-1" title="Delete" @onclick="() => ConfirmDelete(lead)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="text-lg-end mt-auto pt-2 pt-lg-0 border-top border-secondary border-lg-0 w-100">
+                                <div class="small text-secondary">Added @lead.CreatedAt.ToString("MMM dd, yyyy")</div>
+                                @if(lead.AddedByUser != null)
+                                {
+                                    <div class="small text-secondary mt-1">by @lead.AddedByUser.Email</div>
+                                }
+                            </div>
+                        </div>
+                        
                     </div>
                 </div>
+            </div>
             }
         </div>
-    </div>
 
     @if (pagedLeads.Count == 0 && !string.IsNullOrEmpty(_searchTerm))
     {
@@ -211,7 +234,17 @@ else
 
 @if (isDrawerOpen)
 {
-    <LeadDrawer Lead="@selectedLead" OnClose="CloseDrawer" OnLeadSaved="ResetPageAndLoad" CompanyId="userCompanyId" />
+    <LeadDrawer Lead="@selectedLead" OnClose="CloseDrawer" OnLeadSaved="HandleLeadSaved" CompanyId="userCompanyId" />
+}
+
+@if (isEditModalOpen)
+{
+    <LeadEditModal Lead="@editTargetLead" OnClose="CloseEditModal" OnLeadSaved="HandleLeadSaved" />
+}
+
+@if (isInviteModalOpen && inviteTargetLead != null)
+{
+    <InviteLeadModal Lead="inviteTargetLead" IsAdmin="isAdmin" ManagerCompanyId="userCompanyId" OnClose="CloseInviteModal" OnInvited="HandleInviteSent" />
 }
 
 @code {
@@ -219,6 +252,15 @@ else
     
     [SupplyParameterFromQuery(Name = "q")]
     public string? _searchTerm { get; set; } = string.Empty;
+
+    [SupplyParameterFromQuery(Name = "status")]
+    public string? _filterStatusStr { get; set; }
+    private LeadStatus? _filterStatus => Enum.TryParse<LeadStatus>(_filterStatusStr, out var s) ? s : null;
+
+    [SupplyParameterFromQuery(Name = "user")]
+    public string? _filterUserId { get; set; }
+
+    private List<ApplicationUser> _users = new();
     
     private bool isLoading = true;
     
@@ -235,7 +277,19 @@ else
 
     private bool isDrawerOpen;
     private Lead? selectedLead;
+    private bool isEditModalOpen;
+    private Lead? editTargetLead;
+    private bool isInviteModalOpen;
+    private Lead? inviteTargetLead;
     private Lead? deleteTarget;
+
+    private HashSet<string> _registeredEmails = new(StringComparer.OrdinalIgnoreCase);
+
+    private bool IsLeadRegistered(Lead lead)
+    {
+        if (string.IsNullOrWhiteSpace(lead.Email)) return false;
+        return _registeredEmails.Contains(lead.Email);
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -251,6 +305,8 @@ else
                 userCompanyId = parsedCompanyId;
             }
         }
+
+        _users = await LeadService.GetUsersWithLeadsAsync(userCompanyId);
     }
 
     protected override async Task OnParametersSetAsync()
@@ -265,9 +321,13 @@ else
         isLoading = true;
         try
         {
-            var result = await LeadService.GetLeadsPagedAsync(currentPage, PageSize, userCompanyId, searchTerm);
+            bool isActionable = _filterStatusStr == "Actionable";
+            var result = await LeadService.GetLeadsPagedAsync(currentPage, PageSize, userCompanyId, searchTerm, _filterStatus, _filterUserId, isActionable);
             pagedLeads = result.Items.ToList();
             totalPages = result.TotalPages;
+
+            var emails = pagedLeads.Select(l => l.Email).Where(e => !string.IsNullOrWhiteSpace(e)).Cast<string>();
+            _registeredEmails = await LeadService.GetRegisteredEmailsAsync(emails);
         }
         finally
         {
@@ -280,13 +340,31 @@ else
         ChangePage(1);
     }
 
+    private void HandleLeadSaved(bool isNew)
+    {
+        if (isEditModalOpen) CloseEditModal();
+        if (isNew)
+        {
+            _searchTerm = string.Empty;
+            _filterStatusStr = string.Empty;
+            _filterUserId = string.Empty;
+            ChangePage(1);
+        }
+        else
+        {
+            ChangePage(currentPage);
+        }
+    }
+
     private void ChangePage(int page)
     {
         var uri = Nav.GetUriWithQueryParameters(new Dictionary<string, object?>
         {
             ["page"] = page,
             ["size"] = PageSize,
-            ["q"] = string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm
+            ["q"] = string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm,
+            ["status"] = string.IsNullOrWhiteSpace(_filterStatusStr) ? null : _filterStatusStr,
+            ["user"] = string.IsNullOrWhiteSpace(_filterUserId) ? null : _filterUserId
         });
         Nav.NavigateTo(uri);
     }
@@ -296,11 +374,32 @@ else
         return status switch
         {
             LeadStatus.New => "text-primary bg-primary bg-opacity-10",
-            LeadStatus.Contacted => "text-info bg-info bg-opacity-10",
+            LeadStatus.NotInterested => "text-danger bg-danger bg-opacity-10",
+            LeadStatus.ReadyToStart => "text-success bg-success bg-opacity-10",
+            LeadStatus.AttemptContact => "text-warning bg-warning bg-opacity-10",
+            LeadStatus.NeedsToBeContacted => "text-warning bg-warning bg-opacity-10",
+            LeadStatus.ReadyIn2Weeks => "text-info bg-info bg-opacity-10",
+            LeadStatus.Hired => "text-success bg-success bg-opacity-25 border border-success",
+            LeadStatus.Contacted => "text-warning bg-warning bg-opacity-10",
             LeadStatus.Invited => "text-warning bg-warning bg-opacity-10",
-            LeadStatus.Converted => "text-success bg-success bg-opacity-10",
-            LeadStatus.Rejected => "text-danger bg-danger bg-opacity-10",
+            LeadStatus.Rejected => "text-danger bg-danger bg-opacity-10 border border-danger",
             _ => "text-secondary bg-light"
+        };
+    }
+
+    private string GetCardStyle(LeadStatus status)
+    {
+        return status switch
+        {
+            LeadStatus.New => "background-color: rgba(var(--bs-primary-rgb), 0.1) !important; border-color: var(--bs-primary) !important;",
+            LeadStatus.NotInterested => "background-color: rgba(var(--bs-danger-rgb), 0.1) !important; border-color: var(--bs-danger) !important;",
+            LeadStatus.ReadyToStart => "background-color: rgba(var(--bs-success-rgb), 0.1) !important; border-color: var(--bs-success) !important;",
+            LeadStatus.AttemptContact => "background-color: rgba(var(--bs-warning-rgb), 0.1) !important; border-color: var(--bs-warning) !important;",
+            LeadStatus.NeedsToBeContacted => "background-color: rgba(var(--bs-warning-rgb), 0.1) !important; border-color: var(--bs-warning) !important;",
+            LeadStatus.ReadyIn2Weeks => "background-color: rgba(var(--bs-info-rgb), 0.1) !important; border-color: var(--bs-info) !important;",
+            LeadStatus.Hired => "background-color: rgba(var(--bs-success-rgb), 0.25) !important; border-color: var(--bs-success) !important; border-width: 2px !important;",
+            LeadStatus.Rejected => "background-color: rgba(var(--bs-danger-rgb), 0.1) !important; border-color: var(--bs-danger) !important;",
+            _ => "border-color: var(--bs-secondary) !important;"
         };
     }
 
@@ -309,26 +408,93 @@ else
         if (Enum.TryParse<LeadStatus>(newStatusStr, out var newStatus))
         {
             lead.Status = newStatus;
+            
+            if (newStatus == LeadStatus.ReadyIn2Weeks)
+            {
+                lead.ReminderDate = DateTime.UtcNow.Date.AddDays(14);
+            }
+            
             await LeadService.UpdateAsync(lead);
         }
     }
 
-    private void OpenAddLeadDrawer()
+    private async Task UpdateReminderDateAsync(Lead lead, string? newDateStr)
     {
-        selectedLead = new Lead { CompanyId = userCompanyId };
-        isDrawerOpen = true;
+        if (string.IsNullOrWhiteSpace(newDateStr))
+        {
+            lead.ReminderDate = null;
+        }
+        else if (DateTime.TryParse(newDateStr, out var newDate))
+        {
+            // Set the reminder date exactly to the date selected.
+            lead.ReminderDate = DateTime.SpecifyKind(newDate, DateTimeKind.Utc);
+        }
+        await LeadService.UpdateAsync(lead);
     }
 
-    private void OpenLeadDrawer(Lead lead)
+
+
+    private void OpenAddLeadModal()
     {
-        selectedLead = lead;
-        isDrawerOpen = true;
+        editTargetLead = new Lead { CompanyId = userCompanyId };
+        isEditModalOpen = true;
+    }
+
+    private void OpenLeadDrawer(Lead lead, bool editMode = false)
+    {
+        if (editMode)
+        {
+            editTargetLead = lead;
+            isEditModalOpen = true;
+        }
+        else
+        {
+            selectedLead = lead;
+            isDrawerOpen = true;
+        }
+    }
+
+    private void OpenInviteModal(Lead lead)
+    {
+        inviteTargetLead = lead;
+        isInviteModalOpen = true;
+    }
+
+    private void CloseInviteModal()
+    {
+        isInviteModalOpen = false;
+        inviteTargetLead = null;
+    }
+
+    private async Task HandleInviteSent(string message)
+    {
+        if (inviteTargetLead != null)
+        {
+            var currentUserId = (await AuthStateProvider.GetAuthenticationStateAsync()).User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var note = new LeadNote
+            {
+                LeadId = inviteTargetLead.Id,
+                AuthorUserId = currentUserId,
+                Content = $"System: {message}."
+            };
+            await LeadNoteService.CreateAsync(note);
+        }
+        
+        isInviteModalOpen = false;
+        inviteTargetLead = null;
+        await LoadAsync(_searchTerm);
     }
 
     private void CloseDrawer()
     {
         isDrawerOpen = false;
         selectedLead = null;
+    }
+
+    private void CloseEditModal()
+    {
+        isEditModalOpen = false;
+        editTargetLead = null;
     }
 
     private void ConfirmDelete(Lead lead)

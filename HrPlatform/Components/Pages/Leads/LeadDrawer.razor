@@ -1,13 +1,14 @@
 @using HrPlatform.Data.Entities
 @using HrPlatform.Data.Enums
 @using HrPlatform.Models
+@using HrPlatform.Utils
 @using HrPlatform.Services
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Forms
 
 @inject ILeadService LeadService
 @inject ILeadNoteService LeadNoteService
-@inject IInvitationService InvitationService
+
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 @inject ICompanyService CompanyService
@@ -98,7 +99,7 @@
 
 <div class="lead-drawer @(_isClosing ? "closing" : "")">
     <div class="lead-drawer-header">
-        <h5 class="fw-bold mb-0">@(Lead?.Id == 0 ? "New Lead" : "Lead Profile")</h5>
+        <h5 class="fw-bold mb-0">@(Lead?.FirstName) @(Lead?.LastName) - Notes</h5>
         <button type="button" class="btn-close btn-close-white" @onclick="CloseWithAnimation"></button>
     </div>
     <div class="lead-drawer-body">
@@ -112,115 +113,10 @@
             <div class="alert alert-success m-3">@_successMessage</div>
         }
 
-        @if (Lead?.Id == 0 || isEditingLead)
+        @if (Lead != null)
         {
-            <div class="p-4">
-                <EditForm Model="editModel" OnValidSubmit="SaveLeadAsync">
-                    <DataAnnotationsValidator />
-                    <div class="row g-3">
-                        @if (isAdmin)
-                        {
-                            <div class="col-12">
-                                <label class="form-label small fw-bold">Company</label>
-                                <InputSelect @bind-Value="editModel.CompanyId" class="form-select bg-dark text-light border-secondary">
-                                    <option value="">-- No Company --</option>
-                                    @foreach (var c in companies)
-                                    {
-                                        <option value="@c.Id">@c.Name</option>
-                                    }
-                                </InputSelect>
-                            </div>
-                        }
-                        
-                        <div class="col-6">
-                            <label class="form-label small fw-bold">First Name</label>
-                            <InputText @bind-Value="editModel.FirstName" class="form-control bg-dark text-light border-secondary" />
-                            <ValidationMessage For="() => editModel.FirstName" class="text-danger small" />
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label small fw-bold">Last Name</label>
-                            <InputText @bind-Value="editModel.LastName" class="form-control bg-dark text-light border-secondary" />
-                            <ValidationMessage For="() => editModel.LastName" class="text-danger small" />
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label small fw-bold">Email</label>
-                            <InputText @bind-Value="editModel.Email" class="form-control bg-dark text-light border-secondary" type="email" />
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label small fw-bold">Phone</label>
-                            <InputText @bind-Value="editModel.Phone" class="form-control bg-dark text-light border-secondary" />
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label small fw-bold">Source</label>
-                            <InputText @bind-Value="editModel.Source" class="form-control bg-dark text-light border-secondary" />
-                        </div>
-                        <div class="col-12 mt-4 d-flex justify-content-end gap-2">
-                            @if (Lead?.Id > 0)
-                            {
-                                <button type="button" class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
-                            }
-                            <button type="submit" class="btn btn-primary" disabled="@isSaving">
-                                @(isSaving ? "Saving..." : "Save Lead")
-                            </button>
-                        </div>
-                    </div>
-                </EditForm>
-            </div>
-        }
-        else if (Lead != null)
-        {
-            <div class="p-4 border-bottom border-secondary shadow-sm z-1 position-relative">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <h4 class="fw-bold mb-1 text-white">@Lead.FirstName @Lead.LastName</h4>
-                        <div class="d-flex gap-2 align-items-center">
-                            <span class="badge border border-secondary text-light">@Lead.Source</span>
-                            <span class="badge @GetStatusClass(Lead.Status)">@Lead.Status</span>
-                        </div>
-                    </div>
-                    <button class="btn btn-sm btn-outline-secondary text-white border-0" @onclick="EditLead"><i class="bi bi-pencil"></i></button>
-                </div>
-
-                <div class="row g-2 small mb-4 text-light">
-                    @if (!string.IsNullOrEmpty(Lead.Email))
-                    {
-                        <div class="col-12"><i class="bi bi-envelope text-secondary me-2"></i>@Lead.Email</div>
-                    }
-                    @if (!string.IsNullOrEmpty(Lead.Phone))
-                    {
-                        <div class="col-12"><i class="bi bi-telephone text-secondary me-2"></i>@Lead.Phone</div>
-                    }
-                </div>
-
-                @if (Lead.Status != LeadStatus.Converted && Lead.Status != LeadStatus.Invited)
-                {
-                    <div class="d-grid">
-                        <button class="btn btn-primary fw-bold text-dark" style="background-color: #f6c046; border-color: #f6c046;" @onclick="SendInviteAsync" disabled="@isSendingInvite">
-                            @if(isSendingInvite)
-                            {
-                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                            }
-                            <i class="bi bi-envelope-paper me-2"></i> Send Invite to CDL Pool
-                        </button>
-                    </div>
-                }
-                else if (Lead.Status == LeadStatus.Invited)
-                {
-                    <div class="alert alert-warning mb-0 small text-center bg-transparent border-warning text-warning">
-                        <i class="bi bi-hourglass-split me-1"></i> Waiting for candidate to register.
-                    </div>
-                }
-                else if (Lead.Status == LeadStatus.Converted)
-                {
-                    <div class="alert alert-success mb-0 small text-center bg-transparent border-success text-success">
-                        <i class="bi bi-check-circle me-1"></i> Lead converted!
-                    </div>
-                }
-            </div>
-
             <!-- Notes Section -->
             <div class="p-4">
-                <h6 class="fw-bold mb-3 text-secondary text-uppercase small">Timeline & Notes</h6>
                 
                 <div class="mb-4">
                     <textarea class="form-control mb-2 bg-dark text-light border-secondary" rows="2" placeholder="@(editingNote != null ? "Edit note..." : "Write a note...")" @bind="newNoteContent"></textarea>
@@ -283,10 +179,13 @@
 <!-- Backdrop -->
 <div class="modal-backdrop show lead-drawer-backdrop @(_isClosing ? "closing" : "")" style="z-index: 1055;" @onclick="CloseWithAnimation"></div>
 
+
+
 @code {
     [Parameter] public Lead? Lead { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
-    [Parameter] public EventCallback OnLeadSaved { get; set; }
+    [Parameter] public EventCallback<bool> OnLeadSaved { get; set; }
+    [Parameter] public EventCallback OnEdit { get; set; }
     [Parameter] public int? CompanyId { get; set; }
 
     private bool _isClosing = false;
@@ -301,21 +200,15 @@
         await OnClose.InvokeAsync();
     }
 
-    private Lead editModel = new();
     private List<LeadNote> notes = new();
     private List<Company> companies = new();
     private string newNoteContent = string.Empty;
     private LeadNote? editingNote;
 
-    private bool isEditingLead;
-    private bool isSaving;
     private bool isSavingNote;
-    private bool isSendingInvite;
-    
-    private string _errorMessage = string.Empty;
-    private string _successMessage = string.Empty;
-
-    private bool isAdmin;
+    private string _errorMessage = "";
+    private string _successMessage = "";
+    private bool isAdmin = false;
     private string currentUserId = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -335,22 +228,15 @@
             _lastLeadId = Lead.Id;
             await LoadNotesAsync();
         }
-        else
-        {
-            editModel = new Lead 
-            { 
-                CompanyId = CompanyId,
-                Source = "Direct"
-            };
-        }
     }
 
     protected override async Task OnParametersSetAsync()
     {
-        if (Lead != null && Lead.Id > 0 && Lead.Id != _lastLeadId)
+        bool changedLead = Lead != null && Lead.Id > 0 && Lead.Id != _lastLeadId;
+        
+        if (changedLead)
         {
-            _lastLeadId = Lead.Id;
-            isEditingLead = false;
+            _lastLeadId = Lead!.Id;
             editingNote = null;
             newNoteContent = string.Empty;
             _errorMessage = string.Empty;
@@ -360,69 +246,9 @@
         }
     }
 
-    private void EditLead()
+    private async Task TriggerEdit()
     {
-        if (Lead != null)
-        {
-            editModel = new Lead
-            {
-                Id = Lead.Id,
-                FirstName = Lead.FirstName,
-                LastName = Lead.LastName,
-                Email = Lead.Email,
-                Phone = Lead.Phone,
-                CompanyId = Lead.CompanyId,
-                Source = Lead.Source,
-                Status = Lead.Status
-            };
-            isEditingLead = true;
-        }
-    }
-
-    private void CancelEdit()
-    {
-        isEditingLead = false;
-        _errorMessage = "";
-    }
-
-    private async Task SaveLeadAsync()
-    {
-        isSaving = true;
-        _errorMessage = "";
-        try
-        {
-            if (editModel.Id == 0)
-            {
-                var newLead = await LeadService.CreateAsync(editModel);
-                Lead = newLead;
-                isEditingLead = false;
-                await OnLeadSaved.InvokeAsync();
-                await LoadNotesAsync();
-            }
-            else
-            {
-                if (Lead != null)
-                {
-                    Lead.FirstName = editModel.FirstName;
-                    Lead.LastName = editModel.LastName;
-                    Lead.Email = editModel.Email;
-                    Lead.Phone = editModel.Phone;
-                    Lead.Source = editModel.Source;
-                    Lead.CompanyId = editModel.CompanyId;
-                    await LeadService.UpdateAsync(Lead);
-                }
-                isEditingLead = false;
-                await OnLeadSaved.InvokeAsync();
-            }
-        }
-        catch (Exception ex)
-        {
-            _errorMessage = "Failed to save lead: " + ex.Message;
-        }
-        finally
-        {
-            isSaving = false;
-        }
+        await OnEdit.InvokeAsync();
     }
 
     private async Task LoadNotesAsync()
@@ -497,80 +323,6 @@
         await LoadNotesAsync();
     }
 
-    private async Task SendInviteAsync()
-    {
-        if (Lead == null) return;
 
-        if (string.IsNullOrWhiteSpace(Lead.Email) && string.IsNullOrWhiteSpace(Lead.Phone))
-        {
-            _errorMessage = "Cannot send invite: Lead must have an email or phone number.";
-            return;
-        }
 
-        isSendingInvite = true;
-        _errorMessage = "";
-        _successMessage = "";
-
-        try
-        {
-            var contactMethod = !string.IsNullOrWhiteSpace(Lead.Email) ? ContactMethod.Email : ContactMethod.Phone;
-            
-            var invitation = new Invitation
-            {
-                ContactMethod = contactMethod,
-                Email = Lead.Email?.ToLowerInvariant() ?? "",
-                Phone = Lead.Phone?.ToLowerInvariant() ?? "",
-                Role = RoleConstants.Driver,
-                CompanyId = Lead.CompanyId
-            };
-
-            var link = Nav.ToAbsoluteUri($"/Account/Register?token={invitation.Token}");
-            var result = await InvitationService.InviteAsync(invitation, link);
-
-            if (result.Success)
-            {
-                await InvitationService.CreateAsync(invitation);
-                Lead.Status = LeadStatus.Invited;
-                await LeadService.UpdateAsync(Lead);
-                
-                // Add a system note
-                var note = new LeadNote
-                {
-                    LeadId = Lead.Id,
-                    AuthorUserId = currentUserId,
-                    Content = $"System: Invitation sent to {(contactMethod == ContactMethod.Email ? Lead.Email : Lead.Phone)}."
-                };
-                await LeadNoteService.CreateAsync(note);
-                
-                _successMessage = "Invitation sent successfully!";
-                await LoadNotesAsync();
-                await OnLeadSaved.InvokeAsync();
-            }
-            else
-            {
-                _errorMessage = result.Error ?? "Failed to send invitation.";
-            }
-        }
-        catch (Exception ex)
-        {
-            _errorMessage = "Error sending invitation: " + ex.Message;
-        }
-        finally
-        {
-            isSendingInvite = false;
-        }
-    }
-
-    private string GetStatusClass(LeadStatus status)
-    {
-        return status switch
-        {
-            LeadStatus.New => "text-primary bg-primary bg-opacity-10",
-            LeadStatus.Contacted => "text-info bg-info bg-opacity-10",
-            LeadStatus.Invited => "text-warning bg-warning bg-opacity-10",
-            LeadStatus.Converted => "text-success bg-success bg-opacity-10",
-            LeadStatus.Rejected => "text-danger bg-danger bg-opacity-10",
-            _ => "text-secondary border-secondary"
-        };
-    }
 }

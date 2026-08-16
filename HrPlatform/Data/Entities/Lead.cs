@@ -26,8 +26,11 @@ public class Lead
     [MaxLength(20)]
     public string? Phone { get; set; }
 
-    [MaxLength(100)]
-    public string Source { get; set; } = "Direct";
+    public string? AddedByUserId { get; set; }
+    public ApplicationUser? AddedByUser { get; set; }
+
+    public List<TrailerType> TrailerTypes { get; set; } = new();
+    public DateTime? ReminderDate { get; set; }
 
     public LeadStatus Status { get; set; } = LeadStatus.New;
 

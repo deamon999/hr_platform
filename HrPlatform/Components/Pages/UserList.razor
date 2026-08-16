@@ -1,4 +1,5 @@
 @rendermode InteractiveServer
+@implements IDisposable
 
 @using HrPlatform.Models
 @attribute [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.Manager}")]
@@ -202,8 +203,22 @@ else
         Nav.NavigateTo(url);
     }
 
+    private System.Timers.Timer? _debounceTimer;
+
     protected override async Task OnInitializedAsync()
     {
+        _debounceTimer = new System.Timers.Timer(400);
+        _debounceTimer.AutoReset = false;
+        _debounceTimer.Elapsed += async (sender, args) =>
+        {
+            await InvokeAsync(async () =>
+            {
+                currentPage = 1;
+                await LoadAsync(_searchTerm);
+                StateHasChanged();
+            });
+        };
+
         var auth = await AuthState.GetAuthenticationStateAsync();
         var user = auth.User;
 
@@ -275,11 +290,17 @@ else
         }
     }
 
-    private async Task HandleSearchInput(ChangeEventArgs e)
+    private void HandleSearchInput(ChangeEventArgs e)
     {
         _searchTerm = e.Value?.ToString() ?? string.Empty;
-        currentPage = 1; // Always reset to page 1 when typing a new search
-        await LoadAsync(_searchTerm);
+        
+        _debounceTimer?.Stop();
+        _debounceTimer?.Start();
+    }
+
+    public void Dispose()
+    {
+        _debounceTimer?.Dispose();
     }
 
     private void ChangePage(int page)

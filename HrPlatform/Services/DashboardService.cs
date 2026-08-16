@@ -1,4 +1,4 @@
-﻿using HrPlatform.Data;
+using HrPlatform.Data;
 using HrPlatform.Data.Enums;
 using HrPlatform.Models;
 using Microsoft.EntityFrameworkCore;
@@ -38,6 +38,8 @@ public class DashboardService(ApplicationDbContext db) : IDashboardService
             ExpiringLicenses: await db.DriverLicenses
                 .CountAsync(l => l.ExpiryDate <= in30
                                  && l.ExpiryDate >= DateOnly.FromDateTime(now)),
+            ActiveLeads: await db.Leads
+                .CountAsync(l => l.Status != LeadStatus.Hired && l.Status != LeadStatus.NotInterested && l.Status != LeadStatus.Rejected),
             ApplicationsByStatus: byStatus);
     }
 
@@ -83,6 +85,8 @@ public class DashboardService(ApplicationDbContext db) : IDashboardService
                 .CountAsync(i => i.CompanyId == companyId
                                  && !i.IsUsed && i.ExpiresAt > now),
             ExpiringLicenses: expiringInPool,
+            ActiveLeads: await db.Leads
+                .CountAsync(l => l.CompanyId == companyId && l.Status != LeadStatus.Hired && l.Status != LeadStatus.NotInterested && l.Status != LeadStatus.Rejected),
             ApplicationsByStatus: byStatus);
     }
 }

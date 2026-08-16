@@ -1,4 +1,4 @@
-﻿namespace HrPlatform.Models;
+namespace HrPlatform.Models;
 
 public record DashboardStats(
     int TotalDrivers,
@@ -9,4 +9,5 @@ public record DashboardStats(
     int AcceptedThisMonth,
     int InvitationsPending,
     int ExpiringLicenses,
+    int ActiveLeads,
     Dictionary<string, int> ApplicationsByStatus);

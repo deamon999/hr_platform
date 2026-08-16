@@ -18,7 +18,7 @@ namespace HrPlatform.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.10")
+                .HasAnnotation("ProductVersion", "10.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -242,6 +242,9 @@ namespace HrPlatform.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AddedByUserId")
+                        .HasColumnType("text");
+
                     b.Property<int?>("CompanyId")
                         .HasColumnType("integer");
 
@@ -272,16 +275,20 @@ namespace HrPlatform.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
-                    b.Property<string>("Source")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                    b.Property<DateTime?>("ReminderDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.PrimitiveCollection<int[]>("TrailerTypes")
+                        .IsRequired()
+                        .HasColumnType("integer[]");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("AddedByUserId");
 
                     b.HasIndex("CompanyId");
 
@@ -1312,6 +1319,10 @@ namespace HrPlatform.Migrations
 
             modelBuilder.Entity("HrPlatform.Data.Entities.Lead", b =>
                 {
+                    b.HasOne("HrPlatform.Data.Models.ApplicationUser", "AddedByUser")
+                        .WithMany()
+                        .HasForeignKey("AddedByUserId");
+
                     b.HasOne("HrPlatform.Data.Models.Company", "Company")
                         .WithMany()
                         .HasForeignKey("CompanyId")
@@ -1321,6 +1332,8 @@ namespace HrPlatform.Migrations
                         .WithMany()
                         .HasForeignKey("ConvertedUserId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("AddedByUser");
 
                     b.Navigation("Company");
 

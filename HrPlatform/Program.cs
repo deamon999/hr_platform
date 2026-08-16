@@ -6,6 +6,7 @@ using HrPlatform.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace HrPlatform;
 
@@ -37,7 +38,7 @@ public class Program
             options.UseNpgsql(connectionString);
             // Suppress pending model changes warning - migrations are properly defined
             options.ConfigureWarnings(w =>
-                w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+                w.Ignore(RelationalEventId.PendingModelChangesWarning));
         });
         builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
@@ -61,14 +62,14 @@ public class Program
         builder.Services.AddScoped<IJobApplicationService, JobApplicationService>();
         builder.Services.AddScoped<IDriverProfileService, DriverProfileService>();
         builder.Services.AddScoped<ICompanyService, CompanyService>();
-builder.Services.AddScoped<IApplicationMessageService, ApplicationMessageService>();
+        builder.Services.AddScoped<IApplicationMessageService, ApplicationMessageService>();
         builder.Services.AddScoped<IAdminUserService, AdminUserService>();
         builder.Services.AddScoped<IInvitationService, InvitationService>();
         builder.Services.AddScoped<IJobInvitationService, JobInvitationService>();
         builder.Services.AddScoped<IDashboardService, DashboardService>();
         builder.Services.AddScoped<ILeadService, LeadService>();
         builder.Services.AddScoped<ILeadNoteService, LeadNoteService>();
-        
+
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<IDocumentStorageService, DatabaseDocumentStorageService>();
         // Register background job
@@ -84,7 +85,7 @@ builder.Services.AddScoped<IApplicationMessageService, ApplicationMessageService
             await db.Database.MigrateAsync();
 
             // Seed roles + admin user
-            await DataSeed.SeedAsync(services);
+            await DataSeed.SeedAsync(services, app.Configuration, app.Environment);
         }
 
 
@@ -112,15 +113,15 @@ builder.Services.AddScoped<IApplicationMessageService, ApplicationMessageService
         // Add additional endpoints required by the Identity /Account Razor components.
         app.MapAdditionalIdentityEndpoints();
 
-        app.MapGet("/api/documents/{id}", async (string id, bool? download, HrPlatform.Data.ApplicationDbContext db) =>
+        app.MapGet("/api/documents/{id}", async (string id, bool? download, ApplicationDbContext db) =>
         {
             var doc = await db.DocumentFiles.FindAsync(id);
-            if (doc == null) return Microsoft.AspNetCore.Http.Results.NotFound();
-            
+            if (doc == null) return Results.NotFound();
+
             if (download == true)
-                return Microsoft.AspNetCore.Http.Results.File(doc.Data, doc.ContentType, doc.FileName);
-                
-            return Microsoft.AspNetCore.Http.Results.File(doc.Data, doc.ContentType);
+                return Results.File(doc.Data, doc.ContentType, doc.FileName);
+
+            return Results.File(doc.Data, doc.ContentType);
         }).RequireAuthorization();
 
         app.Run();

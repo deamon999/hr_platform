@@ -27,12 +27,18 @@ public class JobService(ApplicationDbContext db) : IJobService
         decimal? minPay = null,
         HrPlatform.Data.Enums.TrailerType? trailerType = null,
         bool matchProfileOnly = false,
-        DriverProfile? driverProfile = null)
+        DriverProfile? driverProfile = null,
+        int? companyId = null)
     {
         var query = db.Jobs
             .Include(j => j.Applications)
             .Include(j => j.Company)
             .AsQueryable();
+
+        if (companyId.HasValue)
+        {
+            query = query.Where(j => j.CompanyId == companyId.Value);
+        }
 
         // Existing active/inactive filter
         query = filter switch

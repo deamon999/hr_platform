@@ -166,8 +166,8 @@
         // We no longer block registration if the token is invalid; we just let them register organically.
 
         var user = CreateUser();
-        user.FirstName = Input.FirstName;
-        user.LastName = Input.LastName;
+        user.FirstName = Input.FirstName?.Trim();
+        user.LastName = Input.LastName?.Trim();
         user.TermsAccepted = Input.AcceptTerms;
         if (Input.AcceptTerms)
         {
@@ -270,11 +270,13 @@
 
     private sealed class InputModel
     {
-        [Required]
+        [Required(ErrorMessage = "First Name is required.")]
+        [MinLength(2, ErrorMessage = "First Name must be at least 2 characters.")]
         [Display(Name = "First Name")]
         public string FirstName { get; set; } = "";
 
-        [Required]
+        [Required(ErrorMessage = "Last Name is required.")]
+        [MinLength(2, ErrorMessage = "Last Name must be at least 2 characters.")]
         [Display(Name = "Last Name")]
         public string LastName { get; set; } = "";
 

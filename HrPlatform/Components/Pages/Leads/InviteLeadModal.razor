@@ -1,0 +1,195 @@
+@using HrPlatform.Data.Entities
+@using HrPlatform.Data.Enums
+@using HrPlatform.Models
+@using HrPlatform.Services
+
+@inject ICompanyService CompanyService
+@inject IJobService JobService
+@inject IInvitationService InvitationService
+@inject NavigationManager Nav
+
+<div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.5); z-index: 1070;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark border-secondary text-light">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">Invite @Lead.FirstName @Lead.LastName</h5>
+                <button type="button" class="btn-close btn-close-white" @onclick="CloseModal"></button>
+            </div>
+            <div class="modal-body">
+                @if (!string.IsNullOrEmpty(_errorMessage))
+                {
+                    <div class="alert alert-danger">@_errorMessage</div>
+                }
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold small text-secondary">Invitation Type</label>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="inviteType" id="inviteJob" value="job" 
+                               checked="@(_inviteType == "job")" @onchange="@(() => _inviteType = "job")">
+                        <label class="form-check-label" for="inviteJob">
+                            Invite to Specific Job
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="inviteType" id="invitePlatform" value="platform" 
+                               checked="@(_inviteType == "platform")" @onchange="@(() => _inviteType = "platform")">
+                        <label class="form-check-label" for="invitePlatform">
+                            Invite to Platform Only
+                        </label>
+                    </div>
+                </div>
+
+                @if (_inviteType == "platform")
+                {
+                    <div class="alert alert-warning small border-warning bg-transparent text-warning">
+                        <i class="bi bi-exclamation-triangle"></i> Warning: This will only invite the driver to register on the platform. They will not be automatically applied or linked to a specific job.
+                    </div>
+                }
+                else
+                {
+                    @if (IsAdmin)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Select Company</label>
+                            <select class="form-select bg-dark text-light border-secondary" @bind="_selectedCompanyId" @bind:after="LoadJobsAsync">
+                                <option value="">-- Choose Company --</option>
+                                @foreach(var c in _companies)
+                                {
+                                    <option value="@c.Id">@c.Name</option>
+                                }
+                            </select>
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Select Job</label>
+                        <select class="form-select bg-dark text-light border-secondary" @bind="_selectedJobId" disabled="@(_jobs.Count == 0)">
+                            <option value="">-- Choose Job --</option>
+                            @foreach(var j in _jobs)
+                            {
+                                <option value="@j.Id">@j.Title (@j.City, @j.State)</option>
+                            }
+                        </select>
+                        @if (_jobs.Count == 0 && (_selectedCompanyId.HasValue || !IsAdmin))
+                        {
+                            <div class="form-text text-secondary small mt-1">No active jobs found.</div>
+                        }
+                    </div>
+                }
+
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                <button type="button" class="btn btn-primary text-dark fw-bold" style="background-color: #f6c046; border-color: #f6c046;" @onclick="SendInviteAsync" disabled="@isSending">
+                    @if(isSending)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    }
+                    Send Invite
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Lead Lead { get; set; } = default!;
+    [Parameter] public bool IsAdmin { get; set; }
+    [Parameter] public int? ManagerCompanyId { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<string> OnInvited { get; set; }
+
+    private string _inviteType = "job";
+    private int? _selectedCompanyId;
+    private int? _selectedJobId;
+    
+    private List<Company> _companies = new();
+    private List<Job> _jobs = new();
+    
+    private bool isSending = false;
+    private string _errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (IsAdmin)
+        {
+            _companies = await CompanyService.GetAllAsync();
+        }
+        else
+        {
+            _selectedCompanyId = ManagerCompanyId;
+            await LoadJobsAsync();
+        }
+    }
+
+    private async Task LoadJobsAsync()
+    {
+        _jobs.Clear();
+        _selectedJobId = null;
+        if (_selectedCompanyId.HasValue)
+        {
+            var paged = await JobService.GetPagedAsync(1, 100, companyId: _selectedCompanyId.Value, filter: "active");
+            _jobs = paged.Items.ToList();
+        }
+    }
+
+    private async Task SendInviteAsync()
+    {
+        _errorMessage = "";
+
+        if (string.IsNullOrWhiteSpace(Lead.Email) && string.IsNullOrWhiteSpace(Lead.Phone))
+        {
+            _errorMessage = "Lead must have an email or phone number.";
+            return;
+        }
+
+        if (_inviteType == "job" && !_selectedJobId.HasValue)
+        {
+            _errorMessage = "Please select a job.";
+            return;
+        }
+
+        isSending = true;
+
+        try
+        {
+            var contactMethod = !string.IsNullOrWhiteSpace(Lead.Email) ? ContactMethod.Email : ContactMethod.Phone;
+            
+            var invitation = new Invitation
+            {
+                ContactMethod = contactMethod,
+                Email = Lead.Email?.ToLowerInvariant() ?? "",
+                Phone = Lead.Phone?.ToLowerInvariant() ?? "",
+                Role = RoleConstants.Driver,
+                CompanyId = _inviteType == "job" ? _selectedCompanyId : Lead.CompanyId,
+                JobId = _inviteType == "job" ? _selectedJobId : null
+            };
+
+            var link = Nav.ToAbsoluteUri($"/Account/Register?token={invitation.Token}");
+            var result = await InvitationService.InviteAsync(invitation, link);
+
+            if (result.Success)
+            {
+                await InvitationService.CreateAsync(invitation);
+                await OnInvited.InvokeAsync($"Invitation sent to {(contactMethod == ContactMethod.Email ? Lead.Email : Lead.Phone)}");
+            }
+            else
+            {
+                _errorMessage = result.Error ?? "Failed to send invitation.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = "Error sending invitation: " + ex.Message;
+        }
+        finally
+        {
+            isSending = false;
+        }
+    }
+
+    private async Task CloseModal()
+    {
+        await OnClose.InvokeAsync();
+    }
+}

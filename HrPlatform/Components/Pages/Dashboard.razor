@@ -1,8 +1,11 @@
 @page "/dashboard"
 @using HrPlatform.Models
+@using HrPlatform.Data.Entities
+@using HrPlatform.Services
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.Manager}")]
 @inject IDashboardService DashSvc
+@inject ILeadService LeadService
 @inject AuthenticationStateProvider AuthState
 
 <PageTitle>Dashboard</PageTitle>
@@ -17,13 +20,44 @@
 }
 else
 {
+    @if (_actionableLeads != null && _actionableLeads.Any())
+    {
+        <div class="card shadow-sm border-0 app-card mb-4 border-warning border-start border-5 bg-dark">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-3 text-warning"><i class="bi bi-bell-fill me-2"></i> Leads Requiring Action</h5>
+                <div class="list-group list-group-flush bg-transparent">
+                    @foreach(var lead in _actionableLeads)
+                    {
+                        <a href="/leads?q=@Uri.EscapeDataString(lead.Email ?? lead.Phone ?? lead.FirstName)" class="list-group-item list-group-item-action bg-transparent text-light border-secondary d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-bold">@lead.FirstName @lead.LastName</div>
+                                <div class="small text-secondary">Due: @lead.ReminderDate!.Value.ToString("MMM dd, yyyy")</div>
+                            </div>
+                            <span class="badge bg-warning text-dark">@lead.Status</span>
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    <h5 class="fw-bold mb-3 border-bottom pb-2 text-secondary">Active Operations</h5>
     <div class="row g-4 mb-4">
         @KpiCard("Active Jobs", stats.OpenJobs, "bi-briefcase", "primary")
-        @KpiCard("Applications (7d)", stats.ApplicationsThisWeek, "bi-send", "info")
         @KpiCard("Pending review", stats.PendingApplications, "bi-hourglass", "warning")
-        @KpiCard("Accepted (month)", stats.AcceptedThisMonth, "bi-check-circle", "success")
-        @KpiCard("Expiring licenses", stats.ExpiringLicenses, "bi-exclamation", "danger")
         @KpiCard("Pending invites", stats.InvitationsPending, "bi-envelope", "secondary")
+    </div>
+
+    <h5 class="fw-bold mb-3 border-bottom pb-2 text-secondary mt-4">Alerts</h5>
+    <div class="row g-4 mb-4">
+        @KpiCard("Actionable Leads", stats.ActiveLeads, "bi-exclamation-circle", "warning", href: "/leads?status=Actionable")
+        @KpiCard("Expiring licenses", stats.ExpiringLicenses, "bi-exclamation-triangle", "danger")
+    </div>
+
+    <h5 class="fw-bold mb-3 border-bottom pb-2 text-secondary mt-4">Statistics</h5>
+    <div class="row g-4 mb-4">
+        @KpiCard("Applications (7d)", stats.ApplicationsThisWeek, "bi-graph-up", "primary")
+        @KpiCard("Accepted (month)", stats.AcceptedThisMonth, "bi-check-circle", "success")
     </div>
 
     <div class="card shadow-sm border-0 app-card mb-4">
@@ -48,48 +82,88 @@ else
 
 @code {
     private DashboardStats? stats;
+    private List<Lead>? _actionableLeads;
 
     protected override async Task OnInitializedAsync()
     {
         var auth = await AuthState.GetAuthenticationStateAsync();
         var user = auth.User;
         bool admin = user.IsInRole(RoleConstants.Admin);
+        int? companyIdForLeads = null;
 
         if (admin)
+        {
             stats = await DashSvc.GetAdminStatsAsync();
+        }
         else
         {
             var cid = int.Parse(user.FindFirst("companyId")!.Value);
+            companyIdForLeads = cid;
             stats = await DashSvc.GetManagerStatsAsync(cid);
         }
+
+        _actionableLeads = await LeadService.GetActionableRemindersAsync(companyIdForLeads);
     }
 
     private RenderFragment KpiCard(
         string label, int value,
-        string icon, string color) => __builder =>
+        string icon, string colorName, string? href = null) => __builder =>
     {
-        var gradient = color switch
+        var iconColor = colorName switch
         {
-            "success" => "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-            "primary" => "linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-hover) 100%)",
-            "info" => "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-            "warning" => "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
-            "danger" => "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
-            _ => "rgba(30, 41, 59, 0.7)"
+            "success" => "var(--success-color)",
+            "primary" => "var(--accent-primary)",
+            "info" => "#3b82f6",
+            "warning" => "#f59e0b",
+            "danger" => "var(--danger-color)",
+            _ => "var(--text-secondary)"
+        };
+
+        var iconBg = colorName switch
+        {
+            "success" => "rgba(16, 185, 129, 0.15)",
+            "primary" => "rgba(230, 168, 56, 0.15)",
+            "info" => "rgba(59, 130, 246, 0.15)",
+            "warning" => "rgba(245, 158, 11, 0.15)",
+            "danger" => "rgba(239, 68, 68, 0.15)",
+            _ => "rgba(148, 163, 184, 0.15)"
         };
 
         <div class="col-12 col-md-6 col-lg-4">
-            <div class="card shadow-sm border-0 h-100 app-card" style="background: @gradient;">
-                <div class="card-body d-flex flex-column justify-content-center p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="card-title text-white fw-semibold mb-0">@label</h5>
-                        <div class="bg-white bg-opacity-25 rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                            <i class="bi @icon fs-4 text-white"></i>
+            @if (!string.IsNullOrEmpty(href))
+            {
+                <a href="@href" class="text-decoration-none d-block h-100">
+                    <div class="card shadow-sm h-100 app-card position-relative overflow-hidden" style="background-color: var(--bg-card); border: 1px solid var(--border-color) !important; transition: border-color 0.2s;">
+                        <div class="position-absolute top-0 start-0 w-100" style="height: 3px; background-color: @iconColor;"></div>
+                        
+                        <div class="card-body p-4 d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h6 class="text-secondary fw-semibold mb-2 text-uppercase" style="letter-spacing: 0.05em; font-size: 0.8rem;">@label</h6>
+                                <h2 class="mb-0 fw-bold text-white display-6">@value</h2>
+                            </div>
+                            <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 54px; height: 54px; background-color: @iconBg;">
+                                <i class="bi @icon fs-3" style="color: @iconColor;"></i>
+                            </div>
                         </div>
                     </div>
-                    <h2 class="mb-0 text-white fw-bold display-5">@value</h2>
+                </a>
+            }
+            else
+            {
+                <div class="card shadow-sm h-100 app-card position-relative overflow-hidden" style="background-color: var(--bg-card); border: 1px solid var(--border-color) !important;">
+                    <div class="position-absolute top-0 start-0 w-100" style="height: 3px; background-color: @iconColor;"></div>
+                    
+                    <div class="card-body p-4 d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="text-secondary fw-semibold mb-2 text-uppercase" style="letter-spacing: 0.05em; font-size: 0.8rem;">@label</h6>
+                            <h2 class="mb-0 fw-bold text-white display-6">@value</h2>
+                        </div>
+                        <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 54px; height: 54px; background-color: @iconBg;">
+                            <i class="bi @icon fs-3" style="color: @iconColor;"></i>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            }
         </div>
     };
 }

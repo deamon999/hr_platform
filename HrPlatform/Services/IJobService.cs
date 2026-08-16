@@ -13,7 +13,8 @@ public interface IJobService
         decimal? minPay = null,
         HrPlatform.Data.Enums.TrailerType? trailerType = null,
         bool matchProfileOnly = false,
-        DriverProfile? driverProfile = null);
+        DriverProfile? driverProfile = null,
+        int? companyId = null);
     Task<Job?> GetByIdAsync(int id);
     Task<Job> CreateAsync(Job job);
     Task UpdateAsync(Job job);
