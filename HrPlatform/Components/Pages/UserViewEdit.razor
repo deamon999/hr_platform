@@ -18,7 +18,7 @@
     <h2 class="fw-bold mb-0 text-dark">@(IsViewMode ? "View User" : "Edit User")</h2>
     @if (IsViewMode)
     {
-        <button class="btn btn-primary rounded-pill px-4" @onclick='() => Nav.NavigateTo($"/users/edit/{Id}")'><i class="bi bi-pencil me-1"></i> Edit</button>
+        <button class="btn btn-primary rounded-pill px-4" @onclick="SwitchToEditMode"><i class="bi bi-pencil me-1"></i> Edit</button>
     }
 </div>
 
@@ -38,6 +38,13 @@ else
     <EditForm Model="model" OnValidSubmit="UpdateAsync">
         <DataAnnotationsValidator/>
         <ValidationSummary/>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger" role="alert">
+                @errorMessage
+            </div>
+        }
 
                     <div class="row g-4 mb-4">
                         <div class="col-md-6">
@@ -125,11 +132,18 @@ else
         var user = auth.User;
         isAdmin = user.IsInRole(RoleConstants.Admin);
 
-        // load roles synchronously from RoleManager (store may not support EF async here)
-        roles = RoleManager.Roles
-            .Where(r => r.NormalizedName != "ADMIN")
-            .Select(r => r.Name)
-            .ToList();
+        // load roles synchronously from RoleManager
+        if (isAdmin)
+        {
+            roles = RoleManager.Roles.Select(r => r.Name).ToList();
+        }
+        else
+        {
+            roles = RoleManager.Roles
+                .Where(r => r.NormalizedName != "ADMIN")
+                .Select(r => r.Name)
+                .ToList();
+        }
 
         if (isAdmin)
         {
@@ -142,21 +156,23 @@ else
             if (currentUser?.CompanyId != null)
             {
                 myCompany = await CompanySvc.GetByIdAsync(currentUser.CompanyId.Value);
-                model.CompanyId = myCompany?.Id;
             }
         }
+    }
 
-        // Check if we are in view or edit mode based on the current route and load data accordingly
+    protected override async Task OnParametersSetAsync()
+    {
+        isLoading = true;
+        
+        // Check if we are in view or edit mode based on the current route
         var uri = Nav.Uri.ToLower();
-        if (uri.Contains("/edit/"))
+        IsViewMode = !uri.Contains("/edit/");
+
+        model = await UserService.GetUserByIdAsync(Id);
+        
+        if (!isAdmin && myCompany != null)
         {
-            model = await UserService.GetUserByIdAsync(Id);
-        }
-        else
-        {
-            // If we are in view mode, load the user details
-            model = await UserService.GetUserByIdAsync(Id);
-            IsViewMode = true;
+            model.CompanyId = myCompany.Id;
         }
 
         isLoading = false;
@@ -167,6 +183,11 @@ else
         await JSRuntime.InvokeVoidAsync("history.back");
     }
 
+    private void SwitchToEditMode()
+    {
+        IsViewMode = false;
+    }
+
     private async Task UpdateAsync()
     {
         errorMessage = null;
@@ -175,6 +196,18 @@ else
         if (user == null)
         {
             errorMessage = "User not found.";
+            return;
+        }
+
+        if (!isAdmin && string.Equals(model.Roles, RoleConstants.Admin, StringComparison.OrdinalIgnoreCase))
+        {
+            errorMessage = "You do not have permission to assign the Admin role.";
+            return;
+        }
+
+        if (string.Equals(model.Roles, RoleConstants.Manager, StringComparison.OrdinalIgnoreCase) && model.CompanyId == null)
+        {
+            errorMessage = "A Company must be selected when assigning the Manager role.";
             return;
         }
 
@@ -212,6 +245,11 @@ else
             return;
         }
 
+        var oldRole = currentRoles.FirstOrDefault();
+        if (oldRole != model.Roles)
+        {
+            await UserService.HandleRoleTransitionCleanupAsync(user, oldRole, model.Roles);
+        }
 
         var result = await UserManager.UpdateAsync(user);
 

@@ -176,9 +176,9 @@
         }
         else if (!Id.HasValue && user.IsInRole(RoleConstants.Manager))
         {
-            // load roles synchronously from RoleManager (store may not support EF async here)
+            // Managers can invite Managers and Drivers, but not Admins
             _roles = _roles
-                .Where(r => !r.Equals(RoleConstants.Admin) && !r.Equals(RoleConstants.Driver))
+                .Where(r => !r.Equals(RoleConstants.Admin, StringComparison.OrdinalIgnoreCase))
                 .ToList()!;
             _model.CompanyId = Convert.ToInt32(user.FindFirstValue("companyId"));
         }
@@ -198,6 +198,11 @@
         {
             if (_isManager)
             {
+                if (string.Equals(_model.Role, RoleConstants.Admin, StringComparison.OrdinalIgnoreCase))
+                {
+                    _errorMessage = "You do not have permission to invite an Admin.";
+                    return;
+                }
                 // Force company to be the manager's company to prevent tampering
                 var companyClaim = auth.User.FindFirstValue("companyId");
                 if (companyClaim != null && int.TryParse(companyClaim, out int userCompanyId))

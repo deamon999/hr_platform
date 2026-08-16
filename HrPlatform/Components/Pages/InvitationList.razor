@@ -7,25 +7,26 @@
 @inject IInvitationService InvitationService
 @inject ICompanyService CompanyService
 
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
-    <div class="d-flex justify-content-between align-items-center gap-2 w-100" style="max-width: 600px;">
-        <div style="flex: 1;">
+<div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+    <div class="d-flex gap-2" style="max-width:600px; flex: 1;">
+        <div style="max-width:450px; flex: 1;">
             <DebounceInput class="form-control"
                            placeholder="Search by email, phone, or company"
                            @bind-Value="_searchTerm"
                            @bind-Value:after="ResetPageAndLoad"
                            disabled="@isLoading" />
         </div>
-        <div class="d-flex align-items-center gap-2">
-            <span class="text-secondary small fw-medium text-nowrap d-none d-md-inline">Items per page:</span>
-            <select class="form-select border-0 bg-white shadow-sm" style="width: 75px;" @bind="PageSize" @bind:after="ResetPageAndLoad">
-                <option value="10">10</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-            </select>
-        </div>
+        <button type="button" class="btn btn-primary px-4 text-nowrap" @onclick="GoToInvite"><i class="bi bi-person-plus me-1"></i> Invite User</button>
     </div>
-    <button type="button" class="btn btn-primary px-4" @onclick="GoToInvite">+ Invite User</button>
+    
+    <div class="d-flex align-items-center gap-2">
+        <span class="text-secondary small fw-medium text-nowrap d-none d-md-inline">Items per page:</span>
+        <select class="form-select form-select-sm border-0 bg-white shadow-sm" style="width: 70px;" @bind="PageSize" @bind:after="ResetPageAndLoad">
+            <option value="10">10</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+        </select>
+    </div>
 </div>
 
 @if (isLoading)
@@ -60,8 +61,8 @@ else
                         <div class="card-body p-4">
                             <div class="row g-3">
                                 <div class="col-md-7">
-                                    <div class="d-flex align-items-center mb-2 gap-2">
-                                        <h4 class="fw-bold mb-0 text-dark">
+                                    <div class="d-flex flex-wrap align-items-center mb-2 gap-2">
+                                        <h4 class="fw-bold mb-0 text-dark text-break">
                                             @if (!string.IsNullOrWhiteSpace(inv.Email))
                                             {
                                                 @inv.Email
@@ -71,51 +72,49 @@ else
                                                 @inv.Phone
                                             }
                                         </h4>
-                                        <span class="badge @RoleBadgeClass(inv.Role) rounded-pill px-3 py-1">@inv.Role</span>
+                                        @if (inv.IsUsed)
+                                        {
+                                            <span class="badge bg-success rounded-pill" title="Used"><i class="bi bi-check-circle"></i> Used</span>
+                                        }
+                                        else if (inv.ExpiresAt < DateTime.UtcNow)
+                                        {
+                                            <span class="badge bg-secondary rounded-pill" title="Expired"><i class="bi bi-exclamation-triangle"></i> Expired</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark rounded-pill" title="Pending"><i class="bi bi-hourglass-split"></i> Pending</span>
+                                        }
                                     </div>
                                     
                                     <div class="mb-3 text-secondary small">
-                                        @if (!string.IsNullOrWhiteSpace(inv.Phone) && !string.IsNullOrWhiteSpace(inv.Email))
-                                        {
-                                            <div class="mb-1"><i class="bi bi-telephone"></i> @inv.Phone</div>
-                                        }
-                                        <div class="d-flex align-items-center gap-3 mb-1">
-                                            <span><i class="bi bi-building"></i> @GetCompanyName(inv.CompanyId)</span>
+                                        <div class="d-flex flex-wrap align-items-center gap-3 mb-1">
+                                            @if (!string.IsNullOrWhiteSpace(inv.Email))
+                                            {
+                                                <span><i class="bi bi-envelope"></i> @inv.Email</span>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(inv.Phone))
+                                            {
+                                                <span><i class="bi bi-telephone"></i> @inv.Phone</span>
+                                            }
                                         </div>
+                                        @if (inv.CompanyId.HasValue)
+                                        {
+                                            <div class="text-muted"><i class="bi bi-building"></i> @GetCompanyName(inv.CompanyId)</div>
+                                        }
                                     </div>
 
                                     <div class="d-flex flex-wrap gap-2 text-secondary small">
+                                        <span class="badge bg-info rounded-pill px-3 py-2 border"><i class="bi bi-person-badge"></i> @inv.Role</span>
                                         <span class="badge bg-light @(inv.ExpiresAt < DateTime.UtcNow && !inv.IsUsed ? "text-danger border-danger" : "text-dark") rounded-pill px-3 py-2 border"><i class="bi bi-clock-history me-1"></i> Expires: @inv.ExpiresAt.ToString("MMM dd, yyyy")</span>
                                     </div>
                                 </div>
                                 
-                                <div class="col-md-5 d-flex flex-column gap-2 justify-content-center align-items-md-end mt-3 mt-md-0">
-                                    <div class="mb-2">
-                                        @if (inv.IsUsed)
-                                        {
-                                            <span class="badge bg-success rounded-pill px-3 py-2"><i class="bi bi-check-circle"></i> Used</span>
-                                        }
-                                        else if (inv.ExpiresAt < DateTime.UtcNow)
-                                        {
-                                            <span class="badge bg-secondary rounded-pill px-3 py-2"><i class="bi bi-exclamation-triangle"></i> Expired</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-warning text-dark rounded-pill px-3 py-2"><i class="bi bi-hourglass-split"></i> Pending</span>
-                                        }
-                                    </div>
-                                    
-                                    <div class="d-flex gap-2 mt-2">
-                                        @if (!inv.IsUsed && inv.ExpiresAt < DateTime.UtcNow)
-                                        {
-                                            <button class="btn btn-outline-primary btn-sm" @onclick="() => ResendInvitationAsync(inv)">
-                                                <i class="bi bi-arrow-clockwise"></i> Resend
-                                            </button>
-                                        }
-                                        <button class="btn btn-outline-danger btn-sm" @onclick="() => DeleteInvitationAsync(inv)">
-                                            <i class="bi bi-trash"></i> Delete
-                                        </button>
-                                    </div>
+                                <div class="col-md-5 d-flex gap-2 justify-content-md-end align-items-end flex-wrap mt-3 mt-md-0">
+                                    @if (!inv.IsUsed && inv.ExpiresAt < DateTime.UtcNow)
+                                    {
+                                        <button class="btn btn-outline-warning" @onclick="() => ResendInvitationAsync(inv)"><i class="bi bi-arrow-clockwise"></i> Resend</button>
+                                    }
+                                    <button type="button" class="btn btn-outline-danger" @onclick="() => DeleteInvitationAsync(inv)"><i class="bi bi-trash"></i></button>
                                 </div>
                             </div>
                         </div>

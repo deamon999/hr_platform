@@ -136,4 +136,42 @@ public class AdminUserService : IAdminUserService
 
         return userList;
     }
+
+    public async Task HandleRoleTransitionCleanupAsync(ApplicationUser user, string? oldRole, string newRole)
+    {
+        if (oldRole == RoleConstants.Driver && newRole != RoleConstants.Driver)
+        {
+            // Delete Driver-specific data
+            var driverProfile = await _context.DriverProfiles.FirstOrDefaultAsync(dp => dp.UserId == user.Id);
+            if (driverProfile != null)
+            {
+                _context.DriverProfiles.Remove(driverProfile);
+            }
+
+            var jobApplications = await _context.JobApplications.Where(ja => ja.UserId == user.Id).ToListAsync();
+            if (jobApplications.Any())
+            {
+                _context.JobApplications.RemoveRange(jobApplications);
+            }
+
+            var jobInvitations = await _context.JobInvitations.Where(ji => ji.UserId == user.Id).ToListAsync();
+            if (jobInvitations.Any())
+            {
+                _context.JobInvitations.RemoveRange(jobInvitations);
+            }
+
+            var messages = await _context.ApplicationMessages.Where(m => m.SenderId == user.Id).ToListAsync();
+            if (messages.Any())
+            {
+                _context.ApplicationMessages.RemoveRange(messages);
+            }
+        }
+
+        if (newRole == RoleConstants.Admin || newRole == RoleConstants.Driver)
+        {
+            user.CompanyId = null;
+        }
+
+        await _context.SaveChangesAsync();
+    }
 }

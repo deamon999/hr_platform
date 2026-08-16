@@ -65,10 +65,10 @@ else
                 }
             }
         </div>
-        <div class="card-footer bg-white border-top py-3">
-            <div class="input-group shadow-sm rounded-pill overflow-hidden">
-                <input type="text" class="form-control bg-light border-0 px-4 py-2" placeholder="Type your message..." @bind="_newMessage" @bind:event="oninput" @onkeyup="HandleKeyUp" />
-                <button class="btn btn-primary px-4 fw-bold" type="button" @onclick="SendMessageAsync" disabled="@string.IsNullOrWhiteSpace(_newMessage)">
+        <div class="card-footer border-top py-3" style="background: transparent;">
+            <div class="d-flex gap-2">
+                <input type="text" class="form-control rounded-pill px-4 py-2" style="background-color: var(--bg-body); border-color: var(--border-color); color: var(--text-primary);" placeholder="Type your message..." @bind="_newMessage" @bind:event="oninput" @onkeyup="HandleKeyUp" />
+                <button class="btn btn-primary rounded-pill px-4 fw-bold" type="button" @onclick="SendMessageAsync" disabled="@string.IsNullOrWhiteSpace(_newMessage)">
                     <i class="bi bi-send-fill me-1"></i> Send
                 </button>
             </div>
