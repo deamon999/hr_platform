@@ -32,8 +32,7 @@ public class LeadService : ILeadService
                 l.FirstName.ToLower().Contains(lowerSearch) || 
                 l.LastName.ToLower().Contains(lowerSearch) || 
                 (l.Email != null && l.Email.ToLower().Contains(lowerSearch)) || 
-                (l.Phone != null && l.Phone.ToLower().Contains(lowerSearch)) ||
-                (l.AddedByUser != null && (l.AddedByUser.FirstName + " " + l.AddedByUser.LastName).ToLower().Contains(lowerSearch))
+                (l.Phone != null && l.Phone.ToLower().Contains(lowerSearch))
             );
         }
 

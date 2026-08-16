@@ -10,6 +10,7 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject ICompanyService CompanyService
 @inject NavigationManager Nav
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Driver Profiles</PageTitle>
 
@@ -25,8 +26,7 @@
     }
 </div>
 
-
-<div class="d-flex flex-wrap gap-3 mb-3 align-items-center">
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
     <div class="d-flex flex-wrap align-items-center gap-2">
         <select class="form-select form-select-sm w-auto" style="min-width: 160px;"
                 @bind="searchAvailString" @bind:after="ResetPageAndLoad">
@@ -36,11 +36,11 @@
                 <option value="@s.ToString()">@s.GetDescriptionValue()</option>
             }
         </select>
-        <input class="form-control form-control-sm"
-               style="max-width:200px"
-               placeholder="Search name..."
-               @bind="searchName"
-               @bind:after="ResetPageAndLoad"/>
+        <DebounceInput class="form-control form-control-sm"
+                       style="max-width:200px"
+                       placeholder="Search name..."
+                       @bind-Value="searchName"
+                       @bind-Value:after="ResetPageAndLoad"/>
         <select class="form-select form-select-sm w-auto" style="min-width: 160px;"
                 @bind="searchCdlString" @bind:after="ResetPageAndLoad">
             <option value="">Any CDL class</option>
@@ -49,7 +49,7 @@
                 <option value="@c.ToString()">@c.GetDescriptionValue()</option>
             }
         </select>
-        <select class="form-select form-select-sm w-auto" style="min-width: 160px;"
+        <select class="form-select form-select-sm w-auto" style="min-width: 180px;"
                 @bind="searchEndString" @bind:after="ResetPageAndLoad">
             <option value="">Any endorsement</option>
             @foreach (var e in Enum.GetValues<CdlEndorsement>())
@@ -57,12 +57,14 @@
                 <option value="@e.ToString()">@e.GetDescriptionValue()</option>
             }
         </select>
-        <button class="btn btn-sm btn-outline-secondary" title="Clear all filters" @onclick="ClearFilters">
-            Clear
-        </button>
-        <span class="text-secondary small fw-medium text-nowrap d-none d-md-inline ms-2">Items per page:</span>
+        <button class="btn btn-sm btn-outline-secondary" @onclick="ClearFilters">Clear</button>
+    </div>
+    
+    <div class="d-flex align-items-center gap-2">
+        <span class="text-secondary small fw-medium text-nowrap d-none d-md-inline">Items per page:</span>
         <select class="form-select form-select-sm border-0 bg-white shadow-sm" style="width: 70px;" @bind="PageSize" @bind:after="ResetPageAndLoad">
             <option value="10">10</option>
+            <option value="25">25</option>
             <option value="50">50</option>
             <option value="100">100</option>
         </select>
@@ -210,19 +212,24 @@ else
         if (currentPage < 1) currentPage = 1;
         if (PageSize < 1) PageSize = 10;
 
-        profileSearch.Name = searchName;
-        
-        if (Enum.TryParse<AvailabilityStatus>(searchAvailString, out var a)) profileSearch.Availability = a; else profileSearch.Availability = null;
-        if (Enum.TryParse<CdlClass>(searchCdlString, out var c)) profileSearch.CdlClass = c; else profileSearch.CdlClass = null;
-        if (Enum.TryParse<CdlEndorsement>(searchEndString, out var e)) profileSearch.RequiredEndorsement = e; else profileSearch.RequiredEndorsement = null;
-
         await LoadAsync();
     }
 
     // Helper to reset to page 1 when filtering/sorting changes
-    private void ResetPageAndLoad()
+    private async Task ResetPageAndLoad()
     {
-        ChangePage(1);
+        currentPage = 1;
+        var uri = Nav.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            ["page"] = null,
+            ["size"] = PageSize == 10 ? null : PageSize,
+            ["q"] = string.IsNullOrWhiteSpace(searchName) ? null : searchName,
+            ["avail"] = string.IsNullOrWhiteSpace(searchAvailString) ? null : searchAvailString,
+            ["cdl"] = string.IsNullOrWhiteSpace(searchCdlString) ? null : searchCdlString,
+            ["end"] = string.IsNullOrWhiteSpace(searchEndString) ? null : searchEndString
+        });
+        await JSRuntime.InvokeVoidAsync("history.replaceState", null, "", uri);
+        await LoadAsync();
     }
 
     private void ClearFilters()
@@ -231,11 +238,16 @@ else
         searchAvailString = null;
         searchCdlString = null;
         searchEndString = null;
-        ResetPageAndLoad();
+        _ = ResetPageAndLoad();
     }
 
     private async Task LoadAsync()
     {
+        profileSearch.Name = searchName;
+        if (Enum.TryParse<AvailabilityStatus>(searchAvailString, out var a)) profileSearch.Availability = a; else profileSearch.Availability = null;
+        if (Enum.TryParse<CdlClass>(searchCdlString, out var c)) profileSearch.CdlClass = c; else profileSearch.CdlClass = null;
+        if (Enum.TryParse<CdlEndorsement>(searchEndString, out var e)) profileSearch.RequiredEndorsement = e; else profileSearch.RequiredEndorsement = null;
+
         // NOTE: You may need to pass 'sortBy' into your ProfileSvc methods if you want it to actually sort in the DB.
         if (isAdmin)
         {

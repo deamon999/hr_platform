@@ -1,0 +1,51 @@
+@implements IDisposable
+
+<input type="text"
+       value="@Value"
+       @oninput="HandleInput"
+       placeholder="@Placeholder"
+       @attributes="AdditionalAttributes" />
+
+@code {
+    [Parameter]
+    public string? Value { get; set; }
+
+    [Parameter]
+    public EventCallback<string?> ValueChanged { get; set; }
+
+    [Parameter]
+    public string Placeholder { get; set; } = "Search...";
+
+    [Parameter]
+    public int DebounceDelay { get; set; } = 500;
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private System.Timers.Timer? _timer;
+
+    protected override void OnInitialized()
+    {
+        _timer = new System.Timers.Timer(DebounceDelay);
+        _timer.AutoReset = false;
+        _timer.Elapsed += async (sender, args) =>
+        {
+            await InvokeAsync(async () =>
+            {
+                await ValueChanged.InvokeAsync(Value);
+            });
+        };
+    }
+
+    private void HandleInput(ChangeEventArgs e)
+    {
+        Value = e.Value?.ToString();
+        _timer?.Stop();
+        _timer?.Start();
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+}

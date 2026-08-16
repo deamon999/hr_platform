@@ -28,11 +28,11 @@
     <div class="d-flex flex-column flex-md-row flex-grow-1 gap-2" style="max-width: 800px;">
         <div class="input-group shadow-sm flex-grow-1">
             <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-search"></i></span>
-            <input class="form-control bg-dark text-light border-secondary border-start-0 ps-0 shadow-none"
-                   placeholder="Search..."
-                   @bind="_searchTerm"
-                   @bind:after="ResetPageAndLoad"
-                   disabled="@isLoading" />
+            <DebounceInput class="form-control bg-dark text-light border-secondary border-start-0 ps-0 shadow-none"
+                           placeholder="Search..."
+                           @bind-Value="_searchTerm"
+                           @bind-Value:after="ResetPageAndLoad"
+                           disabled="@isLoading" />
         </div>
                
         <select class="form-select shadow-sm bg-dark text-light border-secondary" style="min-width: 140px; max-width: 250px;" @bind="_filterStatusStr" @bind:after="ResetPageAndLoad">
@@ -335,9 +335,19 @@ else
         }
     }
 
-    private void ResetPageAndLoad()
+    private async Task ResetPageAndLoad()
     {
-        ChangePage(1);
+        currentPage = 1;
+        var uri = Nav.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            ["page"] = null,
+            ["size"] = PageSize == 10 ? null : PageSize,
+            ["q"] = string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm,
+            ["status"] = string.IsNullOrWhiteSpace(_filterStatusStr) ? null : _filterStatusStr,
+            ["user"] = string.IsNullOrWhiteSpace(_filterUserId) ? null : _filterUserId
+        });
+        await JSRuntime.InvokeVoidAsync("history.replaceState", null, "", uri);
+        await LoadAsync(_searchTerm);
     }
 
     private void HandleLeadSaved(bool isNew)

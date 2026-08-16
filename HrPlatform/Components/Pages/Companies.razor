@@ -5,6 +5,7 @@
 @attribute [Authorize(Roles = RoleConstants.Admin)]
 @inject ICompanyService CompanySvc
 @inject NavigationManager Nav
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Companies</PageTitle>
 
@@ -15,7 +16,7 @@
 
 <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
     <div class="d-flex flex-wrap align-items-center gap-2" style="flex: 1;">
-        <input type="text" class="form-control form-control-sm" style="width: 250px;" placeholder="Search company name..." @bind="searchName" @bind:after="ResetPageAndLoad" />
+        <DebounceInput class="form-control form-control-sm" style="width: 250px;" placeholder="Search company name..." @bind-Value="searchName" @bind-Value:after="ResetPageAndLoad" />
         <select class="form-select form-select-sm w-auto" style="min-width: 200px;" @bind="sortBy" @bind:after="ResetPageAndLoad">
             <option value="name">Sort: Name</option>
             <option value="date">Sort: Date Registered</option>
@@ -148,9 +149,18 @@ else
         await LoadAsync();
     }
 
-    private void ResetPageAndLoad()
+    private async Task ResetPageAndLoad()
     {
-        ChangePage(1);
+        currentPage = 1;
+        var uri = Nav.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            ["page"] = null,
+            ["size"] = PageSize == 10 ? null : PageSize,
+            ["q"] = string.IsNullOrWhiteSpace(searchName) ? null : searchName,
+            ["sort"] = sortBy == "name" ? null : sortBy
+        });
+        await JSRuntime.InvokeVoidAsync("history.replaceState", null, "", uri);
+        await LoadAsync();
     }
 
     private async Task LoadAsync()

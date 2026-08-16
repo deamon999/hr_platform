@@ -3,17 +3,18 @@
 @attribute [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.Manager}")]
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime JSRuntime
 @inject IInvitationService InvitationService
 @inject ICompanyService CompanyService
 
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
     <div class="d-flex justify-content-between align-items-center gap-2 w-100" style="max-width: 600px;">
         <div style="flex: 1;">
-            <input class="form-control"
-                   placeholder="Search by email, phone, or company"
-                   @bind="_searchTerm"
-                   @bind:after="ResetPageAndLoad"
-                   disabled="@isLoading" />
+            <DebounceInput class="form-control"
+                           placeholder="Search by email, phone, or company"
+                           @bind-Value="_searchTerm"
+                           @bind-Value:after="ResetPageAndLoad"
+                           disabled="@isLoading" />
         </div>
         <div class="d-flex align-items-center gap-2">
             <span class="text-secondary small fw-medium text-nowrap d-none d-md-inline">Items per page:</span>
@@ -256,9 +257,17 @@ else
         };
     }
 
-    private void ResetPageAndLoad()
+    private async Task ResetPageAndLoad()
     {
-        ChangePage(1);
+        currentPage = 1;
+        var uri = Nav.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            ["page"] = null,
+            ["size"] = PageSize == 10 ? null : PageSize,
+            ["q"] = string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm
+        });
+        await JSRuntime.InvokeVoidAsync("history.replaceState", null, "", uri);
+        await LoadAsync(_searchTerm);
     }
 
     private void ChangePage(int page)

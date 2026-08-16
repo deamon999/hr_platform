@@ -1,11 +1,11 @@
 @rendermode InteractiveServer
-@implements IDisposable
 
 @using HrPlatform.Models
 @attribute [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.Manager}")]
 @inject NavigationManager Nav
 @inject IAdminUserService UserService
 @inject AuthenticationStateProvider AuthState
+@inject IJSRuntime JSRuntime
 
 
 @if (isLoading)
@@ -23,10 +23,10 @@ else
 {
     <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
         <div style="max-width:450px; flex: 1;">
-            <input class="form-control"
-                   placeholder="Search by email or user name or company name"
-                   value="@_searchTerm"
-                   @oninput="HandleSearchInput"/>
+            <DebounceInput class="form-control"
+                           placeholder="Search by email or user name or company name"
+                           @bind-Value="_searchTerm"
+                           @bind-Value:after="HandleSearchInput"/>
         </div>
         <div class="d-flex align-items-center gap-2">
             <span class="text-secondary small fw-medium text-nowrap d-none d-md-inline">Items per page:</span>
@@ -174,7 +174,8 @@ else
     private List<UserViewModel> pagedUsers = new();
 
     // UI State
-    private string _searchTerm = string.Empty;
+    [SupplyParameterFromQuery(Name = "q")]
+    public string? _searchTerm { get; set; }
     private string? _statusMessage;
     private string _statusClass = "alert-success";
     private bool isLoading = true;
@@ -198,26 +199,14 @@ else
         var url = Nav.GetUriWithQueryParameters(new Dictionary<string, object?>
         {
             { "page", null }, // reset to page 1
-            { "size", PageSize == 10 ? null : PageSize }
+            { "size", PageSize == 10 ? null : PageSize },
+            { "q", string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm }
         });
         Nav.NavigateTo(url);
     }
 
-    private System.Timers.Timer? _debounceTimer;
-
     protected override async Task OnInitializedAsync()
     {
-        _debounceTimer = new System.Timers.Timer(400);
-        _debounceTimer.AutoReset = false;
-        _debounceTimer.Elapsed += async (sender, args) =>
-        {
-            await InvokeAsync(async () =>
-            {
-                currentPage = 1;
-                await LoadAsync(_searchTerm);
-                StateHasChanged();
-            });
-        };
 
         var auth = await AuthState.GetAuthenticationStateAsync();
         var user = auth.User;
@@ -290,17 +279,17 @@ else
         }
     }
 
-    private void HandleSearchInput(ChangeEventArgs e)
+    private async Task HandleSearchInput()
     {
-        _searchTerm = e.Value?.ToString() ?? string.Empty;
-        
-        _debounceTimer?.Stop();
-        _debounceTimer?.Start();
-    }
-
-    public void Dispose()
-    {
-        _debounceTimer?.Dispose();
+        currentPage = 1; // Always reset to page 1 when typing a new search
+        var url = Nav.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            { "page", null },
+            { "size", PageSize == 10 ? null : PageSize },
+            { "q", string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm }
+        });
+        await JSRuntime.InvokeVoidAsync("history.replaceState", null, "", url);
+        await LoadAsync(_searchTerm);
     }
 
     private void ChangePage(int page)
@@ -309,7 +298,8 @@ else
         var url = Nav.GetUriWithQueryParameters(new Dictionary<string, object?>
         {
             { "page", page == 1 ? null : page },
-            { "size", PageSize == 10 ? null : PageSize }
+            { "size", PageSize == 10 ? null : PageSize },
+            { "q", string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm }
         });
         Nav.NavigateTo(url);
     }
