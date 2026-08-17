@@ -47,10 +47,15 @@ public class ApplicationMessageServiceTests
     public async Task GetMessagesForApplicationAsync_ReturnsOrderedMessages()
     {
         var db = GetDbContext();
+        db.Users.Add(new ApplicationUser { Id = "1" });
+        db.JobApplications.AddRange(
+            new JobApplication { Id = 1, UserId = "1", JobId = 1 },
+            new JobApplication { Id = 2, UserId = "1", JobId = 1 }
+        );
         db.ApplicationMessages.AddRange(
-            new ApplicationMessage { JobApplicationId = 1, Content = "Msg2", SentAt = DateTime.UtcNow.AddMinutes(2) },
-            new ApplicationMessage { JobApplicationId = 1, Content = "Msg1", SentAt = DateTime.UtcNow.AddMinutes(1) },
-            new ApplicationMessage { JobApplicationId = 2, Content = "Msg3", SentAt = DateTime.UtcNow }
+            new ApplicationMessage { JobApplicationId = 1, Content = "Msg2", SentAt = DateTime.UtcNow.AddMinutes(2), SenderId = "1" },
+            new ApplicationMessage { JobApplicationId = 1, Content = "Msg1", SentAt = DateTime.UtcNow.AddMinutes(1), SenderId = "1" },
+            new ApplicationMessage { JobApplicationId = 2, Content = "Msg3", SentAt = DateTime.UtcNow, SenderId = "1" }
         );
         await db.SaveChangesAsync();
 
@@ -67,10 +72,10 @@ public class ApplicationMessageServiceTests
     {
         var db = GetDbContext();
         db.ApplicationMessages.AddRange(
-            new ApplicationMessage { JobApplicationId = 1, SenderId = "other", IsRead = false },
-            new ApplicationMessage { JobApplicationId = 1, SenderId = "other", IsRead = true },
-            new ApplicationMessage { JobApplicationId = 1, SenderId = "receiver", IsRead = false },
-            new ApplicationMessage { JobApplicationId = 2, SenderId = "other", IsRead = false }
+            new ApplicationMessage { JobApplicationId = 1, SenderId = "other", IsRead = false, Content = "Test" },
+            new ApplicationMessage { JobApplicationId = 1, SenderId = "other", IsRead = true, Content = "Test" },
+            new ApplicationMessage { JobApplicationId = 1, SenderId = "receiver", IsRead = false, Content = "Test" },
+            new ApplicationMessage { JobApplicationId = 2, SenderId = "other", IsRead = false, Content = "Test" }
         );
         await db.SaveChangesAsync();
 
@@ -89,10 +94,10 @@ public class ApplicationMessageServiceTests
     {
         var db = GetDbContext();
         db.ApplicationMessages.AddRange(
-            new ApplicationMessage { JobApplicationId = 1, SenderId = "other", IsRead = false },
-            new ApplicationMessage { JobApplicationId = 1, SenderId = "other", IsRead = false },
-            new ApplicationMessage { JobApplicationId = 1, SenderId = "receiver", IsRead = false },
-            new ApplicationMessage { JobApplicationId = 1, SenderId = "other", IsRead = true }
+            new ApplicationMessage { JobApplicationId = 1, SenderId = "other", IsRead = false, Content = "Test" },
+            new ApplicationMessage { JobApplicationId = 1, SenderId = "other", IsRead = false, Content = "Test" },
+            new ApplicationMessage { JobApplicationId = 1, SenderId = "receiver", IsRead = false, Content = "Test" },
+            new ApplicationMessage { JobApplicationId = 1, SenderId = "other", IsRead = true, Content = "Test" }
         );
         await db.SaveChangesAsync();
 

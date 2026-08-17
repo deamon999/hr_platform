@@ -20,27 +20,6 @@
 }
 else
 {
-    @if (_actionableLeads != null && _actionableLeads.Any())
-    {
-        <div class="card shadow-sm border-0 app-card mb-4 border-warning border-start border-5 bg-dark">
-            <div class="card-body p-4">
-                <h5 class="fw-bold mb-3 text-warning"><i class="bi bi-bell-fill me-2"></i> Leads Requiring Action</h5>
-                <div class="list-group list-group-flush bg-transparent">
-                    @foreach(var lead in _actionableLeads)
-                    {
-                        <a href="/leads?q=@Uri.EscapeDataString(lead.Email ?? lead.Phone ?? lead.FirstName)" class="list-group-item list-group-item-action bg-transparent text-light border-secondary d-flex justify-content-between align-items-center">
-                            <div>
-                                <div class="fw-bold">@lead.FirstName @lead.LastName</div>
-                                <div class="small text-secondary">Due: @lead.ReminderDate!.Value.ToString("MMM dd, yyyy")</div>
-                            </div>
-                            <span class="badge bg-warning text-dark">@lead.Status</span>
-                        </a>
-                    }
-                </div>
-            </div>
-        </div>
-    }
-
     <h5 class="fw-bold mb-3 border-bottom pb-2 text-secondary">Active Operations</h5>
     <div class="row g-4 mb-4">
         @KpiCard("Active Jobs", stats.OpenJobs, "bi-briefcase", "primary")
@@ -82,7 +61,6 @@ else
 
 @code {
     private DashboardStats? stats;
-    private List<Lead>? _actionableLeads;
 
     protected override async Task OnInitializedAsync()
     {
@@ -101,8 +79,6 @@ else
             companyIdForLeads = cid;
             stats = await DashSvc.GetManagerStatsAsync(cid);
         }
-
-        _actionableLeads = await LeadService.GetActionableRemindersAsync(companyIdForLeads);
     }
 
     private RenderFragment KpiCard(

@@ -3,7 +3,6 @@
 @page "/companies/edit/{Id:int}"
 @page "/my-company"
 @using System.Security.Claims
-@implements IDisposable
 @rendermode InteractiveServer
 
 @attribute [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.Driver},{RoleConstants.Manager}")]
@@ -190,24 +189,9 @@ else
 
     private string Title => isView ? "Company Details" : (isNew ? "Create Company" : "Edit Company");
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
-        Nav.LocationChanged += HandleLocationChanged;
         await LoadStateAsync();
-    }
-
-    private void HandleLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
-    {
-        _ = InvokeAsync(async () =>
-        {
-            await LoadStateAsync();
-            StateHasChanged();
-        });
-    }
-
-    public void Dispose()
-    {
-        Nav.LocationChanged -= HandleLocationChanged;
     }
 
     private async Task LoadStateAsync()

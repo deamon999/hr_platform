@@ -78,9 +78,11 @@ public class JobApplicationServiceTests
     public async Task GetAllFilteredAsync_DriverFilter_ReturnsDriverApplications()
     {
         var db = GetDbContext();
+        db.Companies.Add(new Company { Id = 1, Name = "C1" });
+        db.Jobs.Add(new Job { Id = 10, Title = "T", CompanyId = 1 });
         db.JobApplications.AddRange(
-            new JobApplication { Id = 1, UserId = "user1", JobId = 10, Job = new Job { Id = 10 }, User = new ApplicationUser { Id = "user1" } },
-            new JobApplication { Id = 2, UserId = "user2", JobId = 10, Job = new Job { Id = 10 }, User = new ApplicationUser { Id = "user2" } }
+            new JobApplication { Id = 1, UserId = "user1", JobId = 10, User = new ApplicationUser { Id = "user1" } },
+            new JobApplication { Id = 2, UserId = "user2", JobId = 10, User = new ApplicationUser { Id = "user2" } }
         );
         await db.SaveChangesAsync();
 

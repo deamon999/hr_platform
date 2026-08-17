@@ -52,13 +52,24 @@
             }
         </select>
     </div>
-    <div class="d-flex align-items-center gap-2">
-        <span class="text-secondary small fw-medium text-nowrap d-none d-md-inline">Items per page:</span>
-        <select class="form-select shadow-sm" style="width: 75px;" @bind="PageSize" @bind:after="ResetPageAndLoad">
-            <option value="10">10</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
-        </select>
+    <div class="d-flex align-items-center gap-3">
+        @if (isAdmin)
+        {
+            <div class="form-check form-switch mb-0 d-flex align-items-center gap-2 admin-switch">
+                <input class="form-check-input mt-0 fs-5" type="checkbox" id="showAllLeadsSwitch" @bind="_showAllLeads" @bind:after="ResetPageAndLoad" style="cursor: pointer;">
+                <label class="form-check-label text-light small fw-bold text-nowrap mb-0" for="showAllLeadsSwitch" style="cursor: pointer; letter-spacing: 0.05em; color: #dfb155 !important;">
+                    <i class="bi bi-shield-lock-fill me-1"></i> ADMIN: SHOW ALL LEADS
+                </label>
+            </div>
+        }
+        <div class="d-flex align-items-center gap-2">
+            <span class="text-secondary small fw-medium text-nowrap d-none d-md-inline">Items per page:</span>
+            <select class="form-select shadow-sm" style="width: 75px;" @bind="PageSize" @bind:after="ResetPageAndLoad">
+                <option value="10">10</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+        </div>
     </div>
 </div>
 
@@ -247,6 +258,20 @@ else
     <InviteLeadModal Lead="inviteTargetLead" IsAdmin="isAdmin" ManagerCompanyId="userCompanyId" OnClose="CloseInviteModal" OnInvited="HandleInviteSent" />
 }
 
+<style>
+    .admin-switch .form-check-input {
+        background-color: #2b2d31;
+        border: 2px solid #dfb155;
+    }
+    .admin-switch .form-check-input:checked {
+        background-color: #dfb155;
+        border-color: #dfb155;
+    }
+    .admin-switch .form-check-input:focus {
+        box-shadow: 0 0 0 0.25rem rgba(223, 177, 85, 0.25);
+    }
+</style>
+
 @code {
     private List<Lead> pagedLeads = new();
     
@@ -259,6 +284,9 @@ else
 
     [SupplyParameterFromQuery(Name = "user")]
     public string? _filterUserId { get; set; }
+
+    [SupplyParameterFromQuery(Name = "all")]
+    public bool _showAllLeads { get; set; } = false;
 
     private List<ApplicationUser> _users = new();
     
@@ -322,7 +350,8 @@ else
         try
         {
             bool isActionable = _filterStatusStr == "Actionable";
-            var result = await LeadService.GetLeadsPagedAsync(currentPage, PageSize, userCompanyId, searchTerm, _filterStatus, _filterUserId, isActionable);
+            bool globalOnly = isAdmin && !_showAllLeads;
+            var result = await LeadService.GetLeadsPagedAsync(currentPage, PageSize, userCompanyId, searchTerm, _filterStatus, _filterUserId, isActionable, globalOnly);
             pagedLeads = result.Items.ToList();
             totalPages = result.TotalPages;
 
@@ -344,7 +373,8 @@ else
             ["size"] = PageSize == 10 ? null : PageSize,
             ["q"] = string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm,
             ["status"] = string.IsNullOrWhiteSpace(_filterStatusStr) ? null : _filterStatusStr,
-            ["user"] = string.IsNullOrWhiteSpace(_filterUserId) ? null : _filterUserId
+            ["user"] = string.IsNullOrWhiteSpace(_filterUserId) ? null : _filterUserId,
+            ["all"] = _showAllLeads ? true : null
         });
         await JSRuntime.InvokeVoidAsync("history.replaceState", null, "", uri);
         await LoadAsync(_searchTerm);
@@ -374,7 +404,8 @@ else
             ["size"] = PageSize,
             ["q"] = string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm,
             ["status"] = string.IsNullOrWhiteSpace(_filterStatusStr) ? null : _filterStatusStr,
-            ["user"] = string.IsNullOrWhiteSpace(_filterUserId) ? null : _filterUserId
+            ["user"] = string.IsNullOrWhiteSpace(_filterUserId) ? null : _filterUserId,
+            ["all"] = _showAllLeads ? true : null
         });
         Nav.NavigateTo(uri);
     }

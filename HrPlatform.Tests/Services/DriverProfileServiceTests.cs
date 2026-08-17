@@ -30,8 +30,8 @@ public class DriverProfileServiceTests
         {
             context.DriverProfiles.Add(new DriverProfile 
             { 
-                Id = 1, UserId = "user1", FirstName = "John", LastName = "Doe",
-                License = new DriverLicense { Id = 1, Class = CdlClass.A }
+                Id = 1, UserId = "user1", FirstName = "John", LastName = "Doe", Email = "j@d.com", PhoneNumber = "123",
+                License = new DriverLicense { Id = 1, Class = CdlClass.A, IssuingState="TX", LicenseNumber="1" }
             });
             await context.SaveChangesAsync();
         }
@@ -61,9 +61,9 @@ public class DriverProfileServiceTests
         using (var context = GetDbContext(dbName))
         {
             context.DriverProfiles.AddRange(
-                new DriverProfile { Id = 1, FirstName = "Alice", LastName = "Smith", YearsOfExperience = 5, License = new DriverLicense { Class = CdlClass.A } },
-                new DriverProfile { Id = 2, FirstName = "Bob", LastName = "Jones", YearsOfExperience = 2, License = new DriverLicense { Class = CdlClass.B } },
-                new DriverProfile { Id = 3, FirstName = "Charlie", LastName = "Brown", YearsOfExperience = 10, License = new DriverLicense { Class = CdlClass.A, Endorsements = new List<DriverLicenseEndorsement> { new DriverLicenseEndorsement { Endorsement = CdlEndorsement.Hazmat } } } }
+                new DriverProfile { Id = 1, UserId = "u1", Email = "a@a.com", PhoneNumber="1", FirstName = "Alice", LastName = "Smith", YearsOfExperience = 5, License = new DriverLicense { Class = CdlClass.A, IssuingState="TX", LicenseNumber="1" } },
+                new DriverProfile { Id = 2, UserId = "u2", Email = "b@a.com", PhoneNumber="2", FirstName = "Bob", LastName = "Jones", YearsOfExperience = 2, License = new DriverLicense { Class = CdlClass.B, IssuingState="TX", LicenseNumber="1" } },
+                new DriverProfile { Id = 3, UserId = "u3", Email = "c@a.com", PhoneNumber="3", FirstName = "Charlie", LastName = "Brown", YearsOfExperience = 10, License = new DriverLicense { Class = CdlClass.A, IssuingState="TX", LicenseNumber="1", Endorsements = new List<DriverLicenseEndorsement> { new DriverLicenseEndorsement { Endorsement = CdlEndorsement.Hazmat } } } }
             );
             await context.SaveChangesAsync();
         }
@@ -98,14 +98,14 @@ public class DriverProfileServiceTests
         {
             var user1 = new ApplicationUser { Id = "user1" };
             var user2 = new ApplicationUser { Id = "user2" };
-            var jobCompany1 = new Job { Id = 1, CompanyId = 1 };
+            var jobCompany1 = new Job { Id = 1, CompanyId = 1, Title = "Job" };
             
             context.Users.AddRange(user1, user2);
             context.Jobs.Add(jobCompany1);
 
             context.DriverProfiles.AddRange(
-                new DriverProfile { Id = 1, UserId = "user1", FirstName = "Applied", LastName = "One" },
-                new DriverProfile { Id = 2, UserId = "user2", FirstName = "DidNot", LastName = "Apply" }
+                new DriverProfile { Id = 1, UserId = "user1", FirstName = "Applied", LastName = "One", Email = "1@a.com", PhoneNumber = "1" },
+                new DriverProfile { Id = 2, UserId = "user2", FirstName = "DidNot", LastName = "Apply", Email = "2@a.com", PhoneNumber = "2" }
             );
 
             context.JobApplications.Add(new JobApplication { UserId = "user1", JobId = 1 });
@@ -130,7 +130,7 @@ public class DriverProfileServiceTests
         using (var context = GetDbContext(dbName))
         {
             var service = new DriverProfileService(context);
-            var result = await service.CreateAsync(new DriverProfile { FirstName = "New", LastName = "Driver", UserId = "user" });
+            var result = await service.CreateAsync(new DriverProfile { FirstName = "New", LastName = "Driver", UserId = "user", Email="e@e.com", PhoneNumber="1" });
             Assert.NotEqual(0, result.Id);
         }
         
@@ -146,17 +146,17 @@ public class DriverProfileServiceTests
         var dbName = Guid.NewGuid().ToString();
         using (var context = GetDbContext(dbName))
         {
-            context.DriverProfiles.Add(new DriverProfile { Id = 1, UserId = "owner" });
+            context.DriverProfiles.Add(new DriverProfile { Id = 1, UserId = "owner", FirstName = "F", LastName = "L", Email = "e@e.com", PhoneNumber = "1" });
             await context.SaveChangesAsync();
         }
 
         using (var context = GetDbContext(dbName))
         {
             var service = new DriverProfileService(context);
-            var profile = new DriverProfile { Id = 1, UserId = "hacker" };
+            var profile = new DriverProfile { Id = 1, UserId = "hacker", FirstName = "F", LastName = "L", Email = "e@e.com", PhoneNumber = "1" };
             
             await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.UpdateAsync(profile, "hacker"));
-            await Assert.ThrowsAsync<InvalidOperationException>(() => service.UpdateAsync(new DriverProfile { Id = 99 }, "owner"));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => service.UpdateAsync(new DriverProfile { Id = 99, UserId = "owner", FirstName = "F", LastName = "L", Email = "e@e.com", PhoneNumber = "1" }, "owner"));
         }
     }
 
@@ -168,10 +168,10 @@ public class DriverProfileServiceTests
         {
             context.DriverProfiles.Add(new DriverProfile 
             { 
-                Id = 1, UserId = "owner",
+                Id = 1, UserId = "owner", FirstName = "F", LastName = "L", Email = "e@e.com", PhoneNumber = "1",
                 EmploymentHistory = new List<DriverEmployment> 
                 {
-                    new DriverEmployment { Id = 1, CompanyName = "Old Job" }
+                    new DriverEmployment { Id = 1, CompanyName = "Old Job", JobTitle = "Driver" }
                 }
             });
             await context.SaveChangesAsync();
@@ -184,12 +184,12 @@ public class DriverProfileServiceTests
             var updateProfile = new DriverProfile 
             { 
                 Id = 1, UserId = "owner",
-                FirstName = "Updated",
+                FirstName = "Updated", LastName = "L", Email = "e@e.com", PhoneNumber = "1",
                 EmploymentHistory = new List<DriverEmployment>
                 {
                     // Adding a new job, old job should be deleted
-                    new DriverEmployment { Id = 0, CompanyName = "New Job" },
-                    new DriverEmployment { Id = 0, CompanyName = "" } // Should be pruned
+                    new DriverEmployment { Id = 0, CompanyName = "New Job", JobTitle = "Driver" },
+                    new DriverEmployment { Id = 0, CompanyName = "", JobTitle = "" } // Should be pruned
                 }
             };
 
@@ -211,7 +211,7 @@ public class DriverProfileServiceTests
         var dbName = Guid.NewGuid().ToString();
         using (var context = GetDbContext(dbName))
         {
-            context.DriverProfiles.Add(new DriverProfile { Id = 1, UserId = "owner" });
+            context.DriverProfiles.Add(new DriverProfile { Id = 1, UserId = "owner", FirstName="F", LastName="L", Email="e", PhoneNumber="1" });
             await context.SaveChangesAsync();
         }
 
@@ -228,8 +228,8 @@ public class DriverProfileServiceTests
         var dbName = Guid.NewGuid().ToString();
         using (var context = GetDbContext(dbName))
         {
-            context.DriverProfiles.Add(new DriverProfile { Id = 1, UserId = "owner" });
-            context.DriverProfiles.Add(new DriverProfile { Id = 2, UserId = "owner" });
+            context.DriverProfiles.Add(new DriverProfile { Id = 1, UserId = "owner", FirstName="F", LastName="L", Email="e", PhoneNumber="1" });
+            context.DriverProfiles.Add(new DriverProfile { Id = 2, UserId = "owner", FirstName="F", LastName="L", Email="e", PhoneNumber="1" });
             await context.SaveChangesAsync();
         }
 

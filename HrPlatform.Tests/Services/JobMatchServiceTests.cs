@@ -20,6 +20,7 @@ public class JobMatchServiceTests
     {
         var job = new Job
         {
+            Title = "T",
             RequiredCdlClass = CdlClass.A,
             RequiredEndorsements = new List<CdlEndorsement> { CdlEndorsement.Hazmat, CdlEndorsement.Tanker },
             MinYearsExperience = 5,
@@ -33,9 +34,10 @@ public class JobMatchServiceTests
 
         var profile = new DriverProfile
         {
+            UserId="1", FirstName="F", LastName="L", PhoneNumber="1", Email="e@e.com",
             License = new DriverLicense
             {
-                Class = CdlClass.A,
+                Class = CdlClass.A, IssuingState="TX", LicenseNumber="1",
                 Endorsements = new List<DriverLicenseEndorsement> 
                 { 
                     new() { Endorsement = CdlEndorsement.Hazmat }, 
@@ -68,8 +70,8 @@ public class JobMatchServiceTests
     [Fact]
     public void ComputeScore_NoRequirements_Returns100()
     {
-        var job = new Job();
-        var profile = new DriverProfile();
+        var job = new Job { Title = "T" };
+        var profile = new DriverProfile { UserId="1", FirstName="F", LastName="L", PhoneNumber="1", Email="e@e.com" };
 
         var score = _service.ComputeScore(profile, job);
 
@@ -81,6 +83,7 @@ public class JobMatchServiceTests
     {
         var job = new Job
         {
+            Title = "T",
             RequiredCdlClass = CdlClass.A, 
             MinYearsExperience = 10, 
             RequiredTrailerType = TrailerType.Flatbed 
@@ -88,7 +91,8 @@ public class JobMatchServiceTests
 
         var profile = new DriverProfile
         {
-            License = new DriverLicense { Class = CdlClass.B }, 
+            UserId="1", FirstName="F", LastName="L", PhoneNumber="1", Email="e@e.com",
+            License = new DriverLicense { Class = CdlClass.B, IssuingState="TX", LicenseNumber="1" }, 
             YearsOfExperience = 5, 
             EmploymentHistory = new List<DriverEmployment>
             {

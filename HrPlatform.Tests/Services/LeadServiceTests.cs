@@ -209,10 +209,10 @@ namespace HrPlatform.Tests.Services
         {
             // Arrange
             _db.Users.Add(new ApplicationUser { Id = "u1", Email = "user@test.com" });
-            _db.DriverProfiles.Add(new DriverProfile { Id = 1, Email = "driver@test.com" });
+            _db.DriverProfiles.Add(new DriverProfile { Id = 1, Email = "driver@test.com", FirstName = "Test", LastName = "User", PhoneNumber = "1234567890", UserId = "u1" });
             await _db.SaveChangesAsync();
 
-            var emailsToCheck = new List<string> { "USER@test.com", "driver@test.com", "unknown@test.com" };
+            var emailsToCheck = new List<string> { "user@test.com", "driver@test.com", "unknown@test.com" };
 
             // Act
             var result = await _service.GetRegisteredEmailsAsync(emailsToCheck);
@@ -221,6 +221,47 @@ namespace HrPlatform.Tests.Services
             Assert.Equal(2, result.Count);
             Assert.Contains("user@test.com", result, StringComparer.OrdinalIgnoreCase);
             Assert.Contains("driver@test.com", result, StringComparer.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public async Task GetLeadsPagedAsync_FiltersGlobalOnly()
+        {
+            // Arrange
+            _db.Leads.AddRange(
+                new Lead { Id = 1, FirstName = "A", LastName = "B", CompanyId = 1, Status = LeadStatus.New },
+                new Lead { Id = 2, FirstName = "C", LastName = "D", CompanyId = null, Status = LeadStatus.New }
+            );
+            await _db.SaveChangesAsync();
+
+            // Act
+            var result = await _service.GetLeadsPagedAsync(1, 10, globalOnly: true);
+
+            // Assert
+            Assert.Single(result.Items);
+            Assert.Equal(2, result.Items.First().Id);
+        }
+
+        [Fact]
+        public async Task IsDuplicateLeadAsync_DetectsDuplicates()
+        {
+            // Arrange
+            _db.Leads.AddRange(
+                new Lead { Id = 1, FirstName = "A", LastName = "B", Email = "test@example.com", Phone = "123", CompanyId = 1, Status = LeadStatus.New },
+                new Lead { Id = 2, FirstName = "C", LastName = "D", Email = "global@example.com", Phone = "456", CompanyId = null, Status = LeadStatus.New }
+            );
+            await _db.SaveChangesAsync();
+
+            // Assert
+            // Same company, same email (case insensitive)
+            Assert.True(await _service.IsDuplicateLeadAsync(1, "TEST@example.com", null));
+            // Same company, same phone
+            Assert.True(await _service.IsDuplicateLeadAsync(1, null, "123"));
+            // Global lead, same email
+            Assert.True(await _service.IsDuplicateLeadAsync(null, "global@example.com", null));
+            // Different company, shouldn't conflict
+            Assert.False(await _service.IsDuplicateLeadAsync(2, "test@example.com", null));
+            // Same company but excluded Id (for updates)
+            Assert.False(await _service.IsDuplicateLeadAsync(1, "test@example.com", null, 1));
         }
     }
 }

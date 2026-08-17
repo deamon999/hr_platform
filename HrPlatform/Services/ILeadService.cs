@@ -7,7 +7,7 @@ namespace HrPlatform.Services;
 
 public interface ILeadService
 {
-    Task<PaginationResult<Lead>> GetLeadsPagedAsync(int pageNumber, int pageSize, int? companyId = null, string? searchTerm = null, LeadStatus? status = null, string? addedByUserId = null, bool actionableOnly = false);
+    Task<PaginationResult<Lead>> GetLeadsPagedAsync(int pageNumber, int pageSize, int? companyId = null, string? searchTerm = null, LeadStatus? status = null, string? addedByUserId = null, bool actionableOnly = false, bool globalOnly = false);
     Task<Lead?> GetByIdAsync(int id);
     Task<Lead> CreateAsync(Lead lead);
     Task UpdateAsync(Lead lead);
@@ -15,4 +15,5 @@ public interface ILeadService
     Task<List<Lead>> GetActionableRemindersAsync(int? companyId);
     Task<List<ApplicationUser>> GetUsersWithLeadsAsync(int? companyId);
     Task<HashSet<string>> GetRegisteredEmailsAsync(IEnumerable<string> emails);
+    Task<bool> IsDuplicateLeadAsync(int? companyId, string? email, string? phone, int? excludeLeadId = null);
 }

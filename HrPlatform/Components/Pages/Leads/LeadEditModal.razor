@@ -113,6 +113,18 @@
         _errorMessage = "";
         try
         {
+            bool isDuplicate = await LeadService.IsDuplicateLeadAsync(
+                editModel.CompanyId, 
+                editModel.Email, 
+                editModel.Phone, 
+                editModel.Id > 0 ? editModel.Id : null);
+
+            if (isDuplicate)
+            {
+                _errorMessage = "A lead with this email or phone number already exists.";
+                return;
+            }
+
             if (editModel.Id == 0)
             {
                 await LeadService.CreateAsync(editModel);
@@ -131,6 +143,10 @@
                 }
                 await OnLeadSaved.InvokeAsync(false);
             }
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            _errorMessage = "A lead with this email or phone number already exists.";
         }
         catch (Exception ex)
         {

@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using HrPlatform.Data;
 using HrPlatform.Data.Entities;
 using HrPlatform.Services;
+using HrPlatform.Data.Models;
+using HrPlatform.Data.Enums;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
@@ -35,10 +37,13 @@ namespace HrPlatform.Tests.Services
         {
             // Arrange
             int leadId = 1;
+            _db.Users.Add(new ApplicationUser { Id = "1" });
+            _db.Leads.Add(new Lead { Id = 1, CompanyId = 1, Email = "a@a.com", FirstName = "A", LastName = "B", Phone = "1", Status = LeadStatus.New });
+            _db.Leads.Add(new Lead { Id = 2, CompanyId = 1, Email = "b@a.com", FirstName = "C", LastName = "D", Phone = "2", Status = LeadStatus.New });
             _db.LeadNotes.AddRange(
-                new LeadNote { Id = 1, LeadId = leadId, Timestamp = DateTime.UtcNow.AddMinutes(-10), Content = "Old" },
-                new LeadNote { Id = 2, LeadId = leadId, Timestamp = DateTime.UtcNow, Content = "New" },
-                new LeadNote { Id = 3, LeadId = 2, Timestamp = DateTime.UtcNow, Content = "Other Lead" }
+                new LeadNote { Id = 1, LeadId = leadId, Timestamp = DateTime.UtcNow.AddMinutes(-10), Content = "Old", AuthorUserId = "1" },
+                new LeadNote { Id = 2, LeadId = leadId, Timestamp = DateTime.UtcNow, Content = "New", AuthorUserId = "1" },
+                new LeadNote { Id = 3, LeadId = 2, Timestamp = DateTime.UtcNow, Content = "Other Lead", AuthorUserId = "1" }
             );
             await _db.SaveChangesAsync();
 
@@ -55,7 +60,7 @@ namespace HrPlatform.Tests.Services
         public async Task CreateAsync_AddsNoteAndReturnsIt()
         {
             // Arrange
-            var note = new LeadNote { LeadId = 1, Content = "Test" };
+            var note = new LeadNote { LeadId = 1, Content = "Test", AuthorUserId = "1" };
 
             // Act
             var result = await _service.CreateAsync(note);
@@ -70,7 +75,7 @@ namespace HrPlatform.Tests.Services
         public async Task UpdateAsync_UpdatesNoteAndSetsIsEdited()
         {
             // Arrange
-            var note = new LeadNote { Id = 1, LeadId = 1, Content = "Original", IsEdited = false };
+            var note = new LeadNote { Id = 1, LeadId = 1, Content = "Original", IsEdited = false, AuthorUserId = "1" };
             _db.LeadNotes.Add(note);
             await _db.SaveChangesAsync();
 
@@ -89,7 +94,7 @@ namespace HrPlatform.Tests.Services
         public async Task DeleteAsync_DeletesExistingNote()
         {
             // Arrange
-            var note = new LeadNote { Id = 1, LeadId = 1, Content = "Test" };
+            var note = new LeadNote { Id = 1, LeadId = 1, Content = "Test", AuthorUserId = "1" };
             _db.LeadNotes.Add(note);
             await _db.SaveChangesAsync();
 
@@ -104,7 +109,7 @@ namespace HrPlatform.Tests.Services
         public async Task DeleteAsync_DoesNothingIfNoteNotFound()
         {
             // Arrange
-            var note = new LeadNote { Id = 1, LeadId = 1, Content = "Test" };
+            var note = new LeadNote { Id = 1, LeadId = 1, Content = "Test", AuthorUserId = "1" };
             _db.LeadNotes.Add(note);
             await _db.SaveChangesAsync();
 

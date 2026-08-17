@@ -28,9 +28,9 @@ namespace HrPlatform.Tests.Services
             // Arrange
             using var context = new ApplicationDbContext(_options);
             
-            context.DriverProfiles.Add(new DriverProfile { Id = 1, UserId = "1" });
-            context.Jobs.Add(new Job { Id = 1, IsActive = true, CompanyId = 1 });
-            context.JobApplications.Add(new JobApplication { Id = 1, Status = ApplicationStatus.Pending, AppliedAt = DateTime.UtcNow });
+            context.DriverProfiles.Add(new DriverProfile { Id = 1, UserId = "1", FirstName = "F", LastName = "L", PhoneNumber = "1", Email = "e@e.com" });
+            context.Jobs.Add(new Job { Id = 1, IsActive = true, CompanyId = 1, Title = "T" });
+            context.JobApplications.Add(new JobApplication { Id = 1, Status = ApplicationStatus.Pending, AppliedAt = DateTime.UtcNow, UserId = "1", JobId = 1 });
             
             await context.SaveChangesAsync();
 
@@ -53,8 +53,8 @@ namespace HrPlatform.Tests.Services
             // Arrange
             using var context = new ApplicationDbContext(_options);
             
-            context.Jobs.Add(new Job { Id = 1, IsActive = true, CompanyId = 1 }); // Belongs to company 1
-            context.Jobs.Add(new Job { Id = 2, IsActive = true, CompanyId = 2 }); // Belongs to company 2
+            context.Jobs.Add(new Job { Id = 1, IsActive = true, CompanyId = 1, Title = "T" }); // Belongs to company 1
+            context.Jobs.Add(new Job { Id = 2, IsActive = true, CompanyId = 2, Title = "T" }); // Belongs to company 2
             
             context.JobApplications.Add(new JobApplication { Id = 1, JobId = 1, Status = ApplicationStatus.Pending, AppliedAt = DateTime.UtcNow, UserId = "user1" });
             

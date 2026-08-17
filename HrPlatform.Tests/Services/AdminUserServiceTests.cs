@@ -74,7 +74,7 @@ namespace HrPlatform.Tests.Services
             context.Users.Add(user);
             
             context.Invitations.Add(new Data.Entities.Invitation { Email = "test@example.com" });
-            context.DriverProfiles.Add(new Data.Models.DriverProfile { UserId = "user1" });
+            context.DriverProfiles.Add(new Data.Models.DriverProfile { UserId = "user1", FirstName = "Test", LastName = "User", PhoneNumber = "123", Email = "test@example.com" });
             await context.SaveChangesAsync();
 
             var mockUserManager = GetMockUserManager();
@@ -96,7 +96,7 @@ namespace HrPlatform.Tests.Services
             using var context = new ApplicationDbContext(_options);
             var user = new ApplicationUser { Id = "user1" };
             context.Users.Add(user);
-            context.DriverProfiles.Add(new Data.Models.DriverProfile { UserId = "user1" });
+            context.DriverProfiles.Add(new Data.Models.DriverProfile { UserId = "user1", FirstName = "Test", LastName = "User", PhoneNumber = "123", Email = "test@example.com" });
             await context.SaveChangesAsync();
 
             var mockUserManager = GetMockUserManager();

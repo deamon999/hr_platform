@@ -30,32 +30,28 @@ public class EmailService : IEmailService
     public async Task SendEmailAsync(string email, string? userName,
         string subject, string htmlContent)
     {
-        using var client = new SmtpClient();
-        await client.ConnectAsync(_host, _port, SecureSocketOptions.StartTls);
-        await client.AuthenticateAsync(_username, _password);
-
-        var mimeMessage = new MimeMessage();
-        mimeMessage.From.Add(new MailboxAddress(_fromName, _fromEmail));
-        if (string.IsNullOrEmpty(userName))
-            mimeMessage.To.Add(new MailboxAddress("Guest", email));
-        else
-            mimeMessage.To.Add(new MailboxAddress(userName, email));
-        mimeMessage.Subject = subject;
-        mimeMessage.Body = new TextPart("html") { Text = htmlContent };
-
-
         try
         {
+            using var client = new SmtpClient();
+            await client.ConnectAsync(_host, _port, SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync(_username, _password);
+
+            var mimeMessage = new MimeMessage();
+            mimeMessage.From.Add(new MailboxAddress(_fromName, _fromEmail));
+            if (string.IsNullOrEmpty(userName))
+                mimeMessage.To.Add(new MailboxAddress("Guest", email));
+            else
+                mimeMessage.To.Add(new MailboxAddress(userName, email));
+            mimeMessage.Subject = subject;
+            mimeMessage.Body = new TextPart("html") { Text = htmlContent };
+
             await client.SendAsync(mimeMessage);
+            client.Disconnect(true);
             Console.WriteLine($"Successfully sent email to {email}");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error sending email to {email}: {ex.Message}");
-        }
-        finally
-        {
-            client.Disconnect(true);
         }
     }
 }

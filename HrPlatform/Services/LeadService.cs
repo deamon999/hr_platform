@@ -16,11 +16,15 @@ public class LeadService : ILeadService
         _db = db;
     }
 
-    public async Task<PaginationResult<Lead>> GetLeadsPagedAsync(int pageNumber, int pageSize, int? companyId = null, string? searchTerm = null, LeadStatus? status = null, string? addedByUserId = null, bool actionableOnly = false)
+    public async Task<PaginationResult<Lead>> GetLeadsPagedAsync(int pageNumber, int pageSize, int? companyId = null, string? searchTerm = null, LeadStatus? status = null, string? addedByUserId = null, bool actionableOnly = false, bool globalOnly = false)
     {
         var query = _db.Leads.Include(l => l.AddedByUser).Include(l => l.Notes).AsQueryable();
 
-        if (companyId.HasValue)
+        if (globalOnly)
+        {
+            query = query.Where(l => l.CompanyId == null);
+        }
+        else if (companyId.HasValue)
         {
             query = query.Where(l => l.CompanyId == companyId.Value);
         }
@@ -142,5 +146,48 @@ public class LeadService : ILeadService
         foreach (var e in driverEmails) if (e != null) set.Add(e);
 
         return set;
+    }
+
+    public async Task<bool> IsDuplicateLeadAsync(int? companyId, string? email, string? phone, int? excludeLeadId = null)
+    {
+        if (string.IsNullOrWhiteSpace(email) && string.IsNullOrWhiteSpace(phone))
+            return false;
+
+        var query = _db.Leads.AsQueryable();
+
+        if (companyId.HasValue)
+        {
+            query = query.Where(l => l.CompanyId == companyId.Value);
+        }
+        else
+        {
+            query = query.Where(l => l.CompanyId == null);
+        }
+
+        if (excludeLeadId.HasValue && excludeLeadId.Value > 0)
+        {
+            query = query.Where(l => l.Id != excludeLeadId.Value);
+        }
+
+        var e = email?.Trim().ToLower();
+        var p = phone?.Trim();
+
+        var hasEmail = !string.IsNullOrWhiteSpace(e);
+        var hasPhone = !string.IsNullOrWhiteSpace(p);
+
+        if (hasEmail && hasPhone)
+        {
+            return await query.AnyAsync(l => (l.Email != null && l.Email.ToLower() == e) || (l.Phone != null && l.Phone == p));
+        }
+        else if (hasEmail)
+        {
+            return await query.AnyAsync(l => l.Email != null && l.Email.ToLower() == e);
+        }
+        else if (hasPhone)
+        {
+            return await query.AnyAsync(l => l.Phone != null && l.Phone == p);
+        }
+
+        return false;
     }
 }
