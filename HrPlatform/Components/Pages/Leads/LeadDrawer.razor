@@ -147,7 +147,7 @@
                                     <div class="d-flex justify-content-between mb-2 align-items-center">
                                         <span class="fw-bold small">@(note.AuthorUser?.FirstName ?? note.AuthorUser?.UserName ?? "User")</span>
                                         <div class="d-flex align-items-center gap-2">
-                                            <span class="text-secondary small" style="font-size: 0.75rem;">@note.Timestamp.ToString("MMM dd, h:mm tt")</span>
+                                            <span class="text-secondary small" style="font-size: 0.75rem;">@note.Timestamp.ToLocalTime().ToString("MMM dd, h:mm tt")</span>
                                             @if (note.AuthorUserId == currentUserId || isAdmin)
                                             {
                                                 <button class="btn btn-sm btn-link text-secondary p-0 border-0" @onclick="() => EditNote(note)"><i class="bi bi-pencil small"></i></button>

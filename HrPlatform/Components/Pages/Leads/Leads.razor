@@ -181,7 +181,7 @@ else
                             </div>
                             
                             <div class="text-lg-end mt-auto pt-2 pt-lg-0 border-top border-secondary border-lg-0 w-100">
-                                <div class="small text-secondary">Added @lead.CreatedAt.ToString("MMM dd, yyyy")</div>
+                                <div class="small text-secondary">Added @lead.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</div>
                                 @if(lead.AddedByUser != null)
                                 {
                                     <div class="small text-secondary mt-1">by @lead.AddedByUser.Email</div>

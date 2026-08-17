@@ -75,10 +75,10 @@ else
                                     </div>
 
                                     <div class="d-flex flex-wrap gap-2 text-secondary small">
-                                        <span class="badge bg-light text-dark rounded-pill px-3 py-2 border"><i class="bi bi-calendar-event me-1"></i> Invited: @inv.CreatedAt.ToString("MMM dd, yyyy")</span>
+                                        <span class="badge bg-light text-dark rounded-pill px-3 py-2 border"><i class="bi bi-calendar-event me-1"></i> Invited: @inv.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</span>
                                         @if (inv.ReviewedAt.HasValue)
                                         {
-                                            <span class="badge bg-light text-dark rounded-pill px-3 py-2 border"><i class="bi bi-reply me-1"></i> Responded: @inv.ReviewedAt.Value.ToString("MMM dd, yyyy")</span>
+                                            <span class="badge bg-light text-dark rounded-pill px-3 py-2 border"><i class="bi bi-reply me-1"></i> Responded: @inv.ReviewedAt.Value.ToLocalTime().ToString("MMM dd, yyyy")</span>
                                         }
                                     </div>
                                 </div>
