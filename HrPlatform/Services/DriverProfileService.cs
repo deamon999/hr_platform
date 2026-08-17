@@ -16,8 +16,8 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
             .Include(p => p.User)
             .ThenInclude(u => u!.Applications);
 
-        // Availability status removed from DriverProfile temporarily
-
+        if (profileSearch.Availability.HasValue)
+            q = q.Where(p => p.AvailabilityStatus == profileSearch.Availability.Value);
         // Name search
         if (!string.IsNullOrWhiteSpace(profileSearch.Name))
             q = q.Where(p =>

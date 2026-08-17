@@ -268,7 +268,14 @@
 
     private async Task GoToInvitations()
     {
-        await JSRuntime.InvokeVoidAsync("history.back");
+        if (Id.HasValue)
+        {
+            await JSRuntime.InvokeVoidAsync("history.back");
+        }
+        else
+        {
+            Nav.NavigateTo("/users?tab=invitations");
+        }
     }
 
 }

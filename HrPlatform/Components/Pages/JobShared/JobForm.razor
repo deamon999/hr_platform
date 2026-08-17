@@ -3,193 +3,179 @@
 @using HrPlatform.Utils
 
 <div class="row g-4">
-    <!-- Basic Information Card -->
+    <!-- Basic Information Section -->
     <div class="col-12">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-white border-bottom">
-                <h5 class="mb-0 fw-bold">Basic Information</h5>
+        <h5 class="section-title mb-3"><i class="bi bi-info-circle me-2"></i>Basic Information</h5>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label fw-medium small text-uppercase">Job Title <span class="text-danger">*</span></label>
+                <InputText class="form-control dark-input" @bind-Value="Job.Title" placeholder="e.g. OTR Long Haul CDL-A Driver" />
+                <ValidationMessage For="() => Job.Title" class="text-danger small mt-1" />
             </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label fw-medium text-secondary small text-uppercase">Job Title <span class="text-danger">*</span></label>
-                        <InputText class="form-control bg-light border-0 shadow-sm" @bind-Value="Job.Title" placeholder="e.g. OTR Long Haul CDL-A Driver" />
-                        <ValidationMessage For="() => Job.Title" class="text-danger small mt-1" />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-medium text-secondary small text-uppercase">Company <span class="text-danger">*</span></label>
-                        <InputSelect class="form-select bg-light border-0 shadow-sm" @bind-Value="Job.CompanyId" disabled="@IsCompanySelectionDisabled">
-                            <option value="">-- select company --</option>
-                            @if (Companies != null)
-                            {
-                                @foreach (var c in Companies)
-                                {
-                                    <option value="@c.Id">@c.Name</option>
-                                }
-                            }
-                        </InputSelect>
-                        <ValidationMessage For="() => Job.CompanyId" class="text-danger small mt-1" />
-                    </div>
+            <div class="col-md-6">
+                <label class="form-label fw-medium small text-uppercase">Company <span class="text-danger">*</span></label>
+                <InputSelect class="form-select dark-input" @bind-Value="Job.CompanyId" disabled="@IsCompanySelectionDisabled">
+                    <option value="">-- select company --</option>
+                    @if (Companies != null)
+                    {
+                        @foreach (var c in Companies)
+                        {
+                            <option value="@c.Id">@c.Name</option>
+                        }
+                    }
+                </InputSelect>
+                <ValidationMessage For="() => Job.CompanyId" class="text-danger small mt-1" />
+            </div>
 
-                    <div class="col-md-5">
-                        <label class="form-label fw-medium text-secondary small text-uppercase">City</label>
-                        <InputText class="form-control bg-light border-0 shadow-sm" @bind-Value="Job.City" placeholder="e.g. Dallas" />
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-medium text-secondary small text-uppercase">State</label>
-                        <InputText class="form-control bg-light border-0 shadow-sm" @bind-Value="Job.State" placeholder="e.g. TX" />
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fw-medium text-secondary small text-uppercase">Zip Code</label>
-                        <InputText class="form-control bg-light border-0 shadow-sm" @bind-Value="Job.ZipCode" placeholder="e.g. 75201" />
-                    </div>
+            <div class="col-md-5">
+                <label class="form-label fw-medium small text-uppercase">City</label>
+                <InputText class="form-control dark-input" @bind-Value="Job.City" placeholder="e.g. Dallas" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-medium small text-uppercase">State</label>
+                <InputText class="form-control dark-input" @bind-Value="Job.State" placeholder="e.g. TX" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-medium small text-uppercase">Zip Code</label>
+                <InputText class="form-control dark-input" @bind-Value="Job.ZipCode" placeholder="e.g. 75201" />
+            </div>
 
-                    <div class="col-12">
-                        <label class="form-label fw-medium text-secondary small text-uppercase">Job Description</label>
-                        <InputTextArea class="form-control bg-light border-0 shadow-sm" rows="6" @bind-Value="Job.Description" placeholder="Describe responsibilities, routes, and day-to-day expectations..." />
-                    </div>
-                </div>
+            <div class="col-12">
+                <label class="form-label fw-medium small text-uppercase">Job Description</label>
+                <InputTextArea class="form-control dark-input" rows="6" @bind-Value="Job.Description" placeholder="Describe responsibilities, routes, and day-to-day expectations..." />
             </div>
         </div>
     </div>
 
-    <!-- Compensation & Benefits Card -->
+    <hr class="my-4 border-secondary opacity-25" />
+    <!-- Compensation & Benefits Section -->
     <div class="col-12">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-white border-bottom">
-                <h5 class="mb-0 fw-bold">Compensation & Benefits</h5>
+        <h5 class="section-title mb-3"><i class="bi bi-cash-stack me-2"></i>Compensation & Benefits</h5>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label fw-medium small text-uppercase">Pay Type</label>
+                <InputSelect TValue="PayPeriod?" class="form-select dark-input" @bind-Value="Job.PayPeriod">
+                    <option value="">-- select --</option>
+                    <option value="@PayPeriod.Mile">Cents Per Mile (CPM)</option>
+                    <option value="@PayPeriod.PercentageOfLoad">Percentage of Load</option>
+                    <option value="@PayPeriod.Hour">Hourly</option>
+                    <option value="@PayPeriod.Week">Weekly Salary</option>
+                    <option value="@PayPeriod.Month">Monthly Salary</option>
+                    <option value="@PayPeriod.Year">Annual Salary</option>
+                </InputSelect>
             </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label fw-medium text-secondary small text-uppercase">Pay Type</label>
-                        <InputSelect TValue="PayPeriod?" class="form-select bg-light border-0 shadow-sm" @bind-Value="Job.PayPeriod">
-                            <option value="">-- select --</option>
-                            <option value="@PayPeriod.Mile">Cents Per Mile (CPM)</option>
-                            <option value="@PayPeriod.PercentageOfLoad">Percentage of Load</option>
-                            <option value="@PayPeriod.Hour">Hourly</option>
-                            <option value="@PayPeriod.Week">Weekly Salary</option>
-                            <option value="@PayPeriod.Month">Monthly Salary</option>
-                            <option value="@PayPeriod.Year">Annual Salary</option>
-                        </InputSelect>
-                    </div>
                     
-                    <div class="col-md-4">
-                        <label class="form-label fw-medium text-secondary small text-uppercase">Pay Amount</label>
-                        <div class="input-group shadow-sm rounded-pill overflow-hidden">
-                            @if (Job.PayPeriod != PayPeriod.Mile && Job.PayPeriod != PayPeriod.PercentageOfLoad && Job.PayPeriod != null)
-                            {
-                                <span class="input-group-text bg-light border-0">$</span>
-                            }
+            <div class="col-md-4">
+                <label class="form-label fw-medium small text-uppercase">Pay Amount</label>
+                <div class="input-group overflow-hidden">
+                    @if (Job.PayPeriod != PayPeriod.Mile && Job.PayPeriod != PayPeriod.PercentageOfLoad && Job.PayPeriod != null)
+                    {
+                        <span class="input-group-text dark-addon">$</span>
+                    }
+                    
+                    <InputNumber TValue="decimal?" class="form-control dark-input" @bind-Value="Job.PayRate" placeholder="@(Job.PayPeriod == PayPeriod.Mile ? "e.g. 70" : "0.00")" />
                             
-                            <InputNumber TValue="decimal?" class="form-control bg-light border-0" @bind-Value="Job.PayRate" placeholder="@(Job.PayPeriod == PayPeriod.Mile ? "e.g. 70" : "0.00")" />
-                            
-                            @if (Job.PayPeriod == PayPeriod.PercentageOfLoad)
-                            {
-                                <span class="input-group-text bg-light border-0">%</span>
-                            }
-                            else if (Job.PayPeriod == PayPeriod.Mile)
-                            {
-                                <span class="input-group-text bg-light border-0">CPM</span>
-                            }
-                            else if (Job.PayPeriod == PayPeriod.Hour)
-                            {
-                                <span class="input-group-text bg-light border-0">/ hr</span>
-                            }
-                            else if (Job.PayPeriod == PayPeriod.Week)
-                            {
-                                <span class="input-group-text bg-light border-0">/ wk</span>
-                            }
-                            else if (Job.PayPeriod == PayPeriod.Month)
-                            {
-                                <span class="input-group-text bg-light border-0">/ mo</span>
-                            }
-                            else if (Job.PayPeriod == PayPeriod.Year)
-                            {
-                                <span class="input-group-text bg-light border-0">/ yr</span>
-                            }
-                        </div>
-                    </div>
-
-                    <div class="col-md-5">
-                        <label class="form-label fw-medium text-secondary small text-uppercase">Sign-On Bonus</label>
-                        <div class="input-group shadow-sm rounded-pill overflow-hidden">
-                            <span class="input-group-text bg-light border-0">$</span>
-                            <InputNumber TValue="decimal?" class="form-control bg-light border-0" @bind-Value="Job.SignOnBonus" placeholder="e.g. 5000" />
-                        </div>
-                    </div>
-
-                    <div class="col-md-3">
-                        <label class="form-label fw-medium text-secondary small text-uppercase">Employment Type</label>
-                        <InputSelect TValue="EmploymentType?" class="form-select bg-light border-0 shadow-sm" @bind-Value="Job.EmploymentType">
-                            <option value="">Any</option>
-                            @foreach (var t in Enum.GetValues<EmploymentType>())
-                            {
-                                <option value="@t">@t.GetDescriptionValue()</option>
-                            }
-                        </InputSelect>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold text-secondary small text-uppercase">Route Type</label>
-                        <InputSelect TValue="RouteType?" class="form-select bg-light border-0 shadow-sm" @bind-Value="Job.RouteType">
-                            <option value="">-- Any --</option>
-                            @foreach (var rt in Enum.GetValues<RouteType>())
-                            {
-                                <option value="@rt">@rt.ToString()</option>
-                            }
-                        </InputSelect>
-                    </div>
-
-                    <div class="col-md-5">
-                        <label class="form-label fw-medium text-secondary small text-uppercase">Additional Pay Notes</label>
-                        <InputText class="form-control bg-light border-0 shadow-sm" @bind-Value="Job.PayNotes" placeholder="e.g. + Safety bonus, full benefits" />
-                    </div>
+                    @if (Job.PayPeriod == PayPeriod.PercentageOfLoad)
+                    {
+                        <span class="input-group-text dark-addon">%</span>
+                    }
+                    else if (Job.PayPeriod == PayPeriod.Mile)
+                    {
+                        <span class="input-group-text dark-addon">CPM</span>
+                    }
+                    else if (Job.PayPeriod == PayPeriod.Hour)
+                    {
+                        <span class="input-group-text dark-addon">/ hr</span>
+                    }
+                    else if (Job.PayPeriod == PayPeriod.Week)
+                    {
+                        <span class="input-group-text dark-addon">/ wk</span>
+                    }
+                    else if (Job.PayPeriod == PayPeriod.Month)
+                    {
+                        <span class="input-group-text dark-addon">/ mo</span>
+                    }
+                    else if (Job.PayPeriod == PayPeriod.Year)
+                    {
+                        <span class="input-group-text dark-addon">/ yr</span>
+                    }
                 </div>
+            </div>
+
+            <div class="col-md-5">
+                <label class="form-label fw-medium small text-uppercase">Sign-On Bonus</label>
+                <div class="input-group overflow-hidden">
+                    <span class="input-group-text dark-addon">$</span>
+                    <InputNumber TValue="decimal?" class="form-control dark-input" @bind-Value="Job.SignOnBonus" placeholder="e.g. 5000" />
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label fw-medium small text-uppercase">Employment Type</label>
+                <InputSelect TValue="EmploymentType?" class="form-select dark-input" @bind-Value="Job.EmploymentType">
+                    <option value="">Any</option>
+                    @foreach (var t in Enum.GetValues<EmploymentType>())
+                    {
+                        <option value="@t">@t.GetDescriptionValue()</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label fw-semibold small text-uppercase">Route Type</label>
+                <InputSelect TValue="RouteType?" class="form-select dark-input" @bind-Value="Job.RouteType">
+                    <option value="">-- Any --</option>
+                    @foreach (var rt in Enum.GetValues<RouteType>())
+                    {
+                        <option value="@rt">@rt.ToString()</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <div class="col-md-5">
+                <label class="form-label fw-medium small text-uppercase">Additional Pay Notes</label>
+                <InputText class="form-control dark-input" @bind-Value="Job.PayNotes" placeholder="e.g. + Safety bonus, full benefits" />
             </div>
         </div>
     </div>
 
-    <!-- Driver Requirements Card -->
+    <hr class="my-4 border-secondary opacity-25" />
+    <!-- Driver Requirements Section -->
     <div class="col-12">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-white border-bottom">
-                <h5 class="mb-0 fw-bold">Requirements & Policies</h5>
+        <h5 class="section-title mb-3"><i class="bi bi-shield-check me-2"></i>Requirements & Policies</h5>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label fw-medium small text-uppercase">Required CDL Class</label>
+                <InputSelect TValue="CdlClass?" class="form-select dark-input" @bind-Value="Job.RequiredCdlClass">
+                    <option value="">Any</option>
+                    @foreach (var c in Enum.GetValues<CdlClass>())
+                    {
+                        <option value="@c">CDL-@c</option>
+                    }
+                </InputSelect>
             </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <label class="form-label fw-medium text-secondary small text-uppercase">Required CDL Class</label>
-                        <InputSelect TValue="CdlClass?" class="form-select bg-light border-0 shadow-sm" @bind-Value="Job.RequiredCdlClass">
-                            <option value="">Any</option>
-                            @foreach (var c in Enum.GetValues<CdlClass>())
-                            {
-                                <option value="@c">CDL-@c</option>
-                            }
-                        </InputSelect>
-                    </div>
                     
-                    <div class="col-md-4">
-                        <label class="form-label fw-medium text-secondary small text-uppercase">Required Trailer Type</label>
-                        <InputSelect TValue="TrailerType?" class="form-select bg-light border-0 shadow-sm" @bind-Value="Job.RequiredTrailerType">
-                            <option value="">Any</option>
-                            @foreach (var t in Enum.GetValues<TrailerType>())
-                            {
-                                <option value="@t">@t</option>
-                            }
-                        </InputSelect>
-                    </div>
+            <div class="col-md-4">
+                <label class="form-label fw-medium small text-uppercase">Required Trailer Type</label>
+                <InputSelect TValue="TrailerType?" class="form-select dark-input" @bind-Value="Job.RequiredTrailerType">
+                    <option value="">Any</option>
+                    @foreach (var t in Enum.GetValues<TrailerType>())
+                    {
+                        <option value="@t">@t</option>
+                    }
+                </InputSelect>
+            </div>
 
-                    <div class="col-md-4">
-                        <label class="form-label fw-medium text-secondary small text-uppercase">Min. Years Experience</label>
-                        <div class="input-group shadow-sm rounded-pill overflow-hidden">
-                            <InputNumber class="form-control bg-light border-0" @bind-Value="Job.MinYearsExperience" />
-                            <span class="input-group-text bg-light border-0">Years</span>
-                        </div>
-                    </div>
+            <div class="col-md-4">
+                <label class="form-label fw-medium small text-uppercase">Min. Years Experience</label>
+                <div class="input-group overflow-hidden">
+                    <InputNumber class="form-control dark-input" @bind-Value="Job.MinYearsExperience" />
+                    <span class="input-group-text dark-addon">Years</span>
+                </div>
+            </div>
 
-                    <div class="col-12 mt-4">
-                        <label class="form-label fw-medium text-secondary small text-uppercase mb-3">Required Endorsements</label>
+            <div class="col-12 mt-4">
+                <label class="form-label fw-medium small text-uppercase mb-3">Required Endorsements</label>
                         <div class="d-flex flex-wrap gap-4 px-2">
                             @foreach (var end in Enum.GetValues<CdlEndorsement>())
                             {
@@ -201,33 +187,31 @@
                         </div>
                     </div>
                     
-                    <div class="col-12 mt-4 pt-3 border-top">
-                        <label class="form-label fw-medium text-secondary small text-uppercase mb-3">Driver Lifestyle & Policies</label>
-                        <div class="row g-3">
-                            <div class="col-md-3">
-                                <div class="form-check form-switch p-0 d-flex align-items-center gap-2">
-                                    <InputCheckbox class="form-check-input m-0" style="width: 2.5em; height: 1.25em; cursor: pointer;" id="reqManual" @bind-Value="Job.RequiresManualTransmission" />
-                                    <label class="form-check-label cursor-pointer" for="reqManual">Requires Manual</label>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-check form-switch p-0 d-flex align-items-center gap-2">
-                                    <InputCheckbox class="form-check-input m-0" style="width: 2.5em; height: 1.25em; cursor: pointer;" id="allowsPets" @bind-Value="Job.AllowsPets" />
-                                    <label class="form-check-label cursor-pointer" for="allowsPets">Allows Pets</label>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-check form-switch p-0 d-flex align-items-center gap-2">
-                                    <InputCheckbox class="form-check-input m-0" style="width: 2.5em; height: 1.25em; cursor: pointer;" id="allowsRiders" @bind-Value="Job.AllowsRiders" />
-                                    <label class="form-check-label cursor-pointer" for="allowsRiders">Allows Riders</label>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-check form-switch p-0 d-flex align-items-center gap-2">
-                                    <InputCheckbox class="form-check-input m-0" style="width: 2.5em; height: 1.25em; cursor: pointer;" id="teamDriving" @bind-Value="Job.IsTeamDriving" />
-                                    <label class="form-check-label cursor-pointer" for="teamDriving">Team Driving</label>
-                                </div>
-                            </div>
+            <div class="col-12 mt-4 pt-3 border-top border-secondary opacity-75">
+                <label class="form-label fw-medium small text-uppercase mb-3">Driver Lifestyle & Policies</label>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="form-check form-switch p-0 d-flex align-items-center gap-2">
+                            <InputCheckbox class="form-check-input m-0" style="width: 2.5em; height: 1.25em; cursor: pointer;" id="reqManual" @bind-Value="Job.RequiresManualTransmission" />
+                            <label class="form-check-label cursor-pointer" for="reqManual">Requires Manual</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-check form-switch p-0 d-flex align-items-center gap-2">
+                            <InputCheckbox class="form-check-input m-0" style="width: 2.5em; height: 1.25em; cursor: pointer;" id="allowsPets" @bind-Value="Job.AllowsPets" />
+                            <label class="form-check-label cursor-pointer" for="allowsPets">Allows Pets</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-check form-switch p-0 d-flex align-items-center gap-2">
+                            <InputCheckbox class="form-check-input m-0" style="width: 2.5em; height: 1.25em; cursor: pointer;" id="allowsRiders" @bind-Value="Job.AllowsRiders" />
+                            <label class="form-check-label cursor-pointer" for="allowsRiders">Allows Riders</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-check form-switch p-0 d-flex align-items-center gap-2">
+                            <InputCheckbox class="form-check-input m-0" style="width: 2.5em; height: 1.25em; cursor: pointer;" id="teamDriving" @bind-Value="Job.IsTeamDriving" />
+                            <label class="form-check-label cursor-pointer" for="teamDriving">Team Driving</label>
                         </div>
                     </div>
                 </div>
@@ -235,25 +219,25 @@
         </div>
     </div>
     
-    <div class="col-12">
-        <div class="card shadow-sm border-0 border-start border-4 border-primary bg-light mb-3">
+    <div class="col-12 mt-5">
+        <div class="card shadow-sm border-0 border-start border-4 border-primary mb-3" style="background-color: rgba(13, 110, 253, 0.05);">
             <div class="card-body py-3">
                 <div class="form-check form-switch p-0 d-flex align-items-center gap-3">
                     <InputCheckbox class="form-check-input m-0" style="width: 3em; height: 1.5em; cursor: pointer;" @bind-Value="Job.IsActive" id="isActive" />
                     <div>
-                        <label class="form-check-label fw-bold cursor-pointer" for="isActive">Job Posting Active</label>
+                        <label class="form-check-label fw-bold cursor-pointer" style="color: #6ea8fe;" for="isActive">Job Posting Active</label>
                         <div class="text-muted small">When active, this job is visible to all candidates on the board.</div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <div class="card shadow-sm border-0 border-start border-4 border-warning bg-light">
+        <div class="card shadow-sm border-0 border-start border-4 border-warning" style="background-color: rgba(255, 193, 7, 0.05);">
             <div class="card-body py-3">
                 <div class="form-check form-switch p-0 d-flex align-items-center gap-3">
                     <InputCheckbox class="form-check-input m-0" style="width: 3em; height: 1.5em; cursor: pointer;" @bind-Value="Job.IsConfidential" id="isConfidential" />
                     <div>
-                        <label class="form-check-label fw-bold cursor-pointer" for="isConfidential">Confidential Posting</label>
+                        <label class="form-check-label fw-bold cursor-pointer" style="color: #ffda6a;" for="isConfidential">Confidential Posting</label>
                         <div class="text-muted small">When enabled, the company name is hidden from drivers and public users, displaying as "CDL Pool Client".</div>
                     </div>
                 </div>

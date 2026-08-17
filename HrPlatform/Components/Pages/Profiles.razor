@@ -98,6 +98,17 @@ else
                                         {
                                             <span class="badge bg-dark rounded-pill">CDL-@p.License.Class</span>
                                         }
+                                        @{
+                                            var availColor = p.AvailabilityStatus switch
+                                            {
+                                                AvailabilityStatus.ReadyToStartImmediately => "bg-success",
+                                                AvailabilityStatus.ActivelyLooking => "bg-primary",
+                                                AvailabilityStatus.TwoWeekNotice => "bg-warning text-dark",
+                                                AvailabilityStatus.NotAvailable => "bg-secondary",
+                                                _ => "bg-secondary"
+                                            };
+                                        }
+                                        <span class="badge @availColor rounded-pill shadow-sm">@p.AvailabilityStatus.GetDescriptionValue()</span>
                                     </div>
                                     
                                     <div class="mb-3 text-secondary small">
@@ -209,6 +220,10 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
+        if (searchAvailString == null) searchAvailString = "";
+        if (searchCdlString == null) searchCdlString = "";
+        if (searchEndString == null) searchEndString = "";
+        
         if (currentPage < 1) currentPage = 1;
         if (PageSize < 1) PageSize = 10;
 

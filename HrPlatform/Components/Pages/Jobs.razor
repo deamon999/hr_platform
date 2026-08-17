@@ -267,6 +267,9 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
+        if (string.IsNullOrEmpty(filter)) filter = "all";
+        if (string.IsNullOrEmpty(sortBy)) sortBy = "date";
+        if (filterCdlClassString == null) filterCdlClassString = "";
         if (currentPage < 1) currentPage = 1;
         if (PageSize < 1) PageSize = 10;
         await LoadAsync();

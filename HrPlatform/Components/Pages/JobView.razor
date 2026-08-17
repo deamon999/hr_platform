@@ -28,148 +28,153 @@ else if (job is null)
 }
 else
 {
-    <!-- Hero Section -->
-    <div class="card shadow-sm mb-4 border-0 bg-white">
-        <div class="card-body p-4 p-md-5">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-3">
-                <div>
-                    <h1 class="fw-bold mb-2 text-dark">@job.Title</h1>
-                    <h5 class="text-primary mb-3">@DisplayCompanyName(job)</h5>
-                    <div class="d-flex flex-wrap gap-3 text-secondary">
-                        <span class="d-flex align-items-center gap-1">
-                            <i class="bi bi-geo-alt"></i> @(job.City != null ? $"{job.City}, {job.State}" : job.State) @job.ZipCode
-                        </span>
-                        <span class="d-flex align-items-center gap-1">
-                            <i class="bi bi-clock"></i> Posted @job.PostedAt.ToLocalTime().ToString("MMM dd, yyyy")
-                        </span>
-                        @if (job.EmploymentType.HasValue)
-                        {
-                            <span class="d-flex align-items-center gap-1">
-                                <i class="bi bi-briefcase"></i> @job.EmploymentType.Value.GetDescriptionValue()
-                            </span>
-                        }
-                    </div>
-                </div>
-                <div class="text-md-end bg-light p-3 rounded border">
-                    <div class="text-muted small text-uppercase fw-bold mb-1">Compensation</div>
-                    <div class="fs-4 fw-bold text-success">@FormatCompensation(job)</div>
-                    @if (job.SignOnBonus > 0)
-                    {
-                        <div class="badge bg-success mt-2 fs-6 px-3 py-2">
-                            <i class="bi bi-gift"></i> $@job.SignOnBonus?.ToString("N0") Sign-On Bonus
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row g-4">
-        <!-- Main Content (Left Col) -->
-        <div class="col-lg-8 mb-4">
-            <div class="card shadow-sm border-0 bg-white h-100">
-                <div class="card-body p-4">
-                    <h4 class="fw-bold mb-4 border-bottom pb-2">Job Description</h4>
-                    <div class="text-secondary" style="white-space: pre-wrap; line-height: 1.6;">
-                        @Display(job.Description)
-                    </div>
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Hero Section -->
+            <div class="card shadow-sm mb-4 border-0 app-card">
+                <div class="card-body p-4 p-md-5">
                     
-                    @if (!string.IsNullOrWhiteSpace(job.PayNotes))
-                    {
-                        <h5 class="fw-bold mt-5 mb-3">Pay Notes</h5>
-                        <div class="alert alert-info border-0 bg-light text-dark">
-                            @job.PayNotes
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
-
-        <!-- Sidebar Requirements (Right Col) -->
-        <div class="col-lg-4">
-            <div class="card shadow-sm border-0 bg-white mb-4">
-                <div class="card-body p-4">
-                    <h5 class="fw-bold mb-4 border-bottom pb-2">Requirements</h5>
-                    
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-3 d-flex justify-content-between align-items-center">
-                            <span class="text-secondary">CDL Class</span>
-                            <span class="fw-bold">@(job.RequiredCdlClass.HasValue ? $"Class {job.RequiredCdlClass}" : "Any")</span>
-                        </li>
-                        <li class="mb-3 d-flex justify-content-between align-items-center">
-                            <span class="text-secondary">Experience</span>
-                            <span class="fw-bold">@(job.MinYearsExperience > 0 ? $"{job.MinYearsExperience} Years" : "No minimum")</span>
-                        </li>
-                        @if (job.RequiredTrailerType.HasValue)
-                        {
-                            <li class="mb-3 d-flex justify-content-between align-items-center">
-                                <span class="text-secondary">Trailer Type</span>
-                                <span class="fw-bold">@job.RequiredTrailerType.Value.ToString()</span>
-                            </li>
-                        }
-                        @if (job.RouteType.HasValue)
-                        {
-                            <li class="mb-3 d-flex justify-content-between align-items-center">
-                                <span class="text-secondary">Route Type</span>
-                                <span class="fw-bold">@job.RouteType.Value.ToString()</span>
-                            </li>
-                        }
-                    </ul>
-
-                    @if (job.RequiredEndorsements.Any())
-                    {
-                        <div class="mt-4 pt-3 border-top">
-                            <div class="text-secondary mb-2 small fw-bold text-uppercase">Endorsements</div>
-                            <div class="d-flex flex-wrap gap-2">
-                                @foreach (var end in job.RequiredEndorsements)
+                    <!-- Header -->
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-3">
+                        <div>
+                            <h1 class="fw-bold mb-2 text-white">@job.Title</h1>
+                            <h5 class="section-title mb-3">@DisplayCompanyName(job)</h5>
+                            <div class="d-flex flex-wrap gap-3 text-secondary">
+                                <span class="d-flex align-items-center gap-1">
+                                    <i class="bi bi-geo-alt"></i> @(job.City != null ? $"{job.City}, {job.State}" : job.State) @job.ZipCode
+                                </span>
+                                <span class="d-flex align-items-center gap-1">
+                                    <i class="bi bi-clock"></i> Posted @job.PostedAt.ToLocalTime().ToString("MMM dd, yyyy")
+                                </span>
+                                @if (job.EmploymentType.HasValue)
                                 {
-                                    <span class="badge bg-secondary">@end.GetDescriptionValue()</span>
+                                    <span class="d-flex align-items-center gap-1">
+                                        <i class="bi bi-briefcase"></i> @job.EmploymentType.Value.GetDescriptionValue()
+                                    </span>
                                 }
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Job Description -->
+            <div class="card shadow-sm border-0 app-card mb-4">
+                <div class="card-body p-4 p-md-5">
+                    <h5 class="section-title mb-3"><i class="bi bi-file-text me-2"></i>Job Description</h5>
+                    <div class="text-light" style="white-space: pre-wrap; line-height: 1.6;">
+                        @Display(job.Description)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Compensation & Benefits -->
+            <div class="card shadow-sm border-0 app-card mb-4">
+                <div class="card-body p-4 p-md-5">
+                    <h5 class="section-title mb-3"><i class="bi bi-cash-stack me-2"></i>Compensation & Benefits</h5>
+                    <div class="row g-3 text-light">
+                        <div class="col-md-4">
+                            <div class="text-secondary small fw-bold text-uppercase mb-1">Pay</div>
+                            <div class="fs-5" style="color: #6ea8fe;">@FormatCompensation(job)</div>
+                        </div>
+                        
+                        @if (job.SignOnBonus > 0)
+                        {
+                            <div class="col-md-4">
+                                <div class="text-secondary small fw-bold text-uppercase mb-1">Sign-On Bonus</div>
+                                <div class="fs-5" style="color: #dfb155;">$@job.SignOnBonus?.ToString("N0")</div>
+                            </div>
+                        }
+
+                        @if (job.RouteType.HasValue)
+                        {
+                            <div class="col-md-4">
+                                <div class="text-secondary small fw-bold text-uppercase mb-1">Route Type</div>
+                                <div class="fs-5">@job.RouteType.Value.ToString()</div>
+                            </div>
+                        }
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(job.PayNotes))
+                    {
+                        <div class="mt-4 p-3 rounded" style="background-color: #2b2d31; border: 1px solid rgba(255,255,255,0.05);">
+                            <div class="text-secondary small fw-bold text-uppercase mb-1">Additional Pay Notes</div>
+                            <div>@job.PayNotes</div>
+                        </div>
                     }
                 </div>
             </div>
 
-            <div class="card shadow-sm border-0 bg-white">
-                <div class="card-body p-4">
-                    <h5 class="fw-bold mb-4 border-bottom pb-2">Policies & Perks</h5>
-                    <div class="d-flex flex-wrap gap-2">
-                        @if (job.AllowsPets)
+            <!-- Requirements & Policies -->
+            <div class="card shadow-sm border-0 app-card mb-4">
+                <div class="card-body p-4 p-md-5">
+                    <h5 class="section-title mb-3"><i class="bi bi-shield-check me-2"></i>Requirements & Policies</h5>
+                    <div class="row g-4 text-light">
+                        <div class="col-md-4">
+                            <div class="text-secondary small fw-bold text-uppercase mb-1">Required CDL</div>
+                            <div class="fs-6 fw-bold">@(job.RequiredCdlClass.HasValue ? $"Class {job.RequiredCdlClass}" : "Any")</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-secondary small fw-bold text-uppercase mb-1">Min. Experience</div>
+                            <div class="fs-6 fw-bold">@(job.MinYearsExperience > 0 ? $"{job.MinYearsExperience} Years" : "No minimum")</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-secondary small fw-bold text-uppercase mb-1">Trailer Type</div>
+                            <div class="fs-6 fw-bold">@(job.RequiredTrailerType.HasValue ? job.RequiredTrailerType.Value.ToString() : "Any")</div>
+                        </div>
+                        
+                        @if (job.RequiredEndorsements.Any())
                         {
-                            <span class="badge bg-info text-dark bg-opacity-25 border border-info rounded-pill px-3 py-2"><i class="bi bi-check2"></i> Pets Allowed</span>
+                            <div class="col-12 mt-3">
+                                <div class="text-secondary small fw-bold text-uppercase mb-2">Required Endorsements</div>
+                                <div class="d-flex flex-wrap gap-2">
+                                    @foreach (var end in job.RequiredEndorsements)
+                                    {
+                                        <span class="badge" style="background-color: rgba(223, 177, 85, 0.15); color: #dfb155; border: 1px solid rgba(223, 177, 85, 0.25);">@end.GetDescriptionValue()</span>
+                                    }
+                                </div>
+                            </div>
                         }
-                        @if (job.AllowsRiders)
-                        {
-                            <span class="badge bg-info text-dark bg-opacity-25 border border-info rounded-pill px-3 py-2"><i class="bi bi-check2"></i> Riders Allowed</span>
-                        }
-                        @if (job.IsTeamDriving)
-                        {
-                            <span class="badge bg-primary text-white rounded-pill px-3 py-2"><i class="bi bi-people"></i> Team Driving</span>
-                        }
-                        @if (job.RequiresManualTransmission)
-                        {
-                            <span class="badge bg-warning text-dark rounded-pill px-3 py-2"><i class="bi bi-gear"></i> Manual Transmission Required</span>
-                        }
+
+                        <div class="col-12 mt-3">
+                            <div class="text-secondary small fw-bold text-uppercase mb-2">Policies & Perks</div>
+                            <div class="d-flex flex-wrap gap-2">
+                                @if (job.AllowsPets)
+                                {
+                                    <span class="badge rounded-pill px-3 py-2" style="background-color: rgba(13, 202, 240, 0.1); color: #0dcaf0; border: 1px solid rgba(13, 202, 240, 0.3);"><i class="bi bi-check2"></i> Pets Allowed</span>
+                                }
+                                @if (job.AllowsRiders)
+                                {
+                                    <span class="badge rounded-pill px-3 py-2" style="background-color: rgba(13, 202, 240, 0.1); color: #0dcaf0; border: 1px solid rgba(13, 202, 240, 0.3);"><i class="bi bi-check2"></i> Riders Allowed</span>
+                                }
+                                @if (job.IsTeamDriving)
+                                {
+                                    <span class="badge rounded-pill px-3 py-2" style="background-color: rgba(13, 110, 253, 0.15); color: #6ea8fe; border: 1px solid rgba(13, 110, 253, 0.3);"><i class="bi bi-people"></i> Team Driving</span>
+                                }
+                                @if (job.RequiresManualTransmission)
+                                {
+                                    <span class="badge rounded-pill px-3 py-2" style="background-color: rgba(255, 193, 7, 0.15); color: #ffda6a; border: 1px solid rgba(255, 193, 7, 0.3);"><i class="bi bi-gear"></i> Manual</span>
+                                }
+                                @if (!job.AllowsPets && !job.AllowsRiders && !job.IsTeamDriving && !job.RequiresManualTransmission)
+                                {
+                                    <span class="text-secondary fst-italic small">No specific policies listed.</span>
+                                }
+                            </div>
+                        </div>
                     </div>
-                    @if (!job.AllowsPets && !job.AllowsRiders && !job.IsTeamDriving && !job.RequiresManualTransmission)
-                    {
-                        <div class="text-muted fst-italic">No specific policies listed.</div>
-                    }
+
                 </div>
             </div>
-        </div>
-    </div>
 
     <AuthorizeView Roles="Driver">
         <Authorized>
             @if (job.Company != null && (!job.IsConfidential || isAdmin))
             {
-                <div class="card mb-4 shadow-sm">
-                    <div class="card-header">
-                        <h5 class="mb-0">About @job.Company.Name</h5>
+                <div class="card mb-4 shadow-sm border-0 app-card">
+                    <div class="card-header border-bottom border-secondary border-opacity-25 pt-3">
+                        <h5 class="section-title mb-0">About @job.Company.Name</h5>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body text-light">
                         @if (!string.IsNullOrEmpty(job.Company.Description))
                         {
                             <p>@job.Company.Description</p>
@@ -178,7 +183,7 @@ else
                             @if (job.Company.FleetSize.HasValue)
                             {
                                 <div class="col-auto">
-                                    <span class="badge bg-light text-dark border">
+                                    <span class="badge" style="background-color: #2b2d31; color: #adb5bd; border: 1px solid rgba(255,255,255,0.1);">
                                         @job.Company.FleetSize trucks
                                     </span>
                                 </div>
@@ -186,24 +191,24 @@ else
                             @if (job.Company.RouteType.HasValue)
                             {
                                 <div class="col-auto">
-                                    <span class="badge bg-info text-dark">
+                                    <span class="badge" style="background-color: rgba(13, 202, 240, 0.1); color: #0dcaf0; border: 1px solid rgba(13, 202, 240, 0.3);">
                                         Route: @job.Company.RouteType
                                     </span>
                                 </div>
                             }
                             @if (job.Company.PaidCdlTraining)
-                            { <div class="col-auto"><span class="badge bg-success">Paid training</span></div> }
+                            { <div class="col-auto"><span class="badge" style="background-color: rgba(25, 135, 84, 0.15); color: #20c997; border: 1px solid rgba(25, 135, 84, 0.3);">Paid training</span></div> }
                             @if (job.Company.SignOnBonus)
-                            { <div class="col-auto"><span class="badge bg-warning text-dark">Sign-on bonus</span></div> }
+                            { <div class="col-auto"><span class="badge" style="background-color: rgba(255, 193, 7, 0.15); color: #ffda6a; border: 1px solid rgba(255, 193, 7, 0.3);">Sign-on bonus</span></div> }
                             @if (job.Company.BenefitsOffered)
-                            { <div class="col-auto"><span class="badge bg-primary">Benefits</span></div> }
+                            { <div class="col-auto"><span class="badge" style="background-color: rgba(13, 110, 253, 0.15); color: #6ea8fe; border: 1px solid rgba(13, 110, 253, 0.3);">Benefits</span></div> }
                             @if (job.Company.HiringNewGrads)
-                            { <div class="col-auto"><span class="badge bg-secondary">New grads OK</span></div> }
+                            { <div class="col-auto"><span class="badge" style="background-color: rgba(173, 181, 189, 0.1); color: #dee2e6; border: 1px solid rgba(173, 181, 189, 0.2);">New grads OK</span></div> }
                         </div>
                         @if (!string.IsNullOrEmpty(job.Company.WebsiteUrl))
                         {
                             <a href="@job.Company.WebsiteUrl" target="_blank"
-                               class="btn btn-sm btn-outline-secondary mt-3">
+                               class="btn btn-sm btn-outline-secondary mt-3 text-light">
                                 Company website &rarr;
                             </a>
                         }
@@ -212,31 +217,31 @@ else
             }
             @if (applied)
             {
-                <div class="alert alert-success">
-                    <h5 class="alert-heading">Application Submitted!</h5>
+                <div class="alert border-0" style="background-color: rgba(25, 135, 84, 0.1); border-left: 4px solid #198754 !important; color: #d1e7dd;">
+                    <h5 class="alert-heading text-white mb-3">Application Submitted!</h5>
 
-                    <div class="row g-3 mb-3">
+                    <div class="row g-3 mb-4">
                         <div class="col-md-3">
                             <label class="form-label">Job ID</label>
-                            <input class="form-control" value="#@appliedApp?.Job?.Title" disabled/>
+                            <input class="form-control dark-input" value="#@appliedApp?.Job?.Title" disabled/>
                         </div>
 
                         <div class="col-md-3">
                             <label class="form-label">Date Submitted</label>
-                            <input class="form-control" value="@appliedApp?.AppliedAt.ToLocalTime().ToString("MM/dd/yyyy h:mm tt")" disabled/>
+                            <input class="form-control dark-input" value="@appliedApp?.AppliedAt.ToLocalTime().ToString("MM/dd/yyyy h:mm tt")" disabled/>
                         </div>
 
                         <div class="col-md-3">
                             <label class="form-label">Status</label>
-                            <input class="form-control" value="@appliedApp?.Status" disabled/>
+                            <input class="form-control dark-input" value="@appliedApp?.Status" disabled/>
                         </div>
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-outline-primary btn-sm" @onclick="GoToEditProfile">
+                        <button type="button" class="btn btn-outline-light btn-sm rounded-pill px-3" @onclick="GoToEditProfile">
                             Review Profile
                         </button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="GoToApplications">
+                        <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 text-light" @onclick="GoToApplications">
                             All Applications
                         </button>
                     </div>
@@ -244,13 +249,13 @@ else
             }
             else if (alreadyApplied)
             {
-                <div class="alert alert-info">You have already applied for this position.</div>
+                <div class="alert border-0 text-light" style="background-color: rgba(13, 202, 240, 0.1); border-left: 4px solid #0dcaf0 !important;">You have already applied for this position.</div>
             }
             else if (driverProfile is null)
             {
-                <div class="alert alert-warning">
+                <div class="alert border-0 text-light" style="background-color: rgba(255, 193, 7, 0.1); border-left: 4px solid #ffc107 !important;">
                     <strong>Driver profile required.</strong>
-                    <a class="alert-link ms-1" role="button" style="cursor:pointer" @onclick="GoToCreateProfile">
+                    <a class="alert-link ms-1 text-warning" role="button" style="cursor:pointer" @onclick="GoToCreateProfile">
                         Create your profile
                     </a>
                     before applying.
@@ -258,16 +263,16 @@ else
             }
             else
             {
-                <div class="card mb-4 ">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <strong>Step 1 - Review Your Profile</strong>
-                        <button type="button" class="btn btn-sm btn-outline-primary" @onclick="GoToEditProfile">
+                <div class="card mb-4 border-0 app-card">
+                    <div class="card-header border-bottom border-secondary border-opacity-25 pt-3 d-flex justify-content-between align-items-center">
+                        <strong class="section-title">Step 1 - Review Your Profile</strong>
+                        <button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-3" @onclick="GoToEditProfile">
                             Update Profile
                         </button>
                     </div>
 
                     <div class="card-body">
-                        <div class="accordion" id="profileAccordion">
+                        <div class="accordion dark-accordion" id="profileAccordion">
                             <div class="accordion-item">
                                 <h2 class="accordion-header" id="headingPersonal">
                                     <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePersonal" aria-expanded="true" aria-controls="collapsePersonal">
@@ -308,43 +313,43 @@ else
                     </div>
                 </div>
 
-                <div class="card mb-4 ">
-                    <div class="card-header">
-                        <strong>Step 2 - Confirm Application</strong>
+                <div class="card mb-4 border-0 app-card">
+                    <div class="card-header border-bottom border-secondary border-opacity-25 pt-3">
+                        <strong class="section-title">Step 2 - Confirm Application</strong>
                     </div>
 
                     <div class="card-body">
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">Job</label>
-                                <input class="form-control" value="@job.Title (#@job.Id)" disabled/>
+                                <input class="form-control dark-input" value="@job.Title (#@job.Id)" disabled/>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">Company</label>
-                                <input class="form-control" value="@DisplayCompanyName(job)" disabled/>
+                                <input class="form-control dark-input" value="@DisplayCompanyName(job)" disabled/>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">Profile ID</label>
-                                <input class="form-control" value="#@driverProfile.Id" disabled/>
+                                <input class="form-control dark-input" value="#@driverProfile.Id" disabled/>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">Date</label>
-                                <input class="form-control" value="@DateTime.Now.ToString("MM/dd/yyyy")" disabled/>
+                                <input class="form-control dark-input" value="@DateTime.Now.ToString("MM/dd/yyyy")" disabled/>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <button class="btn btn-success btn-lg" @onclick="SubmitAsync" disabled="@submitting">
-                    @(submitting ? "Submitting..." : "Submit Application")
+                <button class="btn btn-primary rounded-pill px-5 py-2 fw-bold" @onclick="SubmitAsync" disabled="@submitting">
+                    <i class="bi bi-send me-1"></i> @(submitting ? "Submitting..." : "Submit Application")
                 </button>
 
                 @if (!string.IsNullOrEmpty(error))
                 {
-                    <div class="alert alert-danger mt-3">@error</div>
+                    <div class="alert border-0 mt-3 text-light" style="background-color: rgba(220, 53, 69, 0.1); border-left: 4px solid #dc3545 !important;">@error</div>
                 }
             }
         </Authorized>
@@ -360,13 +365,62 @@ else
     </AuthorizeView>
 
     <div class="d-flex justify-content-end gap-2 mt-3 mb-4">
-        <button type="button" class="btn btn-outline-secondary" @onclick="GoBack">Back</button>
+        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" @onclick="GoBack">Back</button>
         @if (!isDriver)
         {
-            <button type="button" class="btn btn-primary" @onclick="GoToEdit">Edit Job</button>
+            <button type="button" class="btn btn-primary rounded-pill px-4" @onclick="GoToEdit">Edit Job</button>
         }
     </div>
+        </div>
+    </div>
 }
+
+<style>
+    .app-card {
+        background-color: #242526;
+        border: 1px solid rgba(255,255,255,0.05) !important;
+        border-radius: 0.75rem;
+    }
+    .section-title {
+        color: #dfb155;
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+    .form-label {
+        color: #adb5bd !important;
+    }
+    .dark-input {
+        background-color: #2b2d31 !important;
+        color: #e9ecef !important;
+        border: 1px solid rgba(255,255,255,0.05) !important;
+    }
+    .dark-input:focus {
+        background-color: #313338 !important;
+        color: #fff !important;
+        border-color: #dfb155 !important;
+        box-shadow: 0 0 0 0.25rem rgba(223, 177, 85, 0.25) !important;
+    }
+    .dark-input:disabled {
+        background-color: #1e1f22 !important;
+        opacity: 0.7;
+    }
+    .dark-accordion .accordion-item {
+        background-color: #2b2d31;
+        border-color: rgba(255,255,255,0.05);
+    }
+    .dark-accordion .accordion-button {
+        background-color: #2b2d31;
+        color: #f8f9fa;
+        box-shadow: inset 0 -1px 0 rgba(255,255,255,0.05);
+    }
+    .dark-accordion .accordion-button:not(.collapsed) {
+        background-color: #313338;
+        color: #dfb155;
+    }
+    .dark-accordion .accordion-button::after {
+        filter: invert(1);
+    }
+</style>
 
 @code {
     [Parameter] public int Id { get; set; }
@@ -428,7 +482,7 @@ else
 
     private void GoToEdit()
     {
-        Nav.NavigateTo($"/jobs/edit/{Id}");
+        Nav.NavigateTo($"/jobs/edit/{Id}?returnUrl=/jobs/{Id}");
     }
 
     private void GoBack()
@@ -482,8 +536,8 @@ else
         
         return job.PayPeriod switch
         {
-            PayPeriod.Mile => $"{job.PayRate:N0} CPM (Cents Per Mile)",
-            PayPeriod.PercentageOfLoad => $"{job.PayRate:N0}% of Load",
+            PayPeriod.Mile => $"{job.PayRate:0.##} CPM (Cents Per Mile)",
+            PayPeriod.PercentageOfLoad => $"{job.PayRate:0.##}% of Load",
             PayPeriod.Hour => $"${job.PayRate:N2} / hr",
             PayPeriod.Week => $"${job.PayRate:N2} / wk",
             PayPeriod.Month => $"${job.PayRate:N2} / mo",

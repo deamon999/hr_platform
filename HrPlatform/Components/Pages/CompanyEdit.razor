@@ -3,6 +3,7 @@
 @page "/companies/edit/{Id:int}"
 @page "/my-company"
 @using System.Security.Claims
+@implements IDisposable
 @rendermode InteractiveServer
 
 @attribute [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.Driver},{RoleConstants.Manager}")]
@@ -50,46 +51,46 @@ else
 
                 <div class="row g-4 mb-4">
                     <div class="col-md-12">
-                        <label class="form-label fw-semibold text-secondary small text-uppercase">Company Name *</label>
-                        <InputText class="form-control form-control-lg bg-light border-0" @bind-Value="company.Name" disabled="@isView"/>
+                        <label class="form-label fw-semibold small text-uppercase">Company Name *</label>
+                        <InputText class="form-control form-control-lg dark-input" @bind-Value="company.Name" disabled="@isView"/>
                     </div>
                     
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold text-secondary small text-uppercase">Registration #</label>
-                        <InputText class="form-control bg-light border-0" @bind-Value="company.RegistrationNumber" disabled="@isView"/>
+                        <label class="form-label fw-semibold small text-uppercase">Registration #</label>
+                        <InputText class="form-control dark-input" @bind-Value="company.RegistrationNumber" disabled="@isView"/>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold text-secondary small text-uppercase">Date Registered</label>
-                        <InputDate class="form-control bg-light border-0" @bind-Value="company.DateRegistered" disabled="@isView"/>
+                        <label class="form-label fw-semibold small text-uppercase">Date Registered</label>
+                        <InputDate class="form-control dark-input" @bind-Value="company.DateRegistered" disabled="@isView"/>
                     </div>
                     
                     <div class="col-12">
-                        <label class="form-label fw-semibold text-secondary small text-uppercase">Address</label>
-                        <InputText class="form-control bg-light border-0" @bind-Value="company.Address" disabled="@isView"/>
+                        <label class="form-label fw-semibold small text-uppercase">Address</label>
+                        <InputText class="form-control dark-input" @bind-Value="company.Address" disabled="@isView"/>
                     </div>
                     
                     <div class="col-12">
-                        <label class="form-label fw-semibold text-secondary small text-uppercase">Description</label>
-                        <InputTextArea class="form-control bg-light border-0" @bind-Value="company.Description" disabled="@isView" rows="3"/>
+                        <label class="form-label fw-semibold small text-uppercase">Description</label>
+                        <InputTextArea class="form-control dark-input" @bind-Value="company.Description" disabled="@isView" rows="3"/>
                     </div>
                     
                     <div class="col-12">
-                        <label class="form-label fw-semibold text-secondary small text-uppercase">Website URL</label>
-                        <InputText class="form-control bg-light border-0" @bind-Value="company.WebsiteUrl" disabled="@isView"/>
+                        <label class="form-label fw-semibold small text-uppercase">Website URL</label>
+                        <InputText class="form-control dark-input" @bind-Value="company.WebsiteUrl" disabled="@isView"/>
                     </div>
                 </div>
 
-                <hr class="my-4 text-muted opacity-25" />
-                <h5 class="fw-bold mb-3">Trucking & Benefits</h5>
+                <hr class="my-4 border-secondary opacity-25" />
+                <h5 class="section-title mb-3"><i class="bi bi-truck me-2"></i>Trucking & Benefits</h5>
 
                 <div class="row g-4 mb-4">
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold text-secondary small text-uppercase">Fleet Size</label>
-                        <InputNumber class="form-control bg-light border-0" @bind-Value="company.FleetSize" disabled="@isView"/>
+                        <label class="form-label fw-semibold small text-uppercase">Fleet Size</label>
+                        <InputNumber class="form-control dark-input" @bind-Value="company.FleetSize" disabled="@isView"/>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Typical Route Type</label>
-                        <InputSelect class="form-select bg-light text-dark border-secondary" @bind-Value="company.RouteType" disabled="@isView">
+                        <label class="form-label fw-semibold small text-uppercase">Typical Route Type</label>
+                        <InputSelect class="form-select dark-input" @bind-Value="company.RouteType" disabled="@isView">
                             <option value="">-- Select --</option>
                             @foreach (var rt in Enum.GetValues<HrPlatform.Data.Enums.RouteType>())
                             {
@@ -127,8 +128,8 @@ else
                 </div>
                 
                 <div class="mb-4">
-                    <label class="form-label fw-semibold text-secondary small text-uppercase">Benefits Summary</label>
-                    <InputTextArea class="form-control bg-light border-0" @bind-Value="company.BenefitsSummary" disabled="@isView" rows="2"/>
+                    <label class="form-label fw-semibold small text-uppercase">Benefits Summary</label>
+                    <InputTextArea class="form-control dark-input" @bind-Value="company.BenefitsSummary" disabled="@isView" rows="2"/>
                 </div>
 
                 @if (!isView)
@@ -147,11 +148,39 @@ else
 
 <style>
     .app-card {
-        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        background-color: #242526;
+        border: 1px solid rgba(255,255,255,0.05) !important;
+        border-radius: 0.75rem;
+    }
+    .dark-input {
+        background-color: #2b2d31 !important;
+        color: #e9ecef !important;
+        border: 1px solid rgba(255,255,255,0.05) !important;
+    }
+    .dark-input:focus {
+        background-color: #313338 !important;
+        color: #fff !important;
+        border-color: #dfb155 !important;
+        box-shadow: 0 0 0 0.25rem rgba(223, 177, 85, 0.25) !important;
+    }
+    .dark-input:disabled {
+        background-color: #1e1f22 !important;
+        opacity: 0.7;
+    }
+    .section-title {
+        color: #dfb155;
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+    .form-label {
+        color: #adb5bd !important;
     }
 </style>
 
 @code {
+    [SupplyParameterFromQuery]
+    public string? returnUrl { get; set; }
+
     [Parameter] public int Id { get; set; }
     private Company? company;
     private int companyId;
@@ -162,6 +191,26 @@ else
     private string Title => isView ? "Company Details" : (isNew ? "Create Company" : "Edit Company");
 
     protected override async Task OnInitializedAsync()
+    {
+        Nav.LocationChanged += HandleLocationChanged;
+        await LoadStateAsync();
+    }
+
+    private void HandleLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        _ = InvokeAsync(async () =>
+        {
+            await LoadStateAsync();
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        Nav.LocationChanged -= HandleLocationChanged;
+    }
+
+    private async Task LoadStateAsync()
     {
         companyId = Id;
         var auth = await AuthState.GetAuthenticationStateAsync();
@@ -250,11 +299,17 @@ else
 
     private void GoToEdit(int id)
     {
-        Nav.NavigateTo($"/companies/edit/{id}");
+        Nav.NavigateTo($"/companies/edit/{id}?returnUrl=/companies/{id}");
     }
 
     private void GoBack()
     {
+        if (!string.IsNullOrEmpty(returnUrl))
+        {
+            Nav.NavigateTo(returnUrl);
+            return;
+        }
+
         if (user.IsInRole(RoleConstants.Admin))
         {
             Nav.NavigateTo("/companies");
