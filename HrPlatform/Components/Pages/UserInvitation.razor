@@ -154,8 +154,9 @@
     protected override async Task OnInitializedAsync()
     {
         _companies = await CompanyService.GetAllAsync();
-        _roles = RoleManager.Roles
-            .Select(r => r.Name)
+        var allRoles = RoleManager.Roles.Select(r => r.Name).ToList();
+        _roles = allRoles
+            .Where(r => r != null && !r.Equals(RoleConstants.User, StringComparison.OrdinalIgnoreCase))
             .ToList()!;
         auth = await AuthState.GetAuthenticationStateAsync();
         var user = auth.User;
@@ -240,21 +241,20 @@
                 JobId = _model.JobId
             };
 
-            var link = Nav.ToAbsoluteUri($"/Account/Register?token={invitation.Token}");
-
+            var link = Nav.ToAbsoluteUri($"/invite/{invitation.Token}");
             var inviteAsyncResult = await InvitationService.InviteAsync(invitation, link);
+
             if (inviteAsyncResult.Success)
             {
-                _successMessage = ContactMethod.Email == invitation.ContactMethod ? $"Invitation sent to {invitation.Email}." : $"Invitation sent to {invitation.Phone}.";   
+                _successMessage = ContactMethod.Email == invitation.ContactMethod ? $"Invitation sent to {invitation.Email}." : $"Invitation sent to {invitation.Phone}.";
+                await InvitationService.CreateAsync(invitation);
+                _model = new();
+                await GoToInvitations();
             }
             else
             {
-                _errorMessage = ContactMethod.Email == invitation.ContactMethod ? $"Invitation was not sent to {invitation.Email}." : $"Invitation was not sent to {invitation.Phone}.";
+                _errorMessage = inviteAsyncResult.Error ?? "Invitation could not be sent.";
             }
-
-            await InvitationService.CreateAsync(invitation);
-            _model = new();
-            await GoToInvitations();
         }
         catch (Exception ex)
         {

@@ -2,7 +2,6 @@
 @using System.ComponentModel.DataAnnotations
 @using System.Text
 @using System.Text.Encodings.Web
-@using HrPlatform.Data.Entities
 @using Microsoft.AspNetCore.WebUtilities
 
 @inject UserManager<ApplicationUser> UserManager
@@ -12,28 +11,8 @@
 @inject ILogger<Register> Logger
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
-@inject IInvitationService InvitationService
-@inject IJobInvitationService JobInvitationService
 
 <PageTitle>Register</PageTitle>
-
-
-
-@if (_invitation is not null && !_tokenInvalid)
-{
-    <div class="alert alert-info mb-3">
-        <strong>You've been invited</strong> as a <strong>@_invitation.Role</strong>.
-        Your email address has been pre-filled from invitation.
-    </div>
-}
-
-@if (_tokenInvalid)
-{
-    <div class="alert alert-danger mb-3">
-        This invitation link is invalid or has already been used.
-        Please ask an administrator to send you a new invitation.
-    </div>
-}
 
 <div class="row justify-content-center">
     <div class="col-12 col-md-8 col-lg-5">
@@ -44,60 +23,65 @@
                 <EditForm Model="Input" method="post" OnValidSubmit="RegisterUser" FormName="register">
                     <DataAnnotationsValidator/>
                     <ValidationSummary class="text-danger" role="alert"/>
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="form-floating mb-3">
-                        <InputText @bind-Value="Input.FirstName" id="Input.FirstName" class="form-control" autocomplete="given-name" aria-required="true" placeholder="First Name"/>
-                        <label for="Input.FirstName">First Name</label>
-                        <ValidationMessage For="() => Input.FirstName" class="text-danger"/>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <InputText @bind-Value="Input.FirstName" id="Input.FirstName" class="form-control" autocomplete="given-name"
+                                           aria-required="true" placeholder="First Name"/>
+                                <label for="Input.FirstName">First Name</label>
+                                <ValidationMessage For="() => Input.FirstName" class="text-danger"/>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <InputText @bind-Value="Input.LastName" id="Input.LastName" class="form-control" autocomplete="family-name"
+                                           aria-required="true" placeholder="Last Name"/>
+                                <label for="Input.LastName">Last Name</label>
+                                <ValidationMessage For="() => Input.LastName" class="text-danger"/>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="col-md-6">
                     <div class="form-floating mb-3">
-                        <InputText @bind-Value="Input.LastName" id="Input.LastName" class="form-control" autocomplete="family-name" aria-required="true" placeholder="Last Name"/>
-                        <label for="Input.LastName">Last Name</label>
-                        <ValidationMessage For="() => Input.LastName" class="text-danger"/>
+                        <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username"
+                                   aria-required="true" placeholder="name@example.com"/>
+                        <label for="Input.Email">Email</label>
+                        <ValidationMessage For="() => Input.Email" class="text-danger"/>
                     </div>
-                </div>
-            </div>
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username"
-                           aria-required="true" placeholder="name@example.com"/>
-                <label for="Input.Email">Email</label>
-                <ValidationMessage For="() => Input.Email" class="text-danger"/>
-            </div>
-            <div class="form-floating mb-3 position-relative">
-                <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control"
-                           autocomplete="new-password" aria-required="true" placeholder="Password" style="padding-right: 2.5rem;"/>
-                <label for="Input.Password">Password</label>
-                <button type="button" class="btn btn-link position-absolute end-0 top-50 translate-middle-y text-secondary text-decoration-none" 
-                        style="z-index: 5; margin-right: 0.5rem;" 
-                        onclick="const input = document.getElementById('Input.Password'); const icon = this.querySelector('i'); if (input.type === 'password') { input.type = 'text'; icon.classList.replace('bi-eye-fill', 'bi-eye-slash-fill'); } else { input.type = 'password'; icon.classList.replace('bi-eye-slash-fill', 'bi-eye-fill'); }">
-                    <i class="bi bi-eye-fill"></i>
-                </button>
-                <ValidationMessage For="() => Input.Password" class="text-danger"/>
-            </div>
-            <div class="form-floating mb-3 position-relative">
-                <InputText type="password" @bind-Value="Input.ConfirmPassword" id="Input.ConfirmPassword"
-                           class="form-control" autocomplete="new-password" aria-required="true"
-                           placeholder="Confirm Password" style="padding-right: 2.5rem;"/>
-                <label for="Input.ConfirmPassword">Confirm Password</label>
-                <button type="button" class="btn btn-link position-absolute end-0 top-50 translate-middle-y text-secondary text-decoration-none" 
-                        style="z-index: 5; margin-right: 0.5rem;" 
-                        onclick="const input = document.getElementById('Input.ConfirmPassword'); const icon = this.querySelector('i'); if (input.type === 'password') { input.type = 'text'; icon.classList.replace('bi-eye-fill', 'bi-eye-slash-fill'); } else { input.type = 'password'; icon.classList.replace('bi-eye-slash-fill', 'bi-eye-fill'); }">
-                    <i class="bi bi-eye-fill"></i>
-                </button>
-                <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger"/>
-            </div>
-            <div class="form-check mb-4 mt-2">
-                <InputCheckbox @bind-Value="Input.AcceptTerms" class="form-check-input darker-border-checkbox" id="Input.AcceptTerms"/>
-                <label class="form-check-label text-secondary small" for="Input.AcceptTerms">
-                    I agree to the <span style="cursor: pointer;" class="text-primary text-decoration-none fw-medium" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</span> and Privacy Policy.
-                </label>
-                <ValidationMessage For="() => Input.AcceptTerms" class="text-danger small"/>
-            </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
-        </EditForm>
+                    <div class="form-floating mb-3 position-relative">
+                        <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control"
+                                   autocomplete="new-password" aria-required="true" placeholder="Password" style="padding-right: 2.5rem;"/>
+                        <label for="Input.Password">Password</label>
+                        <button type="button"
+                                class="btn btn-link position-absolute end-0 top-50 translate-middle-y text-secondary text-decoration-none"
+                                style="z-index: 5; margin-right: 0.5rem;"
+                                onclick="const input = document.getElementById('Input.Password'); const icon = this.querySelector('i'); if (input.type === 'password') { input.type = 'text'; icon.classList.replace('bi-eye-fill', 'bi-eye-slash-fill'); } else { input.type = 'password'; icon.classList.replace('bi-eye-slash-fill', 'bi-eye-fill'); }">
+                            <i class="bi bi-eye-fill"></i>
+                        </button>
+                        <ValidationMessage For="() => Input.Password" class="text-danger"/>
+                    </div>
+                    <div class="form-floating mb-3 position-relative">
+                        <InputText type="password" @bind-Value="Input.ConfirmPassword" id="Input.ConfirmPassword"
+                                   class="form-control" autocomplete="new-password" aria-required="true"
+                                   placeholder="Confirm Password" style="padding-right: 2.5rem;"/>
+                        <label for="Input.ConfirmPassword">Confirm Password</label>
+                        <button type="button"
+                                class="btn btn-link position-absolute end-0 top-50 translate-middle-y text-secondary text-decoration-none"
+                                style="z-index: 5; margin-right: 0.5rem;"
+                                onclick="const input = document.getElementById('Input.ConfirmPassword'); const icon = this.querySelector('i'); if (input.type === 'password') { input.type = 'text'; icon.classList.replace('bi-eye-fill', 'bi-eye-slash-fill'); } else { input.type = 'password'; icon.classList.replace('bi-eye-slash-fill', 'bi-eye-fill'); }">
+                            <i class="bi bi-eye-fill"></i>
+                        </button>
+                        <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger"/>
+                    </div>
+                    <div class="form-check mb-4 mt-2">
+                        <InputCheckbox @bind-Value="Input.AcceptTerms" class="form-check-input darker-border-checkbox" id="Input.AcceptTerms"/>
+                        <label class="form-check-label text-secondary small" for="Input.AcceptTerms">
+                            I agree to the <span style="cursor: pointer;" class="text-primary text-decoration-none fw-medium" data-bs-toggle="modal"
+                                                 data-bs-target="#termsModal">Terms and Conditions</span> and Privacy Policy.
+                        </label>
+                        <ValidationMessage For="() => Input.AcceptTerms" class="text-danger small"/>
+                    </div>
+                    <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
+                </EditForm>
             </div>
         </section>
     </div>
@@ -105,66 +89,59 @@
 
 <!-- Terms and Conditions Modal -->
 <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-scrollable modal-lg">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header border-bottom-0 bg-light">
-        <h5 class="modal-title fw-bold" id="termsModalLabel">Terms and Conditions</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body text-secondary" style="font-size: 0.95rem; line-height: 1.6;">
-        <h6 class="text-dark fw-bold mb-2">1. Acceptance of Terms</h6>
-        <p class="mb-4">By accessing and registering an account on this platform, you accept and agree to be bound by the terms and provision of this agreement. In addition, when using these particular services, you shall be subject to any posted guidelines or rules applicable to such services.</p>
-        
-        <h6 class="text-dark fw-bold mb-2">2. User License & Platform Usage</h6>
-        <p class="mb-4">Permission is granted to temporarily use the platform for the purposes of employment management, driver onboarding, and logistics coordination. This is the grant of a license, not a transfer of title. Any unauthorized extraction of data, reverse engineering, or disruption of services is strictly prohibited.</p>
-        
-        <h6 class="text-dark fw-bold mb-2">3. Data Accuracy & Integrity</h6>
-        <p class="mb-4">You agree that all information you submit (including CDL information, work history, and personal details) is accurate and truthful. We reserve the right to suspend or terminate accounts that provide false or misleading information.</p>
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-bottom-0 bg-light">
+                <h5 class="modal-title fw-bold" id="termsModalLabel">Terms and Conditions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-secondary" style="font-size: 0.95rem; line-height: 1.6;">
+                <h6 class="text-dark fw-bold mb-2">1. Acceptance of Terms</h6>
+                <p class="mb-4">By accessing and registering an account on this platform, you accept and agree to be bound by the terms and provision
+                    of this agreement. In addition, when using these particular services, you shall be subject to any posted guidelines or rules
+                    applicable to such services.</p>
 
-        <h6 class="text-dark fw-bold mb-2">4. Privacy & Data Collection</h6>
-        <p class="mb-4">Your use of the platform is also governed by our Privacy Policy. We collect necessary data (such as contact info, driving history, and application status) strictly for operational and recruitment purposes. By using the platform, you consent to this data processing.</p>
-        
-        <h6 class="text-dark fw-bold mb-2">5. Disclaimer of Warranties</h6>
-        <p class="mb-4">The materials on this platform are provided on an 'as is' basis. We make no warranties, expressed or implied, and hereby disclaim and negate all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property.</p>
-      </div>
-      <div class="modal-footer border-top-0 bg-light">
-        <button type="button" class="btn btn-primary px-4" data-bs-dismiss="modal">I Understand</button>
-      </div>
+                <h6 class="text-dark fw-bold mb-2">2. User License & Platform Usage</h6>
+                <p class="mb-4">Permission is granted to temporarily use the platform for the purposes of employment management, driver onboarding,
+                    and logistics coordination. This is the grant of a license, not a transfer of title. Any unauthorized extraction of data, reverse
+                    engineering, or disruption of services is strictly prohibited.</p>
+
+                <h6 class="text-dark fw-bold mb-2">3. Data Accuracy & Integrity</h6>
+                <p class="mb-4">You agree that all information you submit (including CDL information, work history, and personal details) is accurate
+                    and truthful. We reserve the right to suspend or terminate accounts that provide false or misleading information.</p>
+
+                <h6 class="text-dark fw-bold mb-2">4. Privacy & Data Collection</h6>
+                <p class="mb-4">Your use of the platform is also governed by our Privacy Policy. We collect necessary data (such as contact info,
+                    driving history, and application status) strictly for operational and recruitment purposes. By using the platform, you consent to
+                    this data processing.</p>
+
+                <h6 class="text-dark fw-bold mb-2">5. Disclaimer of Warranties</h6>
+                <p class="mb-4">The materials on this platform are provided on an 'as is' basis. We make no warranties, expressed or implied, and
+                    hereby disclaim and negate all other warranties including, without limitation, implied warranties or conditions of
+                    merchantability, fitness for a particular purpose, or non-infringement of intellectual property.</p>
+            </div>
+            <div class="modal-footer border-top-0 bg-light">
+                <button type="button" class="btn btn-primary px-4" data-bs-dismiss="modal">I Understand</button>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
 @code {
     private IEnumerable<IdentityError>? identityErrors;
 
-    [SupplyParameterFromQuery] private string? Token { get; set; }
     [SupplyParameterFromForm] private InputModel Input { get; set; } = default!;
     [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
 
-    private Invitation? _invitation;
-    private bool _tokenInvalid;
-
     private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         Input ??= new InputModel();
-        if (!string.IsNullOrWhiteSpace(Token))
-        {
-            _invitation = await InvitationService.GetValidAsync(Token);
-
-            if (_invitation is not null)
-            {
-                Input.Email = _invitation.Email;
-                _tokenInvalid = _invitation.IsUsed || _invitation.ExpiresAt < DateTime.UtcNow;
-            }
-        }
     }
 
     public async Task RegisterUser(EditContext editContext)
     {
-        // We no longer block registration if the token is invalid; we just let them register organically.
-
         var user = CreateUser();
         user.FirstName = Input.FirstName?.Trim();
         user.LastName = Input.LastName?.Trim();
@@ -185,41 +162,8 @@
             return;
         }
 
-        // --- ROLE ASSIGNMENT LOGIC ---
-        if (_invitation is not null && !_tokenInvalid)
-        {
-            if (RoleConstants.Manager.Equals(_invitation.Role, StringComparison.OrdinalIgnoreCase))
-            {
-                user.CompanyId = _invitation.CompanyId;
-                await UserManager.UpdateAsync(user);
-                await UserManager.AddToRoleAsync(user, RoleConstants.Manager);
-            }
-            else if (RoleConstants.Driver.Equals(_invitation.Role, StringComparison.OrdinalIgnoreCase))
-            {
-                await UserManager.AddToRoleAsync(user, RoleConstants.Driver);
-                if (_invitation.JobId.HasValue)
-                {
-                    await JobInvitationService.CreateFromRegistrationAsync(
-                        user.Id, _invitation.JobId.Value);
-                }
-            }
-            else
-            {
-                // Fallback if an invitation exists but has an unknown role
-                await UserManager.AddToRoleAsync(user, RoleConstants.Driver);
-            }
-
-            _invitation.IsUsed = true;
-            await InvitationService.MarkUsedAsync(Token!);
-        }
-        else
-        {
-            // DEFAULT ROLE: Assign Driver to all organic, non-invited sign-ups
-            await UserManager.AddToRoleAsync(user, RoleConstants.Driver);
-        }
-        // --------------------------------
-
-        await InvitationService.MarkAllAsUsedByEmailAsync(Input.Email);
+        // DEFAULT ROLE: Assign User to all organic sign-ups
+        await UserManager.AddToRoleAsync(user, RoleConstants.User);
 
         Logger.LogInformation("User created a new account with password.");
 

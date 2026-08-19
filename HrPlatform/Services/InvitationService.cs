@@ -110,25 +110,33 @@ public class InvitationService : IInvitationService
         bool isDriver = existingUser is not null &&
                         (await _userManager.IsInRoleAsync(existingUser, "Driver"));
 
-        if (existingUser is not null && isDriver)
+        if (existingUser is not null)
         {
-            var job = await _db.Jobs
-                .Include(j => j.Company)
-                .FirstOrDefaultAsync(j => j.Id == invitation.JobId);
+            if (isDriver && invitation.JobId.HasValue)
+            {
+                var job = await _db.Jobs
+                    .Include(j => j.Company)
+                    .FirstOrDefaultAsync(j => j.Id == invitation.JobId);
 
-            if (job is null)
-                return InviteResult.Fail("Job not found.");
-            // Guard: already invited to this job
-            bool alreadyInvited = await _db.JobInvitations
-                .AnyAsync(ji => ji.UserId == existingUser.Id && ji.JobId == invitation.JobId);
+                if (job is null)
+                    return InviteResult.Fail("Job not found.");
+                
+                // Guard: already invited to this job
+                bool alreadyInvited = await _db.JobInvitations
+                    .AnyAsync(ji => ji.UserId == existingUser.Id && ji.JobId == invitation.JobId);
 
-            if (alreadyInvited)
-                return InviteResult.Fail("Driver already has an invitation for this job.");
+                if (alreadyInvited)
+                    return InviteResult.Fail("Driver already has an invitation for this job.");
 
-            // Create JobInvitation directly
-            await _jobInvitationService.CreateFromRegistrationAsync(existingUser.Id, invitation.JobId!.Value);
+                // Create JobInvitation directly
+                await _jobInvitationService.CreateFromRegistrationAsync(existingUser.Id, invitation.JobId!.Value);
 
-            return InviteResult.Ok(existing: true);
+                return InviteResult.Ok(existing: true);
+            }
+            else
+            {
+                return InviteResult.Fail("An account with this email or phone number already exists.");
+            }
         }
         else
         {
@@ -184,7 +192,7 @@ public class InvitationService : IInvitationService
         };
 
         var link = new Uri(baseUri,
-            $"/Account/Register?token={fresh.Token}");
+            $"/invite/{fresh.Token}");
 
         var result = await InviteAsync(fresh, link);
 

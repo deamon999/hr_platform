@@ -1,8 +1,9 @@
-﻿@page "/"
-@using HrPlatform
+@page "/"
+@using System.Security.Claims
 @rendermode InteractiveServer
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
+@inject IDriverProfileService ProfileService
 
 @code {
 
@@ -21,6 +22,17 @@
         }
         else if (user.IsInRole(RoleConstants.Driver))
         {
+            var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId != null)
+            {
+                var profile = await ProfileService.GetByUserIdAsync(userId);
+                if (profile == null || !profile.IsApplicationCompleted)
+                {
+                    Nav.NavigateTo("/profiles/new", replace: true);
+                    return;
+                }
+            }
+
             Nav.NavigateTo("/jobs", replace: true);
         }
         else

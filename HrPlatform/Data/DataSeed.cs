@@ -12,7 +12,7 @@ public static class DataSeed
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
 
         // 1. Create required roles (Always needed)
-        string[] roles = { RoleConstants.Admin, RoleConstants.Manager, RoleConstants.Driver };
+        string[] roles = { RoleConstants.Admin, RoleConstants.Manager, RoleConstants.Driver, RoleConstants.User };
 
         foreach (var role in roles)
             if (!await roleManager.RoleExistsAsync(role))

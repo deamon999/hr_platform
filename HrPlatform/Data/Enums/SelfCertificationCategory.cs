@@ -4,15 +4,15 @@ namespace HrPlatform.Data.Enums;
 
 public enum SelfCertificationCategory
 {
-    [Description("Non-Excepted Interstate")]
+    [Description("Non-Excepted Interstate (NI)")]
     NonExceptedInterstate = 1,
 
-    [Description("Excepted Interstate")]
+    [Description("Excepted Interstate (EI)")]
     ExceptedInterstate = 2,
 
-    [Description("Non-Excepted Intrastate")]
+    [Description("Non-Excepted Intrastate (NA)")]
     NonExceptedIntrastate = 3,
 
-    [Description("Excepted Intrastate")]
+    [Description("Excepted Intrastate (EA)")]
     ExceptedIntrastate = 4
 }

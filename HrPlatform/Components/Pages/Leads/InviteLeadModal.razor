@@ -1,8 +1,5 @@
 @using HrPlatform.Data.Entities
-@using HrPlatform.Data.Enums
 @using HrPlatform.Models
-@using HrPlatform.Services
-
 @inject ICompanyService CompanyService
 @inject IJobService JobService
 @inject IInvitationService InvitationService
@@ -24,14 +21,14 @@
                 <div class="mb-4">
                     <label class="form-label fw-bold small text-secondary">Invitation Type</label>
                     <div class="form-check mb-2">
-                        <input class="form-check-input" type="radio" name="inviteType" id="inviteJob" value="job" 
+                        <input class="form-check-input" type="radio" name="inviteType" id="inviteJob" value="job"
                                checked="@(_inviteType == "job")" @onchange="@(() => _inviteType = "job")">
                         <label class="form-check-label" for="inviteJob">
                             Invite to Specific Job
                         </label>
                     </div>
                     <div class="form-check">
-                        <input class="form-check-input" type="radio" name="inviteType" id="invitePlatform" value="platform" 
+                        <input class="form-check-input" type="radio" name="inviteType" id="invitePlatform" value="platform"
                                checked="@(_inviteType == "platform")" @onchange="@(() => _inviteType = "platform")">
                         <label class="form-check-label" for="invitePlatform">
                             Invite to Platform Only
@@ -42,7 +39,8 @@
                 @if (_inviteType == "platform")
                 {
                     <div class="alert alert-warning small border-warning bg-transparent text-warning">
-                        <i class="bi bi-exclamation-triangle"></i> Warning: This will only invite the driver to register on the platform. They will not be automatically applied or linked to a specific job.
+                        <i class="bi bi-exclamation-triangle"></i> Warning: This will only invite the driver to register on the platform. They will
+                        not be automatically applied or linked to a specific job.
                     </div>
                 }
                 else
@@ -53,7 +51,7 @@
                             <label class="form-label small fw-bold">Select Company</label>
                             <select class="form-select bg-dark text-light border-secondary" @bind="_selectedCompanyId" @bind:after="LoadJobsAsync">
                                 <option value="">-- Choose Company --</option>
-                                @foreach(var c in _companies)
+                                @foreach (var c in _companies)
                                 {
                                     <option value="@c.Id">@c.Name</option>
                                 }
@@ -65,7 +63,7 @@
                         <label class="form-label small fw-bold">Select Job</label>
                         <select class="form-select bg-dark text-light border-secondary" @bind="_selectedJobId" disabled="@(_jobs.Count == 0)">
                             <option value="">-- Choose Job --</option>
-                            @foreach(var j in _jobs)
+                            @foreach (var j in _jobs)
                             {
                                 <option value="@j.Id">@j.Title (@j.City, @j.State)</option>
                             }
@@ -80,8 +78,9 @@
             </div>
             <div class="modal-footer border-secondary">
                 <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
-                <button type="button" class="btn btn-primary text-dark fw-bold" style="background-color: #f6c046; border-color: #f6c046;" @onclick="SendInviteAsync" disabled="@isSending">
-                    @if(isSending)
+                <button type="button" class="btn btn-primary text-dark fw-bold" style="background-color: #f6c046; border-color: #f6c046;"
+                        @onclick="SendInviteAsync" disabled="@isSending">
+                    @if (isSending)
                     {
                         <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                     }
@@ -102,11 +101,11 @@
     private string _inviteType = "job";
     private int? _selectedCompanyId;
     private int? _selectedJobId;
-    
+
     private List<Company> _companies = new();
     private List<Job> _jobs = new();
-    
-    private bool isSending = false;
+
+    private bool isSending;
     private string _errorMessage = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -154,7 +153,7 @@
         try
         {
             var contactMethod = !string.IsNullOrWhiteSpace(Lead.Email) ? ContactMethod.Email : ContactMethod.Phone;
-            
+
             var invitation = new Invitation
             {
                 ContactMethod = contactMethod,
@@ -165,7 +164,7 @@
                 JobId = _inviteType == "job" ? _selectedJobId : null
             };
 
-            var link = Nav.ToAbsoluteUri($"/Account/Register?token={invitation.Token}");
+            var link = Nav.ToAbsoluteUri($"/invite/{invitation.Token}");
             var result = await InvitationService.InviteAsync(invitation, link);
 
             if (result.Success)
@@ -192,4 +191,5 @@
     {
         await OnClose.InvokeAsync();
     }
+
 }

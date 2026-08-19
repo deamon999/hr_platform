@@ -131,9 +131,9 @@
                 if (user != null && await UserManager.IsInRoleAsync(user, RoleConstants.Driver))
                 {
                     var profile = await ProfileService.GetByUserIdAsync(user.Id);
-                    if (profile == null)
+                    if (profile == null || !profile.IsApplicationCompleted)
                     {
-                        RedirectManager.RedirectTo("/my-profile");
+                        RedirectManager.RedirectTo("/profiles/new");
                         return;
                     }
                 }

@@ -1,0 +1,512 @@
+@page "/invite/{Token}"
+@using System.Security.Claims
+@using HrPlatform.Utils
+@using HrPlatform.Data.Entities
+@using HrPlatform.Data.Enums
+@using HrPlatform.Data.Models
+@using HrPlatform.Services
+@using Microsoft.AspNetCore.Identity
+@using System.Text
+@using Microsoft.AspNetCore.WebUtilities
+@using System.Text.Encodings.Web
+@rendermode InteractiveServer
+
+@inject IInvitationService InvitationService
+@inject IJobInvitationService JobInvitationService
+@inject IDriverProfileService ProfileService
+@inject ICompanyService CompanyService
+@inject UserManager<ApplicationUser> UserManager
+@inject IUserStore<ApplicationUser> UserStore
+@inject IEmailService RealEmailService
+@inject NavigationManager Nav
+
+<PageTitle>Complete Registration</PageTitle>
+
+<div>
+    @if (_loading)
+    {
+        <div class="d-flex align-items-center justify-content-center" style="height: 100vh;">
+            <div class="spinner-border text-primary" role="status"></div>
+            <span class="ms-3 text-muted">Loading your invitation...</span>
+        </div>
+    }
+    else if (_tokenInvalid)
+    {
+        <div class="d-flex justify-content-center mt-5">
+            <div class="alert alert-danger shadow-sm border-0 d-inline-block">
+                <strong><i class="bi bi-x-circle-fill me-2"></i> Invalid Invitation</strong>
+                <p class="mb-0 mt-2">This invitation link is invalid or has already been used.</p>
+            </div>
+        </div>
+    }
+    else if (_success)
+    {
+        <div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+            <div class="card shadow-sm border-0 text-center" style="max-width: 500px;">
+                <div class="card-body p-5">
+                    <i class="bi bi-check-circle-fill text-primary" style="font-size: 4rem;"></i>
+                    <h2 class="mt-4 mb-3 fw-bold text-dark">Welcome to CDL Pool!</h2>
+                    <p class="text-secondary mb-4">Your account has been created successfully. We've sent an email to <strong>@_profile.Email</strong> with instructions to set your password and log in.</p>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row g-0 h-100" style="min-height: calc(100vh - 4.5rem);">
+            <!-- Sidebar Progress -->
+            <div class="col-lg-3 p-4" style="background-color: var(--bg-card); border-right: 1px solid var(--border-color);">
+                <div class="mb-4">
+                    <h4 class="fw-bold mb-4">
+                        @if (RoleConstants.Admin.Equals(_invitation?.Role, StringComparison.OrdinalIgnoreCase))
+                        {
+                            <text>Admin Registration</text>
+                        }
+                        else if (RoleConstants.Manager.Equals(_invitation?.Role, StringComparison.OrdinalIgnoreCase))
+                        {
+                            <text>Manager Registration</text>
+                        }
+                        else
+                        {
+                            <text>Driver Registration</text>
+                        }
+                    </h4>
+                    @if (_companyName != null && _isManager)
+                    {
+                        <div class="alert alert-info py-2 px-3 mb-4 shadow-sm border-0 small">
+                            Joining: <strong>@_companyName</strong>
+                        </div>
+                    }
+                    
+                    @if (!_isManager)
+                    {
+                        <h5 class="text-secondary fw-bold text-uppercase mb-2" style="font-size: 0.8rem; letter-spacing: 1px;">Application Progress</h5>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small class="text-muted fw-medium">@(Math.Min(((activeTab + 1) * 100) / tabs.Length, 100))% Complete</small>
+                        </div>
+                        <div class="progress mb-4" style="height: 6px; background-color: rgba(255,255,255,0.1);">
+                            <div class="progress-bar bg-primary" style="width: @(Math.Min(((activeTab + 1) * 100) / tabs.Length, 100))%; transition: width 0.3s ease;"></div>
+                        </div>
+                    }
+
+                    <ul class="nav flex-column gap-3 wizard-steps">
+                        @foreach (var (label, index) in tabs.Select((l, i) => (l, i)))
+                        {
+                            var locked = index > maxReachedTab;
+                            var completed = index < maxReachedTab;
+                            var active = activeTab == index;
+
+                            <li class="nav-item">
+                                <button type="button"
+                                        class="nav-link text-start w-100 p-0 d-flex align-items-center @(active ? "active-step" : "inactive-step") @(locked ? "disabled opacity-50" : "")"
+                                        @onclick="() => ActivateTab(index)"
+                                        disabled="@locked"
+                                        style="background: transparent; border: none;">
+                                    <div class="step-circle @(active ? "active-circle" : (completed ? "completed-circle" : "inactive-circle")) me-3 d-flex justify-content-center align-items-center rounded-circle" style="width: 24px; height: 24px; font-size: 0.75rem;">
+                                        @if (completed)
+                                        {
+                                            <i class="bi bi-check"></i>
+                                        }
+                                        else
+                                        {
+                                            <span>@(index + 1)</span>
+                                        }
+                                    </div>
+                                    <span style="font-size: 0.9rem;">@label</span>
+                                </button>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="col-lg-9 d-flex flex-column bg-white text-dark">
+                <EditForm EditContext="editContext" class="d-flex flex-column flex-grow-1">
+                    <DataAnnotationsValidator/>
+                    
+                    <!-- Top Bar -->
+                    <div class="px-5 py-4 d-flex justify-content-between align-items-center border-bottom" style="border-color: var(--border-color) !important;">
+                        <h4 class="mb-0 fw-bold text-uppercase d-flex align-items-center">
+                            <span class="text-primary me-2">@(activeTab + 1).</span> @tabs[activeTab]
+                        </h4>
+                    </div>
+                    
+                    <div class="px-5 py-4 flex-grow-1 overflow-auto">
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="alert alert-danger shadow-sm rounded-3 mb-4 d-flex align-items-center">
+                                <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+                                <div>@errorMessage</div>
+                            </div>
+                        }
+                        <ValidationSummary class="text-danger mb-4"/>
+
+                        <div class="@(activeTab == 0 ? "" : "d-none")">
+                            <HrPlatform.Components.Pages.ProfileShared.ProfilePersonalForm Profile="_profile" IsReadOnly="false" IsManager="_isManager" />
+                        </div>
+                        @if (!_isManager)
+                        {
+                            <div class="@(activeTab == 1 ? "" : "d-none")">
+                                <HrPlatform.Components.Pages.ProfileShared.ProfileLicenseForm Profile="_profile" IsReadOnly="false" />
+                            </div>
+                            <div class="@(activeTab == 2 ? "" : "d-none")">
+                                <HrPlatform.Components.Pages.ProfileShared.ProfileDrivingStatsForm Profile="_profile" IsReadOnly="false" />
+                            </div>
+                            <div class="@(activeTab == 3 ? "" : "d-none")">
+                                <HrPlatform.Components.Pages.ProfileShared.ProfileEmploymentForm Profile="_profile" IsReadOnly="false" />
+                            </div>
+                            <div class="@(activeTab == 4 ? "" : "d-none")">
+                                <HrPlatform.Components.Pages.ProfileShared.ProfileSafetyForm Profile="_profile" IsReadOnly="false" />
+                            </div>
+                            <div class="@(activeTab == 5 ? "" : "d-none")">
+                                <HrPlatform.Components.Pages.ProfileShared.ProfilePreferencesForm Profile="_profile" IsReadOnly="false" />
+                            </div>
+                            <div class="@(activeTab == 6 ? "" : "d-none")">
+                                <HrPlatform.Components.Pages.ProfileShared.ProfileEducationForm Profile="_profile" IsReadOnly="false" />
+                            </div>
+                            <div class="@(activeTab == 7 ? "" : "d-none")">
+                                <HrPlatform.Components.Pages.ProfileShared.ProfileDocumentsForm Profile="_profile" IsReadOnly="false" />
+                            </div>
+                            <div class="@(activeTab == 8 ? "" : "d-none")">
+                                <HrPlatform.Components.Pages.ProfileShared.ProfileConsentsForm Profile="_profile" IsReadOnly="false" />
+                            </div>
+                            <div class="@(activeTab == 9 ? "" : "d-none")">
+                                <HrPlatform.Components.Pages.ProfileShared.ProfileReviewForm Profile="_profile" />
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Bottom Nav Bar -->
+                    <div class="px-5 py-4 border-top d-flex justify-content-between align-items-center bg-white" style="border-color: var(--border-color) !important;">
+                            @if (activeTab > 0)
+                            {
+                                <button type="button" class="btn btn-outline-secondary px-4" @onclick="GoPrevious">
+                                    <i class="bi bi-arrow-left me-2"></i> Previous
+                                </button>
+                            }
+                            else
+                            {
+                                <div></div>
+                            }
+
+                            @if (activeTab < tabs.Length - 1)
+                            {
+                                <div class="d-flex gap-3">
+                                    <button type="button" class="btn btn-primary px-4 fw-medium" @onclick="SaveAndContinue">
+                                        Continue <i class="bi bi-arrow-right ms-2"></i>
+                                    </button>
+                                </div>
+                            }
+                            else if (activeTab == tabs.Length - 1)
+                            {
+                                <div class="d-flex gap-3">
+                                    <button type="button" class="btn btn-primary px-5 fw-bold" @onclick="SubmitRegistrationAsync" disabled="@_isSubmitting">
+                                        @if (_isSubmitting)
+                                        {
+                                            <span class="spinner-border spinner-border-sm me-2"></span>
+                                        }
+                                        Complete Registration <i class="bi bi-check-circle ms-2"></i>
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                </EditForm>
+            </div>
+        </div>
+        
+        <style>
+            .wizard-steps .active-step {
+                color: var(--text-primary);
+                font-weight: 600;
+            }
+            .wizard-steps .inactive-step {
+                color: var(--text-secondary);
+            }
+            .wizard-steps .inactive-step:hover:not(.disabled) {
+                color: var(--text-primary);
+            }
+            .step-circle {
+                border: 1px solid var(--border-color);
+            }
+            .active-circle {
+                background-color: var(--accent-primary);
+                border-color: var(--accent-primary);
+                color: #000;
+            }
+            .completed-circle {
+                background-color: transparent;
+                border-color: var(--text-secondary);
+                color: var(--text-secondary);
+            }
+            .inactive-circle {
+                background-color: transparent;
+                color: var(--text-secondary);
+            }
+        </style>
+    }
+</div>
+
+@code {
+    [Parameter] public string Token { get; set; } = string.Empty;
+
+    private bool _loading = true;
+    private bool _tokenInvalid = false;
+    private bool _success = false;
+    private bool _isSubmitting = false;
+    
+    private Invitation? _invitation;
+    private bool _isManager;
+    private string? _companyName;
+    
+    private DriverProfile _profile = new();
+    private EditContext editContext = default!;
+    
+    private string? errorMessage;
+    private int activeTab;
+    private int maxReachedTab;
+
+    private string[] tabs = Array.Empty<string>();
+    
+    private static readonly string[] driverTabs =
+        ["Personal Information", "CDL License & Medical", "Driving Experience", "Employment History", "Safety History", "Preferences", "Education", "Other Documents", "Consents & Authorizations", "Review & Submit"];
+    private static readonly string[] managerTabs = ["Personal Information"];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _invitation = await InvitationService.GetValidAsync(Token);
+
+        if (_invitation is null)
+        {
+            _tokenInvalid = true;
+        }
+        else
+        {
+            _isManager = RoleConstants.Manager.Equals(_invitation.Role, StringComparison.OrdinalIgnoreCase) || 
+                         RoleConstants.Admin.Equals(_invitation.Role, StringComparison.OrdinalIgnoreCase);
+            tabs = _isManager ? managerTabs : driverTabs;
+            
+            if (_invitation.CompanyId.HasValue)
+            {
+                var company = await CompanyService.GetByIdAsync(_invitation.CompanyId.Value);
+                _companyName = company?.Name;
+            }
+            else
+            {
+                _companyName = "CDL Pool Group";
+            }
+
+            _profile = new DriverProfile
+            {
+                UserId = "temp-user-id", // Satisfies [Required] validation before actual user is created
+                DateOfBirth = DateOnly.FromDateTime(DateTime.Today),
+                Email = _invitation.Email ?? string.Empty,
+                PhoneNumber = _invitation.Phone ?? string.Empty
+            };
+            
+            editContext = new EditContext(_profile);
+        }
+        
+        _loading = false;
+    }
+
+    private void ActivateTab(int index)
+    {
+        errorMessage = null;
+        if (index > maxReachedTab) return;
+        
+        if (!_isManager && activeTab == 1 && index > activeTab && (!_profile.Documents.Any(d => d.DocumentType == "CDL License") || !_profile.Documents.Any(d => d.DocumentType == "Medical Card")))
+        {
+            errorMessage = "CDL License and DOT Medical Card documents are required before proceeding.";
+            return;
+        }
+
+        activeTab = index;
+    }
+
+    private void GoPrevious()
+    {
+        if (activeTab > 0) activeTab--;
+    }
+
+    private void SaveAndContinue()
+    {
+        errorMessage = null;
+        
+        if (!_isManager && activeTab == 1 && (!_profile.Documents.Any(d => d.DocumentType == "CDL License") || !_profile.Documents.Any(d => d.DocumentType == "Medical Card")))
+        {
+            errorMessage = "CDL License and DOT Medical Card documents are required before proceeding.";
+            return;
+        }
+
+        if (ValidateProfileSafe())
+        {
+            var nextTab = activeTab + 1;
+            if (nextTab > maxReachedTab) maxReachedTab = nextTab;
+            activeTab++;
+        }
+        else
+        {
+            errorMessage = "Validation failed. Please fill in all required fields.";
+        }
+    }
+
+    private bool ValidateProfileSafe()
+    {
+        var tempLicense = _profile.License;
+        if (tempLicense != null && tempLicense.Id == 0 && string.IsNullOrWhiteSpace(tempLicense.LicenseNumber))
+            _profile.License = null;
+
+        var tempMedical = _profile.MedicalCard;
+        if (tempMedical != null && tempMedical.Id == 0 && tempMedical.SelfCertification == null && string.IsNullOrWhiteSpace(tempMedical.MedicalExaminerName))
+            _profile.MedicalCard = null;
+
+        bool isValid = editContext.Validate();
+
+        foreach (var edu in _profile.Educations)
+        {
+            if (string.IsNullOrWhiteSpace(edu.SchoolName) || 
+                string.IsNullOrWhiteSpace(edu.City) || 
+                string.IsNullOrWhiteSpace(edu.State) || 
+                edu.Level == null)
+            {
+                isValid = false;
+                if (string.IsNullOrWhiteSpace(errorMessage))
+                {
+                    errorMessage = "Please complete all required fields for your Education records.";
+                }
+            }
+        }
+
+        _profile.License = tempLicense;
+        _profile.MedicalCard = tempMedical;
+
+        if (_isManager)
+        {
+            if (string.IsNullOrWhiteSpace(_profile.FirstName) || string.IsNullOrWhiteSpace(_profile.LastName) ||
+                string.IsNullOrWhiteSpace(_profile.Email) || string.IsNullOrWhiteSpace(_profile.PhoneNumber))
+            {
+                isValid = false;
+            }
+        }
+
+        return isValid;
+    }
+
+    private IUserEmailStore<ApplicationUser> GetEmailStore()
+    {
+        if (!UserManager.SupportsUserEmail)
+        {
+            throw new NotSupportedException("The default UI requires a user store with email support.");
+        }
+        return (IUserEmailStore<ApplicationUser>)UserStore;
+    }
+
+    private async Task SubmitRegistrationAsync()
+    {
+        errorMessage = null;
+        if (!ValidateProfileSafe())
+        {
+            errorMessage = "Please ensure all required fields are filled correctly.";
+            return;
+        }
+
+        _isSubmitting = true;
+
+        try
+        {
+            var user = new ApplicationUser
+            {
+                FirstName = _profile.FirstName.Trim(),
+                LastName = _profile.LastName.Trim(),
+                PhoneNumber = _profile.PhoneNumber,
+                EmailConfirmed = true,
+            };
+            
+            if (_isManager)
+            {
+                user.CompanyId = _invitation!.CompanyId;
+            }
+            
+            await UserStore.SetUserNameAsync(user, _profile.Email.Trim(), CancellationToken.None);
+            var emailStore = GetEmailStore();
+            await emailStore.SetEmailAsync(user, _profile.Email.Trim(), CancellationToken.None);
+            
+            var dummyPassword = Guid.NewGuid().ToString("N").Substring(0, 12) + "A1!";
+            var result = await UserManager.CreateAsync(user, dummyPassword);
+
+            if (!result.Succeeded)
+            {
+                errorMessage = $"Failed to create user: {string.Join(", ", result.Errors.Select(e => e.Description))}";
+                _isSubmitting = false;
+                return;
+            }
+
+            var roleToAssign = _invitation!.Role;
+            await UserManager.AddToRoleAsync(user, roleToAssign);
+
+            if (!_isManager)
+            {
+                _profile.IsApplicationCompleted = true;
+                _profile.UserId = user.Id;
+                
+                if (_profile.License != null && string.IsNullOrWhiteSpace(_profile.License.LicenseNumber)) _profile.License = null;
+                if (_profile.MedicalCard != null && string.IsNullOrWhiteSpace(_profile.MedicalCard.MedicalExaminerName)) _profile.MedicalCard = null;
+                
+                foreach (var doc in _profile.Documents)
+                {
+                    doc.IsUnsaved = false;
+                }
+                
+                await ProfileService.CreateAsync(_profile);
+                
+                if (_invitation!.JobId.HasValue)
+                {
+                    await JobInvitationService.CreateFromRegistrationAsync(user.Id, _invitation.JobId.Value);
+                }
+            }
+
+            _invitation!.IsUsed = true;
+            await InvitationService.MarkUsedAsync(Token);
+            await InvitationService.MarkAllAsUsedByEmailAsync(_profile.Email);
+
+            var code = await UserManager.GeneratePasswordResetTokenAsync(user);
+            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+            var callbackUrl = Nav.GetUriWithQueryParameters(
+                Nav.ToAbsoluteUri("Account/ResetPassword").AbsoluteUri,
+                new Dictionary<string, object?> { ["code"] = code, ["email"] = _profile.Email });
+
+            var subject = "Welcome to CDL Pool! Set your password";
+            var emailHtml = $@"
+<div style='font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e9ecef; border-radius: 8px; overflow: hidden;'>
+    <div style='background-color: #0d6efd; color: #fff; padding: 20px; text-align: center;'>
+        <h2 style='margin: 0;'>Welcome to CDL Pool!</h2>
+    </div>
+    <div style='padding: 30px;'>
+        <p style='font-size: 16px;'>Hi {user.FirstName},</p>
+        <p style='font-size: 16px;'>Your account has been successfully created. To complete your setup and log in, please set your password by clicking the button below:</p>
+        <div style='text-align: center; margin: 30px 0;'>
+            <a href='{callbackUrl}' style='background-color: #0d6efd; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 16px; display: inline-block;'>Set Your Password</a>
+        </div>
+        <p style='font-size: 14px; color: #6c757d;'>If the button doesn't work, copy and paste this link into your browser:<br/>
+        <a href='{callbackUrl}' style='color: #0d6efd; word-break: break-all;'>{callbackUrl}</a></p>
+    </div>
+    <div style='background-color: #f8f9fa; padding: 15px; text-align: center; font-size: 12px; color: #6c757d;'>
+        <p style='margin: 0;'>&copy; {DateTime.Now.Year} CDL Pool Group. All rights reserved.</p>
+    </div>
+</div>";
+
+            await RealEmailService.SendEmailAsync(_profile.Email, null, subject, emailHtml);
+
+            _success = true;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred during registration: {ex.Message}";
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+}
