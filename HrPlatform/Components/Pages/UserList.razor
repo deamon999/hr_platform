@@ -30,7 +30,7 @@ else
         </div>
         <div class="d-flex align-items-center gap-2">
             <span class="text-secondary small fw-medium text-nowrap d-none d-md-inline">Items per page:</span>
-            <select class="form-select form-select-sm border-0 bg-white shadow-sm" style="width: 70px;" @bind="PageSize" @bind:after="OnPageSizeChanged">
+            <select class="form-select form-select-sm border-0 bg-white shadow-sm" style="width: 70px;" @bind="PageSize" @bind:after="ResetPageAndLoad">
                 <option value="10">10</option>
                 <option value="50">50</option>
                 <option value="100">100</option>
@@ -174,10 +174,16 @@ else
     private List<UserViewModel> pagedUsers = new();
 
     // UI State
-    [SupplyParameterFromQuery(Name = "q")]
-    public string? _searchTerm { get; set; }
     private string? _statusMessage;
     private string _statusClass = "alert-success";
+    public string? SearchQuery { get; set; }
+    public int? PageQuery { get; set; }
+    public int? SizeQuery { get; set; }
+
+    private int currentPage = 1;
+    public int PageSize { get; set; } = 10;
+    private int totalPages = 1;
+    private string? _searchTerm;
     private bool isLoading = true;
     private UserViewModel? deleteTarget;
 
@@ -185,28 +191,10 @@ else
     private bool isAdmin;
     private int? companyId;
 
-    // Pagination State
-    [SupplyParameterFromQuery(Name = "page")]
-    public int currentPage { get; set; } = 1;
-
-    [SupplyParameterFromQuery(Name = "size")]
-    public int PageSize { get; set; } = 10;
-    
-    private int totalPages = 1;
-
-    private void OnPageSizeChanged()
-    {
-        var url = Nav.GetUriWithQueryParameters(new Dictionary<string, object?>
-        {
-            { "page", null }, // reset to page 1
-            { "size", PageSize == 10 ? null : PageSize },
-            { "q", string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm }
-        });
-        Nav.NavigateTo(url);
-    }
-
     protected override async Task OnInitializedAsync()
     {
+        Nav.LocationChanged += OnLocationChanged;
+        ParseParametersFromUri();
 
         var auth = await AuthState.GetAuthenticationStateAsync();
         var user = auth.User;
@@ -224,10 +212,49 @@ else
         }
     }
 
-    protected override async Task OnParametersSetAsync()
+    private void ResetPageAndLoad()
     {
+        currentPage = 1;
+        var url = Nav.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            { "page", null }, // reset to page 1
+            { "size", PageSize == 10 ? null : PageSize },
+            { "q", string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm }
+        });
+        Nav.NavigateTo(url);
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        InvokeAsync(async () =>
+        {
+            ParseParametersFromUri();
+            await LoadAsync(_searchTerm);
+            StateHasChanged();
+        });
+    }
+
+    private void ParseParametersFromUri()
+    {
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        
+        _searchTerm = query.TryGetValue("q", out var q) ? (string?)q : null;
+        currentPage = query.TryGetValue("page", out var p) && int.TryParse(p, out var page) ? page : 1;
+        PageSize = query.TryGetValue("size", out var s) && int.TryParse(s, out var size) ? size : 10;
+        
         if (currentPage < 1) currentPage = 1;
         if (PageSize < 1) PageSize = 10;
+    }
+
+    public void Dispose()
+    {
+        Nav.LocationChanged -= OnLocationChanged;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        ParseParametersFromUri();
         await LoadAsync(_searchTerm);
     }
 

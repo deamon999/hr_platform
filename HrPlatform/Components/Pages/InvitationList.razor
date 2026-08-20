@@ -167,31 +167,73 @@ else
     private List<Invitation> pagedInvitations = new();
 
     // UI State
-    [SupplyParameterFromQuery(Name = "q")]
-    public string? _searchTerm { get; set; } = string.Empty;
+    public string? SearchQuery { get; set; }
+    public int? PageQuery { get; set; }
+    public int? SizeQuery { get; set; }
 
-    private string? _statusMessage;
-    private string _statusClass = "alert-success";
-    private bool isLoading = true;
-    private List<Company> _companies = new();
-
-    // Pagination State
-    [SupplyParameterFromQuery(Name = "page")]
-    public int currentPage { get; set; } = 1;
-
-    [SupplyParameterFromQuery(Name = "size")]
+    private int currentPage = 1;
     public int PageSize { get; set; } = 10;
     private int totalPages = 1;
+    private string? _searchTerm;
+    private bool isLoading;
+    private string? _statusMessage;
+    private string _statusClass = "alert-success";
+    private List<Company> _companies = new();
+    private bool isAdmin;
+    private int? companyId;
 
     protected override async Task OnInitializedAsync()
     {
         _companies = await CompanyService.GetAllAsync();
+        
+        Nav.LocationChanged += OnLocationChanged;
+        ParseParametersFromUri();
+        
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
+        isAdmin = user.IsInRole(RoleConstants.Admin);
+        
+        if (!isAdmin)
+        {
+            var companyIdClaim = user.FindFirst("companyId")?.Value;
+            if (int.TryParse(companyIdClaim, out var parsedCompanyId))
+            {
+                companyId = parsedCompanyId;
+            }
+        }
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        InvokeAsync(async () =>
+        {
+            ParseParametersFromUri();
+            await LoadAsync(_searchTerm);
+            StateHasChanged();
+        });
+    }
+
+    private void ParseParametersFromUri()
+    {
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        
+        _searchTerm = query.TryGetValue("q", out var q) ? (string?)q : null;
+        currentPage = query.TryGetValue("page", out var p) && int.TryParse(p, out var page) ? page : 1;
+        PageSize = query.TryGetValue("size", out var s) && int.TryParse(s, out var size) ? size : 10;
+        
+        if (currentPage < 1) currentPage = 1;
+        if (PageSize < 1) PageSize = 10;
+    }
+
+    public void Dispose()
+    {
+        Nav.LocationChanged -= OnLocationChanged;
     }
 
     protected override async Task OnParametersSetAsync()
     {
-        if (currentPage < 1) currentPage = 1;
-        if (PageSize < 1) PageSize = 10;
+        ParseParametersFromUri();
         await LoadAsync(_searchTerm);
     }
 

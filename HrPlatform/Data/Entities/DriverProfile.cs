@@ -102,8 +102,10 @@ public class DriverProfile
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+    [ValidateComplexType]
     public DriverLicense? License { get; set; }
 
+    [ValidateComplexType]
     public DriverMedicalCard? MedicalCard { get; set; }
 
     // Navigation property for skills junction table

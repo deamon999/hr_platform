@@ -1,0 +1,122 @@
+@page "/invite/{Token}"
+@using HrPlatform.Data.Entities
+@rendermode InteractiveServer
+@inject IInvitationService InvitationService
+@inject ICompanyService CompanyService
+@inject NavigationManager Nav
+
+<PageTitle>Invitation</PageTitle>
+
+@if (_loading)
+{
+    <div class="d-flex align-items-center justify-content-center" style="height: 100vh;">
+        <div class="spinner-border text-primary" role="status"></div>
+        <span class="ms-3 text-muted">Loading your invitation...</span>
+    </div>
+}
+else if (_tokenInvalid)
+{
+    <div class="d-flex justify-content-center mt-5">
+        <div class="alert alert-danger shadow-sm border-0 d-inline-block">
+            <strong><i class="bi bi-x-circle-fill me-2"></i> Invalid Invitation</strong>
+            <p class="mb-0 mt-2">This invitation link is invalid or has already been used.</p>
+        </div>
+    </div>
+}
+else if (_invitation != null)
+{
+    @if (RoleConstants.Driver.Equals(_invitation.Role, StringComparison.OrdinalIgnoreCase))
+    {
+        <div class="row g-0 h-100 p-4" style="min-height: calc(100vh - 4.5rem); background-color: var(--bg-color);">
+            <div class="col-12 col-xl-10 mx-auto">
+                <HrPlatform.Components.Pages.ProfileShared.ProfileRequirementsWelcome OnContinue="StartRegistration"/>
+            </div>
+        </div>
+    }
+    else if (RoleConstants.Manager.Equals(_invitation.Role, StringComparison.OrdinalIgnoreCase))
+    {
+        <div class="row g-0 h-100 p-4 align-items-center justify-content-center"
+             style="min-height: calc(100vh - 4.5rem); background-color: var(--bg-color);">
+            <div class="col-12 col-md-8 col-lg-6">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-5 text-center">
+                        <i class="bi bi-building text-primary mb-3" style="font-size: 3rem;"></i>
+                        <h2 class="fw-bold mb-3">Welcome to the Team!</h2>
+                        <p class="text-secondary mb-4 fs-5">
+                            You've been invited to join <strong>@_companyName</strong> as a Manager.
+                        </p>
+                        <p class="text-secondary mb-5">
+                            As a manager, you will be able to review driver profiles, invite team members, and manage jobs for your organization.
+                        </p>
+                        <button class="btn btn-primary btn-lg px-5 fw-bold rounded-pill" @onclick="StartRegistration">
+                            Accept Invitation <i class="bi bi-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (RoleConstants.Admin.Equals(_invitation.Role, StringComparison.OrdinalIgnoreCase))
+    {
+        <div class="row g-0 h-100 p-4 align-items-center justify-content-center"
+             style="min-height: calc(100vh - 4.5rem); background-color: var(--bg-color);">
+            <div class="col-12 col-md-8 col-lg-6">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-5 text-center">
+                        <i class="bi bi-shield-lock-fill text-primary mb-3" style="font-size: 3rem;"></i>
+                        <h2 class="fw-bold mb-3">CDL Pool Administrator</h2>
+                        <p class="text-secondary mb-4 fs-5">
+                            You've been invited to join the CDL Pool core administration team.
+                        </p>
+                        <p class="text-secondary mb-5">
+                            CDL Pool is the premier platform connecting qualified truck drivers with top-tier companies. As an Administrator, you will
+                            have full access to manage platform operations, oversight of companies, and system-wide configurations.
+                        </p>
+                        <button class="btn btn-primary btn-lg px-5 fw-bold rounded-pill" @onclick="StartRegistration">
+                            Proceed to Registration <i class="bi bi-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public string Token { get; set; } = string.Empty;
+
+    private bool _loading = true;
+    private bool _tokenInvalid;
+    private Invitation? _invitation;
+    private string? _companyName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _invitation = await InvitationService.GetValidAsync(Token);
+
+        if (_invitation is null)
+        {
+            _tokenInvalid = true;
+        }
+        else
+        {
+            if (_invitation.CompanyId.HasValue)
+            {
+                var company = await CompanyService.GetByIdAsync(_invitation.CompanyId.Value);
+                _companyName = company?.Name;
+            }
+            else
+            {
+                _companyName = "CDL Pool Group";
+            }
+        }
+
+        _loading = false;
+    }
+
+    private void StartRegistration()
+    {
+        Nav.NavigateTo($"/invite/{Token}/register");
+    }
+
+}

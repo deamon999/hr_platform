@@ -1,0 +1,84 @@
+<div class="card shadow-sm border-0 h-100">
+    <div class="card-body p-4 p-md-5 d-flex flex-column">
+        <h2 class="fw-bold mb-4 text-center">Welcome! Let's get you ready.</h2>
+        <p class="text-secondary text-center mb-5" style="font-size: 1.1rem;">
+            To apply for a driving position, please complete your driver profile. Incomplete information will delay the processing of your
+            application.
+        </p>
+
+        <div class="row g-5 flex-grow-1">
+            <!-- Left Column: What to prepare -->
+            <div class="col-md-6 border-end">
+                <h5 class="fw-bold text-primary mb-4">
+                    <i class="bi bi-card-checklist me-2"></i> What you will need:
+                </h5>
+                <ul class="list-unstyled mb-0 ms-2">
+                    <li class="mb-3 d-flex align-items-start">
+                        <i class="bi bi-check-circle-fill text-success mt-1 me-3 fs-5"></i>
+                        <span><strong>Current Address</strong> & contact information</span>
+                    </li>
+                    <li class="mb-3 d-flex align-items-start">
+                        <i class="bi bi-check-circle-fill text-success mt-1 me-3 fs-5"></i>
+                        <span><strong>Current CDL Details</strong> (including medical card)</span>
+                    </li>
+                    <li class="mb-3 d-flex align-items-start">
+                        <i class="bi bi-check-circle-fill text-success mt-1 me-3 fs-5"></i>
+                        <span><strong>Employment History</strong> up to 10 years</span>
+                    </li>
+                    <li class="mb-3 d-flex align-items-start">
+                        <i class="bi bi-check-circle-fill text-success mt-1 me-3 fs-5"></i>
+                        <span><strong>Accident & Violation History</strong> from the last 3 years (including DUI, reckless driving, or license suspension)</span>
+                    </li>
+                    <li class="mb-3 d-flex align-items-start">
+                        <i class="bi bi-check-circle-fill text-success mt-1 me-3 fs-5"></i>
+                        <span><strong>Military History</strong> (if applicable)</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Right Column: General Requirements -->
+            <div class="col-md-6">
+                <h5 class="fw-bold text-primary mb-4">
+                    <i class="bi bi-shield-check me-2"></i> General Qualifications:
+                </h5>
+                <ul class="list-unstyled mb-0 ms-2">
+                    <li class="mb-3 d-flex align-items-start">
+                        <i class="bi bi-check2-square text-primary mt-1 me-3 fs-5"></i>
+                        <span>Valid <strong>Commercial Driver's License</strong> (CDL A, B, or C)</span>
+                    </li>
+                    <li class="mb-3 d-flex align-items-start">
+                        <i class="bi bi-check2-square text-primary mt-1 me-3 fs-5"></i>
+                        <span>At least <strong>21 years old</strong> for interstate driving (18+ for intrastate)</span>
+                    </li>
+                    <li class="mb-3 d-flex align-items-start">
+                        <i class="bi bi-check2-square text-primary mt-1 me-3 fs-5"></i>
+                        <span><strong>Clean driving record</strong> and safety history</span>
+                    </li>
+                    <li class="mb-3 d-flex align-items-start">
+                        <i class="bi bi-check2-square text-primary mt-1 me-3 fs-5"></i>
+                        <span>Current and valid <strong>DOT Medical Card</strong></span>
+                    </li>
+                    <li class="mb-3 d-flex align-items-start">
+                        <i class="bi bi-check2-square text-primary mt-1 me-3 fs-5"></i>
+                        <span>Ability to pass standard <strong>DOT background and drug screenings</strong></span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="alert alert-info mt-4 mb-4">
+            <i class="bi bi-info-circle-fill me-2"></i> Required entry fields are followed by an asterisk (<span class="text-danger fw-bold">*</span>).
+            You must provide the requested information to continue.
+        </div>
+
+        <div class="mt-auto pt-4 border-top text-center">
+            <button type="button" class="btn btn-primary btn-lg px-5 fw-bold rounded-pill shadow-sm" @onclick="OnContinue">
+                I'm Ready, Let's Start <i class="bi bi-arrow-right ms-2"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnContinue { get; set; }
+}

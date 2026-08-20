@@ -1,6 +1,6 @@
 @page "/users"
+@using Microsoft.AspNetCore.WebUtilities
 @rendermode InteractiveServer
-@using HrPlatform.Models
 @attribute [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.Manager}")]
 
 <PageTitle>User Management</PageTitle>
@@ -11,11 +11,11 @@
 
 <div class="mb-4">
     <div class="d-flex gap-3 mb-4 pb-3 border-bottom">
-        <button class="btn @(activeTab == "users" ? "btn-primary fw-bold" : "btn-outline-secondary") rounded-pill px-5" 
+        <button class="btn @(activeTab == "users" ? "btn-primary fw-bold" : "btn-outline-secondary") rounded-pill px-5"
                 @onclick="@(() => activeTab = "users")">
             Users
         </button>
-        <button class="btn @(activeTab == "invitations" ? "btn-primary fw-bold" : "btn-outline-secondary") rounded-pill px-5" 
+        <button class="btn @(activeTab == "invitations" ? "btn-primary fw-bold" : "btn-outline-secondary") rounded-pill px-5"
                 @onclick="@(() => activeTab = "invitations")">
             Invitations
         </button>
@@ -24,11 +24,11 @@
     <div>
         @if (activeTab == "users")
         {
-            <UserList />
+            <UserList/>
         }
         else if (activeTab == "invitations")
         {
-            <InvitationList />
+            <InvitationList/>
         }
     </div>
 </div>
@@ -36,13 +36,35 @@
 
 
 @code {
-    [SupplyParameterFromQuery]
-    public string? Tab { get; set; }
+    [Inject] private NavigationManager NavManager { get; set; } = default!;
 
+    private string? Tab;
     private string activeTab = "users";
 
-    protected override void OnParametersSet()
+    protected override void OnInitialized()
     {
+        NavManager.LocationChanged += OnLocationChanged;
+        ParseTabFromUri();
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        ParseTabFromUri();
+        StateHasChanged();
+    }
+
+    private void ParseTabFromUri()
+    {
+        var uri = NavManager.ToAbsoluteUri(NavManager.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("Tab", out var tabValue))
+        {
+            Tab = tabValue;
+        }
+        else
+        {
+            Tab = null;
+        }
+
         if (string.Equals(Tab, "invitations", StringComparison.OrdinalIgnoreCase))
         {
             activeTab = "invitations";
@@ -52,4 +74,10 @@
             activeTab = "users";
         }
     }
+
+    public void Dispose()
+    {
+        NavManager.LocationChanged -= OnLocationChanged;
+    }
+
 }
