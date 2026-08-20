@@ -1,15 +1,13 @@
 @page "/driver/invitations"
-@attribute [Authorize(Roles = "Driver")]
-@rendermode InteractiveServer
-
 @using System.Security.Claims
 @using HrPlatform.Data.Entities
 @using HrPlatform.Models
-@using Microsoft.AspNetCore.Server.HttpSys
+@attribute [Authorize(Roles = "Driver")]
+@rendermode InteractiveServer
+<TimezoneInitializer/>
 
 @inject IJobInvitationService JobInvitationService
 @inject AuthenticationStateProvider AuthStateProvider
-@inject UserManager<ApplicationUser> UserManager
 @inject NavigationManager Nav
 
 <PageTitle>My Job Invitations</PageTitle>
@@ -67,7 +65,7 @@ else
                                         <h4 class="fw-bold mb-0 text-dark">@inv.Job.Title</h4>
                                         <span class="badge @(StatusBadgeClass(inv.Status)) rounded-pill px-3 py-1">@inv.Status</span>
                                     </div>
-                                    
+
                                     <div class="mb-3 text-secondary small">
                                         <div class="d-flex align-items-center gap-3 mb-1">
                                             <span><i class="bi bi-building"></i> @DisplayCompanyName(inv.Job)</span>
@@ -75,14 +73,14 @@ else
                                     </div>
 
                                     <div class="d-flex flex-wrap gap-2 text-secondary small">
-                                        <span class="badge bg-light text-dark rounded-pill px-3 py-2 border"><i class="bi bi-calendar-event me-1"></i> Invited: @inv.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</span>
+                                        <span class="badge bg-light text-dark rounded-pill px-3 py-2 border"><i class="bi bi-calendar-event me-1"></i> Invited: @TimeZoneService.ToUserTime(inv.CreatedAt).ToString("MMM dd, yyyy")</span>
                                         @if (inv.ReviewedAt.HasValue)
                                         {
-                                            <span class="badge bg-light text-dark rounded-pill px-3 py-2 border"><i class="bi bi-reply me-1"></i> Responded: @inv.ReviewedAt.Value.ToLocalTime().ToString("MMM dd, yyyy")</span>
+                                            <span class="badge bg-light text-dark rounded-pill px-3 py-2 border"><i class="bi bi-reply me-1"></i> Responded: @TimeZoneService.ToUserTime(inv.ReviewedAt.Value).ToString("MMM dd, yyyy")</span>
                                         }
                                     </div>
                                 </div>
-                                
+
                                 <div class="col-md-5 d-flex gap-2 justify-content-md-end align-items-end flex-wrap mt-3 mt-md-0">
                                     @if (inv.Status == JobInvitationStatus.Pending)
                                     {
@@ -115,9 +113,10 @@ else
             .app-card {
                 transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
             }
+
             .app-card:hover {
                 transform: translateY(-2px);
-                box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+                box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
             }
         </style>
 
@@ -129,7 +128,7 @@ else
                         <button class="page-link" @onclick="() => ChangePage(currentPage - 1)" tabindex="-1">Previous</button>
                     </li>
 
-                    @for (int i = 1; i <= _paginationResult.TotalPages; i++)
+                    @for (var i = 1; i <= _paginationResult.TotalPages; i++)
                     {
                         var pageIndex = i;
                         <li class="page-item @(currentPage == pageIndex ? "active" : "")">
@@ -159,7 +158,7 @@ else
 
     [SupplyParameterFromQuery(Name = "size")]
     public int PageSize { get; set; } = 10;
-    
+
     private string currentUserId = string.Empty;
     private bool isAdmin;
 
@@ -216,12 +215,12 @@ else
         {
             SetStatus(status == JobInvitationStatus.Accepted
                 ? "Invitation accepted. You can now apply for the job."
-                : "Invitation declined.", success: true);
+                : "Invitation declined.", true);
             await LoadInvitations();
         }
         else
         {
-            SetStatus("Could not update invitation status.", success: false);
+            SetStatus("Could not update invitation status.", false);
         }
     }
 

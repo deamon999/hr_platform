@@ -1,9 +1,8 @@
 @page "/applications/{ApplicationId:int}/chat"
-@using HrPlatform.Data.Entities
-@using HrPlatform.Data.Models
-@using HrPlatform.Services
 @using System.Security.Claims
+@using HrPlatform.Data.Entities
 @rendermode InteractiveServer
+<TimezoneInitializer/>
 
 @attribute [Authorize(Roles = $"{RoleConstants.Driver},{RoleConstants.Manager}")]
 @inject IApplicationMessageService MessageService
@@ -58,8 +57,11 @@ else
                             @msg.Content
                         </div>
                         <small class="text-muted mt-1" style="font-size: 0.75rem;">
-                            @msg.SentAt.ToLocalTime().ToString("g")
-                            @if (!isMine && msg.IsRead) { <text> (Read)</text> }
+                            @TimeZoneService.ToUserTime(msg.SentAt).ToString("g")
+                            @if (!isMine && msg.IsRead)
+                            {
+                                <text> (Read)</text>
+                            }
                         </small>
                     </div>
                 }
@@ -67,8 +69,11 @@ else
         </div>
         <div class="card-footer border-top py-3" style="background: transparent;">
             <div class="d-flex gap-2">
-                <input type="text" class="form-control rounded-pill px-4 py-2" style="background-color: var(--bg-body); border-color: var(--border-color); color: var(--text-primary);" placeholder="Type your message..." @bind="_newMessage" @bind:event="oninput" @onkeyup="HandleKeyUp" />
-                <button class="btn btn-primary rounded-pill px-4 fw-bold" type="button" @onclick="SendMessageAsync" disabled="@string.IsNullOrWhiteSpace(_newMessage)">
+                <input type="text" class="form-control rounded-pill px-4 py-2"
+                       style="background-color: var(--bg-dark); border-color: var(--border-color); color: var(--text-primary);"
+                       placeholder="Type your message..." @bind="_newMessage" @bind:event="oninput" @onkeyup="HandleKeyUp"/>
+                <button class="btn btn-primary rounded-pill px-4 fw-bold" type="button" @onclick="SendMessageAsync"
+                        disabled="@string.IsNullOrWhiteSpace(_newMessage)">
                     <i class="bi bi-send-fill me-1"></i> Send
                 </button>
             </div>
@@ -83,8 +88,7 @@ else
 </style>
 
 @code {
-    [Parameter]
-    public int ApplicationId { get; set; }
+    [Parameter] public int ApplicationId { get; set; }
 
     private JobApplication? _application;
     private List<ApplicationMessage> _messages = new();
@@ -151,7 +155,7 @@ else
     private async Task LoadMessagesAsync()
     {
         _messages = await MessageService.GetMessagesForApplicationAsync(ApplicationId);
-        
+
         if (_currentUserId != null)
         {
             await MessageService.MarkMessagesAsReadAsync(ApplicationId, _currentUserId);
@@ -179,4 +183,5 @@ else
     {
         Nav.NavigateTo("/applications");
     }
+
 }

@@ -1,0 +1,22 @@
+@inject IJSRuntime JS
+
+@* This component initializes the user's timezone from the browser once per circuit *@
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !TimeZoneService.IsInitialized)
+        {
+            try
+            {
+                var ianaTz = await JS.InvokeAsync<string>("eval", "Intl.DateTimeFormat().resolvedOptions().timeZone");
+                TimeZoneService.SetTimeZone(ianaTz);
+                StateHasChanged();
+            }
+            catch
+            {
+                // Fallback: already UTC
+            }
+        }
+    }
+}

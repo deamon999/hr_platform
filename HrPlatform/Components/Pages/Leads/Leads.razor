@@ -1,17 +1,13 @@
 @page "/leads"
-@rendermode InteractiveServer
-
-@using HrPlatform.Data.Entities
-@using HrPlatform.Data.Enums
-@using HrPlatform.Models
-@using HrPlatform.Services
-@using HrPlatform.Utils
 @using System.Security.Claims
+@using HrPlatform.Data.Entities
+@using HrPlatform.Utils
+@rendermode InteractiveServer
+<TimezoneInitializer/>
 
 @attribute [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.Manager}")]
 
 @inject ILeadService LeadService
-@inject ICompanyService CompanyService
 @inject ILeadNoteService LeadNoteService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
@@ -32,10 +28,11 @@
                            placeholder="Search..."
                            @bind-Value="_searchTerm"
                            @bind-Value:after="ResetPageAndLoad"
-                           disabled="@isLoading" />
+                           disabled="@isLoading"/>
         </div>
-               
-        <select class="form-select shadow-sm bg-dark text-light border-secondary" style="min-width: 140px; max-width: 250px;" @bind="_filterStatusStr" @bind:after="ResetPageAndLoad">
+
+        <select class="form-select shadow-sm bg-dark text-light border-secondary" style="min-width: 140px; max-width: 250px;" @bind="_filterStatusStr"
+                @bind:after="ResetPageAndLoad">
             <option value="">All Statuses</option>
             <option value="Actionable">Actionable</option>
             @foreach (var status in Enum.GetValues<LeadStatus>().Where(s => s != LeadStatus.Contacted && s != LeadStatus.Invited && s != LeadStatus.Converted))
@@ -43,8 +40,9 @@
                 <option value="@status">@(status.GetDescriptionValue() ?? status.ToString())</option>
             }
         </select>
-        
-        <select class="form-select shadow-sm bg-dark text-light border-secondary" style="min-width: 140px; max-width: 250px;" @bind="_filterUserId" @bind:after="ResetPageAndLoad">
+
+        <select class="form-select shadow-sm bg-dark text-light border-secondary" style="min-width: 140px; max-width: 250px;" @bind="_filterUserId"
+                @bind:after="ResetPageAndLoad">
             <option value="">All Users</option>
             @foreach (var u in _users)
             {
@@ -56,8 +54,10 @@
         @if (isAdmin)
         {
             <div class="form-check form-switch mb-0 d-flex align-items-center gap-2 admin-switch">
-                <input class="form-check-input mt-0 fs-5" type="checkbox" id="showAllLeadsSwitch" @bind="_showAllLeads" @bind:after="ResetPageAndLoad" style="cursor: pointer;">
-                <label class="form-check-label text-light small fw-bold text-nowrap mb-0" for="showAllLeadsSwitch" style="cursor: pointer; letter-spacing: 0.05em; color: #dfb155 !important;">
+                <input class="form-check-input mt-0 fs-5" type="checkbox" id="showAllLeadsSwitch" @bind="_showAllLeads" @bind:after="ResetPageAndLoad"
+                       style="cursor: pointer;">
+                <label class="form-check-label text-light small fw-bold text-nowrap mb-0" for="showAllLeadsSwitch"
+                       style="cursor: pointer; letter-spacing: 0.05em; color: #dfb155 !important;">
                     <i class="bi bi-shield-lock-fill me-1"></i> ADMIN: SHOW ALL LEADS
                 </label>
             </div>
@@ -91,26 +91,31 @@ else
         @foreach (var lead in pagedLeads)
         {
             <div class="col-12">
-                <div class="card shadow-sm border bg-dark text-light" style="cursor:pointer; @GetCardStyle(lead.Status)" @onclick="() => OpenLeadDrawer(lead, false)">
+                <div class="card shadow-sm border bg-dark text-light" style="cursor:pointer; @GetCardStyle(lead.Status)"
+                     @onclick="() => OpenLeadDrawer(lead)">
                     <div class="card-body p-3 d-flex flex-column flex-lg-row align-items-lg-stretch gap-3">
-                        
+
                         <!-- Col 1: Identity & Mobile Actions -->
                         <div class="d-flex flex-column" style="min-width: 220px;">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <h5 class="fw-bold mb-0">
                                     @lead.FirstName @lead.LastName
-                                    @if(IsLeadRegistered(lead))
+                                    @if (IsLeadRegistered(lead))
                                     {
-                                        <span class="badge bg-success bg-opacity-25 text-success border border-success ms-2" style="font-size: 0.65rem; vertical-align: middle;">Registered</span>
+                                        <span class="badge bg-success bg-opacity-25 text-success border border-success ms-2"
+                                              style="font-size: 0.65rem; vertical-align: middle;">Registered</span>
                                     }
                                 </h5>
                                 <div class="d-lg-none" @onclick:stopPropagation="true">
                                     @if (lead.Status != LeadStatus.Hired)
                                     {
-                                        <button class="btn btn-sm btn-outline-primary border-0 p-1 me-1" @onclick="() => OpenInviteModal(lead)"><i class="bi bi-envelope-paper"></i></button>
+                                        <button class="btn btn-sm btn-outline-primary border-0 p-1 me-1" @onclick="() => OpenInviteModal(lead)"><i
+                                                class="bi bi-envelope-paper"></i></button>
                                     }
-                                    <button class="btn btn-sm btn-outline-secondary border-0 p-1 me-1" @onclick="() => OpenLeadDrawer(lead, true)"><i class="bi bi-pencil"></i></button>
-                                    <button class="btn btn-sm btn-outline-danger border-0 p-1" @onclick="() => ConfirmDelete(lead)"><i class="bi bi-trash"></i></button>
+                                    <button class="btn btn-sm btn-outline-secondary border-0 p-1 me-1" @onclick="() => OpenLeadDrawer(lead, true)"><i
+                                            class="bi bi-pencil"></i></button>
+                                    <button class="btn btn-sm btn-outline-danger border-0 p-1" @onclick="() => ConfirmDelete(lead)"><i
+                                            class="bi bi-trash"></i></button>
                                 </div>
                             </div>
                             @if (!string.IsNullOrEmpty(lead.Email))
@@ -122,13 +127,13 @@ else
                                 <div class="small"><i class="bi bi-telephone text-secondary me-2"></i>@lead.Phone</div>
                             }
                         </div>
-                        
+
                         <!-- Col 2: Details -->
                         <div class="flex-grow-1 d-flex flex-column justify-content-center gap-2">
-                            @if(lead.TrailerTypes.Any())
+                            @if (lead.TrailerTypes.Any())
                             {
                                 <div class="d-flex flex-wrap gap-1">
-                                    @foreach(var tt in lead.TrailerTypes)
+                                    @foreach (var tt in lead.TrailerTypes)
                                     {
                                         <span class="badge bg-secondary">@tt.ToString()</span>
                                     }
@@ -138,13 +143,13 @@ else
                                 <i class="bi bi-chat-square-text me-1"></i> @lead.Notes.Count Notes
                             </div>
                         </div>
-                        
+
                         <!-- Col 3: Status & Reminder -->
                         <div class="d-flex flex-column justify-content-center" style="min-width: 220px; max-width: 300px;">
-                            <select class="form-select form-select-sm border-0 fw-bold mb-1 @GetStatusClass(lead.Status) w-100" 
+                            <select class="form-select form-select-sm border-0 fw-bold mb-1 @GetStatusClass(lead.Status) w-100"
                                     value="@lead.Status.ToString()"
                                     @onclick:stopPropagation="true"
-                                    @onchange="@(async (ChangeEventArgs e) => await UpdateStatusAsync(lead, e.Value?.ToString()))">
+                                    @onchange="@(async e => await UpdateStatusAsync(lead, e.Value?.ToString()))">
                                 @foreach (var status in Enum.GetValues<LeadStatus>().Where(s => s != LeadStatus.Contacted && s != LeadStatus.Invited && s != LeadStatus.Converted))
                                 {
                                     <option value="@status">@(status.GetDescriptionValue() ?? status.ToString())</option>
@@ -156,9 +161,10 @@ else
                                 var colorClass = isDue ? "text-danger fw-bold" : "text-secondary";
                                 <div class="d-flex align-items-center px-1 mt-1 @colorClass" @onclick:stopPropagation="true">
                                     <i class="bi bi-bell-fill small me-1"></i>
-                                    <input type="date" class="form-control form-control-sm border-0 bg-transparent px-1 py-0 shadow-none @colorClass" style="max-width: 130px; font-size: 0.75rem;" 
-                                           value="@lead.ReminderDate?.ToString("yyyy-MM-dd")" 
-                                           @onchange="@(async (ChangeEventArgs e) => await UpdateReminderDateAsync(lead, e.Value?.ToString()))" />
+                                    <input type="date" class="form-control form-control-sm border-0 bg-transparent px-1 py-0 shadow-none @colorClass"
+                                           style="max-width: 130px; font-size: 0.75rem;"
+                                           value="@lead.ReminderDate?.ToString("yyyy-MM-dd")"
+                                           @onchange="@(async e => await UpdateReminderDateAsync(lead, e.Value?.ToString()))"/>
                                 </div>
                             }
                         </div>
@@ -168,32 +174,34 @@ else
                             <div class="d-none d-lg-block mb-3" @onclick:stopPropagation="true">
                                 @if (lead.Status != LeadStatus.Hired)
                                 {
-                                    <button class="btn btn-sm btn-outline-primary border-0 p-1 me-1" title="Invite to CDL Pool" @onclick="() => OpenInviteModal(lead)">
+                                    <button class="btn btn-sm btn-outline-primary border-0 p-1 me-1" title="Invite to CDL Pool"
+                                            @onclick="() => OpenInviteModal(lead)">
                                         <i class="bi bi-envelope-paper"></i>
                                     </button>
                                 }
-                                <button class="btn btn-sm btn-outline-secondary border-0 p-1 me-1" title="Edit" @onclick="() => OpenLeadDrawer(lead, true)">
+                                <button class="btn btn-sm btn-outline-secondary border-0 p-1 me-1" title="Edit"
+                                        @onclick="() => OpenLeadDrawer(lead, true)">
                                     <i class="bi bi-pencil"></i>
                                 </button>
                                 <button class="btn btn-sm btn-outline-danger border-0 p-1" title="Delete" @onclick="() => ConfirmDelete(lead)">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </div>
-                            
+
                             <div class="text-lg-end mt-auto pt-2 pt-lg-0 border-top border-secondary border-lg-0 w-100">
-                                <div class="small text-secondary">Added @lead.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</div>
-                                @if(lead.AddedByUser != null)
+                                <div class="small text-secondary">Added @TimeZoneService.ToUserTime(lead.CreatedAt).ToString("MMM dd, yyyy")</div>
+                                @if (lead.AddedByUser != null)
                                 {
                                     <div class="small text-secondary mt-1">by @lead.AddedByUser.Email</div>
                                 }
                             </div>
                         </div>
-                        
+
                     </div>
                 </div>
             </div>
-            }
-        </div>
+        }
+    </div>
 
     @if (pagedLeads.Count == 0 && !string.IsNullOrEmpty(_searchTerm))
     {
@@ -245,17 +253,18 @@ else
 
 @if (isDrawerOpen)
 {
-    <LeadDrawer Lead="@selectedLead" OnClose="CloseDrawer" OnLeadSaved="HandleLeadSaved" CompanyId="userCompanyId" />
+    <LeadDrawer Lead="@selectedLead" OnClose="CloseDrawer" OnLeadSaved="HandleLeadSaved" CompanyId="userCompanyId"/>
 }
 
 @if (isEditModalOpen)
 {
-    <LeadEditModal Lead="@editTargetLead" OnClose="CloseEditModal" OnLeadSaved="HandleLeadSaved" />
+    <LeadEditModal Lead="@editTargetLead" OnClose="CloseEditModal" OnLeadSaved="HandleLeadSaved"/>
 }
 
 @if (isInviteModalOpen && inviteTargetLead != null)
 {
-    <InviteLeadModal Lead="inviteTargetLead" IsAdmin="isAdmin" ManagerCompanyId="userCompanyId" OnClose="CloseInviteModal" OnInvited="HandleInviteSent" />
+    <InviteLeadModal Lead="inviteTargetLead" IsAdmin="isAdmin" ManagerCompanyId="userCompanyId" OnClose="CloseInviteModal"
+                     OnInvited="HandleInviteSent"/>
 }
 
 <style>
@@ -263,10 +272,12 @@ else
         background-color: #2b2d31;
         border: 2px solid #dfb155;
     }
+
     .admin-switch .form-check-input:checked {
         background-color: #dfb155;
         border-color: #dfb155;
     }
+
     .admin-switch .form-check-input:focus {
         box-shadow: 0 0 0 0.25rem rgba(223, 177, 85, 0.25);
     }
@@ -274,30 +285,30 @@ else
 
 @code {
     private List<Lead> pagedLeads = new();
-    
-    [SupplyParameterFromQuery(Name = "q")]
-    public string? _searchTerm { get; set; } = string.Empty;
+
+    [SupplyParameterFromQuery(Name = "q")] public string? _searchTerm { get; set; } = string.Empty;
 
     [SupplyParameterFromQuery(Name = "status")]
     public string? _filterStatusStr { get; set; }
+
     private LeadStatus? _filterStatus => Enum.TryParse<LeadStatus>(_filterStatusStr, out var s) ? s : null;
 
     [SupplyParameterFromQuery(Name = "user")]
     public string? _filterUserId { get; set; }
 
     [SupplyParameterFromQuery(Name = "all")]
-    public bool _showAllLeads { get; set; } = false;
+    public bool _showAllLeads { get; set; }
 
     private List<ApplicationUser> _users = new();
-    
+
     private bool isLoading = true;
-    
+
     [SupplyParameterFromQuery(Name = "page")]
     public int currentPage { get; set; } = 1;
-    
+
     [SupplyParameterFromQuery(Name = "size")]
     public int PageSize { get; set; } = 10;
-    
+
     private int totalPages = 1;
 
     private bool isAdmin;
@@ -324,7 +335,7 @@ else
         var auth = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = auth.User;
         isAdmin = user.IsInRole(RoleConstants.Admin);
-        
+
         if (!isAdmin)
         {
             var companyIdClaim = user.FindFirst("companyId")?.Value;
@@ -349,8 +360,8 @@ else
         isLoading = true;
         try
         {
-            bool isActionable = _filterStatusStr == "Actionable";
-            bool globalOnly = isAdmin && !_showAllLeads;
+            var isActionable = _filterStatusStr == "Actionable";
+            var globalOnly = isAdmin && !_showAllLeads;
             var result = await LeadService.GetLeadsPagedAsync(currentPage, PageSize, userCompanyId, searchTerm, _filterStatus, _filterUserId, isActionable, globalOnly);
             pagedLeads = result.Items.ToList();
             totalPages = result.TotalPages;
@@ -449,12 +460,12 @@ else
         if (Enum.TryParse<LeadStatus>(newStatusStr, out var newStatus))
         {
             lead.Status = newStatus;
-            
+
             if (newStatus == LeadStatus.ReadyIn2Weeks)
             {
                 lead.ReminderDate = DateTime.UtcNow.Date.AddDays(14);
             }
-            
+
             await LeadService.UpdateAsync(lead);
         }
     }
@@ -470,9 +481,9 @@ else
             // Set the reminder date exactly to the date selected.
             lead.ReminderDate = DateTime.SpecifyKind(newDate, DateTimeKind.Utc);
         }
+
         await LeadService.UpdateAsync(lead);
     }
-
 
 
     private void OpenAddLeadModal()
@@ -520,7 +531,7 @@ else
             };
             await LeadNoteService.CreateAsync(note);
         }
-        
+
         isInviteModalOpen = false;
         inviteTargetLead = null;
         await LoadAsync(_searchTerm);
@@ -557,4 +568,5 @@ else
             await LoadAsync(_searchTerm);
         }
     }
+
 }

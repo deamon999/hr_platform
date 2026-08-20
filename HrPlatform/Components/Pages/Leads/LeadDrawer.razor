@@ -1,16 +1,8 @@
-@using HrPlatform.Data.Entities
-@using HrPlatform.Data.Enums
-@using HrPlatform.Models
-@using HrPlatform.Utils
-@using HrPlatform.Services
 @using System.Security.Claims
-@using Microsoft.AspNetCore.Components.Forms
-
-@inject ILeadService LeadService
+@using HrPlatform.Data.Entities
 @inject ILeadNoteService LeadNoteService
 
 @inject AuthenticationStateProvider AuthStateProvider
-@inject NavigationManager Nav
 @inject ICompanyService CompanyService
 
 <style>
@@ -24,10 +16,16 @@
             opacity: 1;
         }
     }
+
     @@keyframes backdropFadeIn {
-        from { opacity: 0; }
-        to   { opacity: 1; }
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
     }
+
     .lead-drawer {
         position: fixed;
         bottom: 0;
@@ -38,20 +36,29 @@
         background-color: #1a1a1a;
         color: #fff;
         border-top: 1px solid #444;
-        box-shadow: 0 -8px 40px rgba(0,0,0,0.9);
+        box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.9);
         z-index: 1060;
         display: flex;
         flex-direction: column;
         border-radius: 12px 12px 0 0;
         animation: drawerSlideUp 0.38s cubic-bezier(0.32, 0.72, 0, 1) both;
     }
+
     .lead-drawer.closing {
         animation: drawerSlideDown 0.32s cubic-bezier(0.32, 0.72, 0, 1) both;
     }
+
     @@keyframes drawerSlideDown {
-        from { transform: translateY(0); opacity: 1; }
-        to   { transform: translateY(100%); opacity: 0; }
+        from {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateY(100%);
+            opacity: 0;
+        }
     }
+
     .lead-drawer-header {
         flex-shrink: 0;
         padding: 1rem 1.25rem;
@@ -60,26 +67,36 @@
         justify-content: space-between;
         align-items: center;
     }
+
     .lead-drawer-body {
         flex: 1 1 0;
         overflow-y: auto;
         padding: 0;
     }
+
     .notes-timeline {
         overflow-y: auto;
         max-height: 320px;
         padding-right: 4px;
     }
+
     .lead-drawer-backdrop {
         animation: backdropFadeIn 0.3s ease both;
     }
+
     .lead-drawer-backdrop.closing {
         animation: backdropFadeOut 0.3s ease both;
     }
+
     @@keyframes backdropFadeOut {
-        from { opacity: 1; }
-        to   { opacity: 0; }
+        from {
+            opacity: 1;
+        }
+        to {
+            opacity: 0;
+        }
     }
+
     @@media (min-width: 768px) {
         .lead-drawer {
             left: auto;
@@ -91,6 +108,7 @@
             border-top: 1px solid #444;
             border-left: 1px solid #333;
         }
+
         .notes-timeline {
             max-height: 100%;
         }
@@ -103,7 +121,7 @@
         <button type="button" class="btn-close btn-close-white" @onclick="CloseWithAnimation"></button>
     </div>
     <div class="lead-drawer-body">
-        
+
         @if (!string.IsNullOrEmpty(_errorMessage))
         {
             <div class="alert alert-danger m-3">@_errorMessage</div>
@@ -117,41 +135,48 @@
         {
             <!-- Notes Section -->
             <div class="p-4">
-                
+
                 <div class="mb-4">
-                    <textarea class="form-control mb-2 bg-dark text-light border-secondary" rows="2" placeholder="@(editingNote != null ? "Edit note..." : "Write a note...")" @bind="newNoteContent"></textarea>
-                        <div class="d-flex justify-content-end gap-2">
-                            @if (editingNote != null)
-                            {
-                                <button class="btn btn-sm btn-outline-secondary px-3" @onclick="CancelEditNote">Cancel</button>
-                                <button class="btn btn-sm btn-primary px-3 text-dark fw-bold" style="background-color: #f6c046; border-color: #f6c046;" @onclick="SaveNoteEditAsync" disabled="@(string.IsNullOrWhiteSpace(newNoteContent) || isSavingNote)">
-                                    @(isSavingNote ? "Saving..." : "Save")
-                                </button>
-                            }
-                            else
-                            {
-                                <button class="btn btn-sm btn-primary px-3 text-dark fw-bold" style="background-color: #f6c046; border-color: #f6c046;" @onclick="AddNoteAsync" disabled="@(string.IsNullOrWhiteSpace(newNoteContent) || isSavingNote)">
-                                    @(isSavingNote ? "Saving..." : "Add Note")
-                                </button>
-                            }
-                        </div>
+                    <textarea class="form-control mb-2 bg-dark text-light border-secondary" rows="2"
+                              placeholder="@(editingNote != null ? "Edit note..." : "Write a note...")" @bind="newNoteContent"></textarea>
+                    <div class="d-flex justify-content-end gap-2">
+                        @if (editingNote != null)
+                        {
+                            <button class="btn btn-sm btn-outline-secondary px-3" @onclick="CancelEditNote">Cancel</button>
+                            <button class="btn btn-sm btn-primary px-3 text-dark fw-bold" style="background-color: #f6c046; border-color: #f6c046;"
+                                    @onclick="SaveNoteEditAsync" disabled="@(string.IsNullOrWhiteSpace(newNoteContent) || isSavingNote)">
+                                @(isSavingNote ? "Saving..." : "Save")
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-sm btn-primary px-3 text-dark fw-bold" style="background-color: #f6c046; border-color: #f6c046;"
+                                    @onclick="AddNoteAsync" disabled="@(string.IsNullOrWhiteSpace(newNoteContent) || isSavingNote)">
+                                @(isSavingNote ? "Saving..." : "Add Note")
+                            </button>
+                        }
                     </div>
+                </div>
 
                 <div class="notes-timeline position-relative ps-3" style="border-left: 2px solid #444;">
                     @foreach (var note in notes.OrderByDescending(n => n.Timestamp))
                     {
                         <div class="mb-4 position-relative">
-                            <span class="position-absolute top-0 start-0 translate-middle bg-primary rounded-circle" style="width: 10px; height: 10px; margin-left: -16px; margin-top: 8px;"></span>
+                            <span class="position-absolute top-0 start-0 translate-middle bg-primary rounded-circle"
+                                  style="width: 10px; height: 10px; margin-left: -16px; margin-top: 8px;"></span>
                             <div class="card bg-dark border-secondary shadow-sm text-light">
                                 <div class="card-body p-3">
                                     <div class="d-flex justify-content-between mb-2 align-items-center">
                                         <span class="fw-bold small">@(note.AuthorUser?.FirstName ?? note.AuthorUser?.UserName ?? "User")</span>
                                         <div class="d-flex align-items-center gap-2">
-                                            <span class="text-secondary small" style="font-size: 0.75rem;">@note.Timestamp.ToLocalTime().ToString("MMM dd, h:mm tt")</span>
+                                            <span class="text-secondary small"
+                                                  style="font-size: 0.75rem;">@TimeZoneService.ToUserTime(note.Timestamp).ToString("MMM dd, h:mm tt")</span>
                                             @if (note.AuthorUserId == currentUserId || isAdmin)
                                             {
-                                                <button class="btn btn-sm btn-link text-secondary p-0 border-0" @onclick="() => EditNote(note)"><i class="bi bi-pencil small"></i></button>
-                                                <button class="btn btn-sm btn-link text-danger p-0 border-0" @onclick="() => DeleteNoteAsync(note.Id)"><i class="bi bi-trash small"></i></button>
+                                                <button class="btn btn-sm btn-link text-secondary p-0 border-0" @onclick="() => EditNote(note)"><i
+                                                        class="bi bi-pencil small"></i></button>
+                                                <button class="btn btn-sm btn-link text-danger p-0 border-0"
+                                                        @onclick="() => DeleteNoteAsync(note.Id)"><i class="bi bi-trash small"></i></button>
                                             }
                                         </div>
                                     </div>
@@ -188,8 +213,8 @@
     [Parameter] public EventCallback OnEdit { get; set; }
     [Parameter] public int? CompanyId { get; set; }
 
-    private bool _isClosing = false;
-    private int _lastLeadId = 0;
+    private bool _isClosing;
+    private int _lastLeadId;
 
     private async Task CloseWithAnimation()
     {
@@ -208,7 +233,7 @@
     private bool isSavingNote;
     private string _errorMessage = "";
     private string _successMessage = "";
-    private bool isAdmin = false;
+    private bool isAdmin;
     private string currentUserId = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -232,8 +257,8 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        bool changedLead = Lead != null && Lead.Id > 0 && Lead.Id != _lastLeadId;
-        
+        var changedLead = Lead != null && Lead.Id > 0 && Lead.Id != _lastLeadId;
+
         if (changedLead)
         {
             _lastLeadId = Lead!.Id;
@@ -241,7 +266,7 @@
             newNoteContent = string.Empty;
             _errorMessage = string.Empty;
             _successMessage = string.Empty;
-            notes = new();
+            notes = new List<LeadNote>();
             await LoadNotesAsync();
         }
     }
@@ -262,7 +287,7 @@
     private async Task AddNoteAsync()
     {
         if (string.IsNullOrWhiteSpace(newNoteContent) || Lead == null) return;
-        
+
         isSavingNote = true;
         try
         {
@@ -320,9 +345,9 @@
         {
             CancelEditNote();
         }
+
         await LoadNotesAsync();
     }
-
 
 
 }

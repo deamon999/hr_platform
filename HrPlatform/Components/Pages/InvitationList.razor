@@ -1,5 +1,7 @@
 @using HrPlatform.Data.Entities
+@using Microsoft.AspNetCore.WebUtilities
 @rendermode InteractiveServer
+<TimezoneInitializer/>
 @attribute [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.Manager}")]
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthStateProvider
@@ -14,11 +16,12 @@
                            placeholder="Search by email, phone, or company"
                            @bind-Value="_searchTerm"
                            @bind-Value:after="ResetPageAndLoad"
-                           disabled="@isLoading" />
+                           disabled="@isLoading"/>
         </div>
-        <button type="button" class="btn btn-primary px-4 text-nowrap" @onclick="GoToInvite"><i class="bi bi-person-plus me-1"></i> Invite User</button>
+        <button type="button" class="btn btn-primary px-4 text-nowrap" @onclick="GoToInvite"><i class="bi bi-person-plus me-1"></i> Invite User
+        </button>
     </div>
-    
+
     <div class="d-flex align-items-center gap-2">
         <span class="text-secondary small fw-medium text-nowrap d-none d-md-inline">Items per page:</span>
         <select class="form-select form-select-sm border-0 bg-white shadow-sm" style="width: 70px;" @bind="PageSize" @bind:after="ResetPageAndLoad">
@@ -42,7 +45,6 @@ else if (!pagedInvitations.Any() && string.IsNullOrEmpty(_searchTerm))
 }
 else
 {
-
     @if (_statusMessage is not null)
     {
         <div class="alert @_statusClass alert-dismissible mb-3" role="alert">
@@ -82,10 +84,11 @@ else
                                         }
                                         else
                                         {
-                                            <span class="badge bg-warning text-dark rounded-pill" title="Pending"><i class="bi bi-hourglass-split"></i> Pending</span>
+                                            <span class="badge bg-warning text-dark rounded-pill" title="Pending"><i
+                                                    class="bi bi-hourglass-split"></i> Pending</span>
                                         }
                                     </div>
-                                    
+
                                     <div class="mb-3 text-secondary small">
                                         <div class="d-flex flex-wrap align-items-center gap-3 mb-1">
                                             @if (!string.IsNullOrWhiteSpace(inv.Email))
@@ -105,16 +108,21 @@ else
 
                                     <div class="d-flex flex-wrap gap-2 text-secondary small">
                                         <span class="badge bg-info rounded-pill px-3 py-2 border"><i class="bi bi-person-badge"></i> @inv.Role</span>
-                                        <span class="badge bg-light @(inv.ExpiresAt < DateTime.UtcNow && !inv.IsUsed ? "text-danger border-danger" : "text-dark") rounded-pill px-3 py-2 border"><i class="bi bi-clock-history me-1"></i> Expires: @inv.ExpiresAt.ToLocalTime().ToString("MMM dd, yyyy")</span>
+                                        <span
+                                            class="badge bg-light @(inv.ExpiresAt < DateTime.UtcNow && !inv.IsUsed ? "text-danger border-danger" : "text-dark") rounded-pill px-3 py-2 border"><i
+                                                class="bi bi-clock-history me-1"></i> Expires: @TimeZoneService.ToUserTime(inv.ExpiresAt).ToString("MMM dd, yyyy")</span>
                                     </div>
                                 </div>
-                                
+
                                 <div class="col-md-5 d-flex gap-2 justify-content-md-end align-items-end flex-wrap mt-3 mt-md-0">
                                     @if (!inv.IsUsed && inv.ExpiresAt < DateTime.UtcNow)
                                     {
-                                        <button class="btn btn-outline-warning" @onclick="() => ResendInvitationAsync(inv)"><i class="bi bi-arrow-clockwise"></i> Resend</button>
+                                        <button class="btn btn-outline-warning" @onclick="() => ResendInvitationAsync(inv)"><i
+                                                class="bi bi-arrow-clockwise"></i> Resend
+                                        </button>
                                     }
-                                    <button type="button" class="btn btn-outline-danger" @onclick="() => DeleteInvitationAsync(inv)"><i class="bi bi-trash"></i></button>
+                                    <button type="button" class="btn btn-outline-danger" @onclick="() => DeleteInvitationAsync(inv)"><i
+                                            class="bi bi-trash"></i></button>
                                 </div>
                             </div>
                         </div>
@@ -127,9 +135,10 @@ else
             .app-card {
                 transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
             }
+
             .app-card:hover {
                 transform: translateY(-2px);
-                box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+                box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
             }
         </style>
     </div>
@@ -185,14 +194,14 @@ else
     protected override async Task OnInitializedAsync()
     {
         _companies = await CompanyService.GetAllAsync();
-        
+
         Nav.LocationChanged += OnLocationChanged;
         ParseParametersFromUri();
-        
+
         var auth = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = auth.User;
         isAdmin = user.IsInRole(RoleConstants.Admin);
-        
+
         if (!isAdmin)
         {
             var companyIdClaim = user.FindFirst("companyId")?.Value;
@@ -203,7 +212,7 @@ else
         }
     }
 
-    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
         InvokeAsync(async () =>
         {
@@ -216,12 +225,12 @@ else
     private void ParseParametersFromUri()
     {
         var uri = Nav.ToAbsoluteUri(Nav.Uri);
-        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
-        
+        var query = QueryHelpers.ParseQuery(uri.Query);
+
         _searchTerm = query.TryGetValue("q", out var q) ? (string?)q : null;
         currentPage = query.TryGetValue("page", out var p) && int.TryParse(p, out var page) ? page : 1;
         PageSize = query.TryGetValue("size", out var s) && int.TryParse(s, out var size) ? size : 10;
-        
+
         if (currentPage < 1) currentPage = 1;
         if (PageSize < 1) PageSize = 10;
     }

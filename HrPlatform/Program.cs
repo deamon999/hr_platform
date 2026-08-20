@@ -23,6 +23,7 @@ public class Program
         builder.Services.AddCascadingAuthenticationState();
         builder.Services.AddScoped<IdentityRedirectManager>();
         builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
+        builder.Services.AddScoped<IUserTimeZoneService, UserTimeZoneService>();
 
         builder.Services.AddAuthentication(options =>
             {

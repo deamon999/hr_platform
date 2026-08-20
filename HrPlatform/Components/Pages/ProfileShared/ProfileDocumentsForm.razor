@@ -1,8 +1,4 @@
-@using HrPlatform.Data.Models
-@using HrPlatform.Services
-@using System.Security.Claims
-
-@inject AuthenticationStateProvider AuthState
+@using HrPlatform.Data.Entities
 
 <div>
     <div class="alert alert-info border-0 shadow-sm rounded-3 mb-4 d-flex align-items-center bg-light">
@@ -29,18 +25,20 @@
                         <i class="bi bi-file-earmark-pdf fs-3 text-danger"></i>
                         <div class="flex-grow-1 text-truncate">
                             <div class="fw-medium text-truncate">@doc.FileName</div>
-                            <small class="text-muted">@doc.DocumentType • @doc.UploadedAt.ToLocalTime().ToString("g")</small>
+                            <small class="text-muted">@doc.DocumentType • @TimeZoneService.ToUserTime(doc.UploadedAt).ToString("g")</small>
                         </div>
                         <div class="d-flex align-items-center">
                             @if (!string.IsNullOrEmpty(doc.Id) && !doc.IsUnsaved)
                             {
-                                <button type="button" @onclick="() => PreviewDocument(doc)" class="btn btn-sm btn-outline-primary rounded-pill px-3 me-2" title="View Document">
+                                <button type="button" @onclick="() => PreviewDocument(doc)"
+                                        class="btn btn-sm btn-outline-primary rounded-pill px-3 me-2" title="View Document">
                                     <i class="bi bi-eye"></i>
                                 </button>
                             }
                             @if (!IsReadOnly)
                             {
-                                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" @onclick="() => DeleteDocumentAsync(doc)" title="Delete Document"><i class="bi bi-trash"></i></button>
+                                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                                        @onclick="() => DeleteDocumentAsync(doc)" title="Delete Document"><i class="bi bi-trash"></i></button>
                             }
                         </div>
                     </div>
@@ -65,7 +63,7 @@
                     </div>
                     <div class="col-md-8">
                         <label class="form-label fw-semibold text-secondary small text-uppercase">Select File *</label>
-                        <InputFile class="form-control bg-white border-0 shadow-sm" accept=".pdf,.jpg,.jpeg,.png" OnChange="HandleFileSelected" />
+                        <InputFile class="form-control bg-white border-0 shadow-sm" accept=".pdf,.jpg,.jpeg,.png" OnChange="HandleFileSelected"/>
                         <small class="text-muted mt-2 d-block"><i class="bi bi-paperclip me-1"></i> PDF, JPG, or PNG. Max 5 MB.</small>
                     </div>
                 </div>
@@ -86,7 +84,8 @@
                         @if (previewDoc.ContentType.StartsWith("image/"))
                         {
                             <div class="w-100 h-100 d-flex justify-content-center align-items-center bg-black">
-                                <img src="/api/documents/@previewDoc.Id" alt="@previewDoc.FileName" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+                                <img src="/api/documents/@previewDoc.Id" alt="@previewDoc.FileName"
+                                     style="max-width: 100%; max-height: 100%; object-fit: contain;"/>
                             </div>
                         }
                         else
@@ -107,16 +106,16 @@
 </div>
 
 @code {
-    [Parameter, EditorRequired] public DriverProfile Profile { get; set; } = default!;
+    [Parameter][EditorRequired] public DriverProfile Profile { get; set; } = default!;
     [Parameter] public bool IsReadOnly { get; set; }
 
-    private IEnumerable<HrPlatform.Data.Entities.DocumentFile> OtherDocs => Profile.Documents.Where(d => d.DocumentType != "CDL License" && d.DocumentType != "Medical Card");
+    private IEnumerable<DocumentFile> OtherDocs => Profile.Documents.Where(d => d.DocumentType != "CDL License" && d.DocumentType != "Medical Card");
 
     private string newDocType = "TWIC";
     private bool showPreviewModal;
-    private HrPlatform.Data.Entities.DocumentFile? previewDoc;
+    private DocumentFile? previewDoc;
 
-    private void PreviewDocument(HrPlatform.Data.Entities.DocumentFile doc)
+    private void PreviewDocument(DocumentFile doc)
     {
         previewDoc = doc;
         showPreviewModal = true;
@@ -133,11 +132,11 @@
         var file = e.File;
         if (file.Size > 5 * 1024 * 1024) return;
 
-        using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+        using var stream = file.OpenReadStream(5 * 1024 * 1024);
         using var ms = new MemoryStream();
         await stream.CopyToAsync(ms);
 
-        var docFile = new HrPlatform.Data.Entities.DocumentFile
+        var docFile = new DocumentFile
         {
             DriverProfileId = Profile.Id,
             DocumentType = newDocType,
@@ -151,9 +150,10 @@
         Profile.Documents.Add(docFile);
     }
 
-    private Task DeleteDocumentAsync(HrPlatform.Data.Entities.DocumentFile doc)
+    private Task DeleteDocumentAsync(DocumentFile doc)
     {
         Profile.Documents.Remove(doc);
         return Task.CompletedTask;
     }
+
 }

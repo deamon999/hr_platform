@@ -2,6 +2,7 @@
 @using System.Security.Claims
 @using HrPlatform.Utils
 @rendermode InteractiveServer
+<TimezoneInitializer />
 
 @inject IJobService JobSvc
 @inject IJobApplicationService AppSvc
@@ -44,7 +45,7 @@ else
                                     <i class="bi bi-geo-alt"></i> @(job.City != null ? $"{job.City}, {job.State}" : job.State) @job.ZipCode
                                 </span>
                                 <span class="d-flex align-items-center gap-1">
-                                    <i class="bi bi-clock"></i> Posted @job.PostedAt.ToLocalTime().ToString("MMM dd, yyyy")
+                                    <i class="bi bi-clock"></i> Posted @TimeZoneService.ToUserTime(job.PostedAt).ToString("MMM dd, yyyy")
                                 </span>
                                 @if (job.EmploymentType.HasValue)
                                 {
@@ -228,7 +229,7 @@ else
 
                         <div class="col-md-3">
                             <label class="form-label">Date Submitted</label>
-                            <input class="form-control dark-input" value="@appliedApp?.AppliedAt.ToLocalTime().ToString("MM/dd/yyyy h:mm tt")" disabled/>
+                            <input class="form-control dark-input" value="@(TimeZoneService.ToUserTime(appliedApp?.AppliedAt)?.ToString("MM/dd/yyyy h:mm tt"))" disabled/>
                         </div>
 
                         <div class="col-md-3">

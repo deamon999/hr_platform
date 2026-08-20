@@ -1,6 +1,7 @@
 @page "/applications"
 @using System.Security.Claims
 @rendermode InteractiveServer
+<TimezoneInitializer />
 
 @attribute [Authorize(Roles = $"{RoleConstants.Driver},{RoleConstants.Manager}")]
 @inject IJobApplicationService AppSvc
@@ -77,10 +78,10 @@ else
 
                                         <div class="d-flex flex-wrap gap-2 text-secondary small">
                                             <span class="badge @StatusBadge(app.Status) rounded-pill px-3 py-2 border">@app.Status</span>
-                                            <span class="d-flex align-items-center"><i class="bi bi-calendar3 me-1"></i> Applied @app.AppliedAt.ToLocalTime().ToString("MMM dd, yyyy")</span>
+                                            <span class="d-flex align-items-center"><i class="bi bi-calendar3 me-1"></i> Applied @TimeZoneService.ToUserTime(app.AppliedAt).ToString("MMM dd, yyyy")</span>
                                             @if (app.ReviewedAt.HasValue)
                                             {
-                                                <span class="d-flex align-items-center"><i class="bi bi-eye me-1"></i> Reviewed @app.ReviewedAt.Value.ToLocalTime().ToString("MMM dd, yyyy")</span>
+                                                <span class="d-flex align-items-center"><i class="bi bi-eye me-1"></i> Reviewed @TimeZoneService.ToUserTime(app.ReviewedAt.Value).ToString("MMM dd, yyyy")</span>
                                             }
                                         </div>
                                     </div>
@@ -219,7 +220,7 @@ else
                                                     @app.User.FirstName @app.User.LastName
                                                 </strong>
                                                 <div class="text-muted" style="font-size:.75rem">
-                                                    @app.AppliedAt.ToLocalTime().ToString("MMM dd")
+                                                    @TimeZoneService.ToUserTime(app.AppliedAt).ToString("MMM dd")
                                                 </div>
                                             </div>
                                             <div class="text-secondary mb-2" style="font-size:.85rem">
