@@ -1,18 +1,20 @@
+using System.ComponentModel;
+
 namespace HrPlatform.Data.Enums;
 
 public enum TrailerType
 {
-    DryVan,
-    Flatbed,
-    Reefer,
-    Tanker,
-    StepDeck,
-    Lowboy,
-    Doubles,
-    Triples,
-    CarHauler,
-    Intermodal,
-    RGN,
-    Conestoga,
-    Other
+    [Description("Dry Van")] DryVan,
+    [Description("Flatbed")] Flatbed,
+    [Description("Reefer")] Reefer,
+    [Description("Tanker")] Tanker,
+    [Description("Step Deck")] StepDeck,
+    [Description("Lowboy")] Lowboy,
+    [Description("Doubles")] Doubles,
+    [Description("Triples")] Triples,
+    [Description("Car Hauler")] CarHauler,
+    [Description("Intermodal")] Intermodal,
+    [Description("RGN")] RGN,
+    [Description("Conestoga")] Conestoga,
+    [Description("Other")] Other
 }

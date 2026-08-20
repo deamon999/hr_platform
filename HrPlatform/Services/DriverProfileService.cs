@@ -51,6 +51,7 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
             .Include(p => p.EmploymentHistory)
             .ThenInclude(e => e!.TrailerTypes)
             .Include(p => p.Educations)
+            .Include(p => p.ViolationHistory)
             .Include(p => p.Skills)
             .Include(p => p.Documents)
             .FirstOrDefaultAsync(p => p.UserId == userId);
@@ -65,6 +66,7 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
             .Include(p => p.EmploymentHistory)
             .ThenInclude(e => e!.TrailerTypes)
             .Include(p => p.Educations)
+            .Include(p => p.ViolationHistory)
             .Include(p => p.Skills)
             .Include(p => p.Documents)
             .FirstOrDefaultAsync(p => p.Id == id);
@@ -97,6 +99,7 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
             .Include(p => p.MedicalCard)
             .Include(p => p.EmploymentHistory).ThenInclude(e => e!.TrailerTypes)
             .Include(p => p.Educations)
+            .Include(p => p.ViolationHistory)
             .Include(p => p.Skills)
             .Include(p => p.Documents)
             .FirstOrDefaultAsync(p => p.Id == profile.Id);
@@ -128,6 +131,11 @@ public class DriverProfileService(ApplicationDbContext db) : IDriverProfileServi
         var incomingSkills = profile.Skills.Select(e => e.Id).ToHashSet();
         foreach (var skill in existing.Skills) {
             if (!incomingSkills.Contains(skill.Id)) db.Entry(skill).State = EntityState.Deleted;
+        }
+
+        var incomingViolations = profile.ViolationHistory.Select(e => e.Id).ToHashSet();
+        foreach (var viol in existing.ViolationHistory) {
+            if (!incomingViolations.Contains(viol.Id)) db.Entry(viol).State = EntityState.Deleted;
         }
 
         var incomingDocs = profile.Documents.Select(e => e.Id).ToHashSet();

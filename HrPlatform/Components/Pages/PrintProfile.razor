@@ -1,0 +1,369 @@
+@page "/profiles/{Id:int}/print"
+@using HrPlatform.Utils
+
+@attribute [Authorize(Roles = "Admin,Manager")]
+@inject IDriverProfileService ProfileService
+@inject IJSRuntime JS
+
+<PageTitle>Print Profile - @profile?.FirstName @profile?.LastName</PageTitle>
+
+@if (profile == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="print-container text-black bg-white">
+
+        <!-- Header -->
+        <div class="text-center mb-5 pb-3 border-bottom">
+            <h1 class="display-6 fw-bold mb-1">@profile.FirstName @profile.LastName</h1>
+            <h5 class="text-muted">Driver Profile</h5>
+            <div class="small mt-2">
+                Created: @profile.CreatedAt.ToString("MM/dd/yyyy") &nbsp;|&nbsp;
+                Updated: @profile.UpdatedAt.ToString("MM/dd/yyyy")
+            </div>
+        </div>
+
+        <!-- Personal Info & Contact -->
+        <h4 class="border-bottom pb-2 mt-4 text-uppercase fw-bold fs-6">Personal & Contact Information</h4>
+        <div class="row g-3 mb-4">
+            <div class="col-6">
+                <strong>Email:</strong> @profile.Email
+            </div>
+            <div class="col-6">
+                <strong>Phone:</strong> @profile.PhoneNumber
+            </div>
+            <div class="col-6">
+                <strong>Alternate Phone:</strong> @(profile.AlternatePhone ?? "N/A")
+            </div>
+            <div class="col-6">
+                <strong>Date of Birth:</strong> @(profile.DateOfBirth == default ? "N/A" : profile.DateOfBirth.ToString("MM/dd/yyyy"))
+            </div>
+            <div class="col-12">
+                <strong>Address:</strong> @profile.StreetAddress, @profile.City, @profile.State @profile.ZipCode
+            </div>
+        </div>
+
+        <!-- License & Medical -->
+        <h4 class="border-bottom pb-2 mt-4 text-uppercase fw-bold fs-6">CDL License & DOT Medical</h4>
+        @if (profile.License != null)
+        {
+            <div class="row g-3 mb-3">
+                <div class="col-6">
+                    <strong>CDL Number:</strong> @profile.License.LicenseNumber
+                </div>
+                <div class="col-6">
+                    <strong>Class & State:</strong> @(profile.License.Class.GetDescriptionValue()) (@profile.License.IssuingState)
+                </div>
+                <div class="col-6">
+                    <strong>Issued:</strong> @(profile.License.IssuedDate == default ? "N/A" : profile.License.IssuedDate.ToString("MM/dd/yyyy"))
+                </div>
+                <div class="col-6">
+                    <strong>Expires:</strong> @(profile.License.ExpiryDate == default ? "N/A" : profile.License.ExpiryDate.ToString("MM/dd/yyyy"))
+                </div>
+                <div class="col-12">
+                    <strong>Endorsements:</strong> @(profile.License.Endorsements?.Any() == true ? string.Join(", ", profile.License.Endorsements.Select(e => e.Endorsement.GetDescriptionValue())) : "None")
+                </div>
+            </div>
+        }
+        else
+        {
+            <p class="fst-italic text-muted">No CDL License details provided.</p>
+        }
+
+        @if (profile.MedicalCard != null)
+        {
+            <div class="row g-3 mb-4">
+                <div class="col-6">
+                    <strong>Medical Examiner:</strong> @profile.MedicalCard.MedicalExaminerName
+                </div>
+                <div class="col-6">
+                    <strong>Examiner Cert #:</strong> @(profile.MedicalCard.MedicalExaminerCertNumber ?? "N/A")
+                </div>
+                <div class="col-6">
+                    <strong>Card
+                        Expires:</strong> @(profile.MedicalCard.ExpiryDate == default ? "N/A" : profile.MedicalCard.ExpiryDate.ToString("MM/dd/yyyy"))
+                </div>
+                <div class="col-6">
+                    <strong>Self Cert:</strong> @(profile.MedicalCard.SelfCertification?.GetDescriptionValue() ?? "N/A")
+                </div>
+            </div>
+        }
+        else
+        {
+            <p class="fst-italic text-muted">No Medical Card details provided.</p>
+        }
+
+        <!-- Driving Experience -->
+        <h4 class="border-bottom pb-2 mt-4 text-uppercase fw-bold fs-6">Driving Experience</h4>
+        <div class="row g-3 mb-4">
+            <div class="col-4">
+                <strong>Total Exp:</strong> @profile.YearsOfExperience yrs
+            </div>
+            <div class="col-4">
+                <strong>OTR Exp:</strong> @profile.OtrExperience yrs
+            </div>
+            <div class="col-4">
+                <strong>Local Exp:</strong> @profile.LocalExperience yrs
+            </div>
+            <div class="col-12 mt-3">
+                <strong>Equipment Experience (Years):</strong><br/>
+                <span class="me-3">Dry Van: @profile.DryVanExperience</span>
+                <span class="me-3">Reefer: @profile.ReeferExperience</span>
+                <span class="me-3">Flatbed: @profile.FlatbedExperience</span>
+                <span class="me-3">Tanker: @profile.TankerExperience</span>
+                <span class="me-3">Step Deck: @profile.StepDeckExperience</span>
+            </div>
+        </div>
+
+        <!-- Employment History -->
+        <h4 class="border-bottom pb-2 mt-4 text-uppercase fw-bold fs-6">Employment History</h4>
+        @if (profile.EmploymentHistory.Any())
+        {
+            foreach (var emp in profile.EmploymentHistory.OrderByDescending(e => e.StartDate))
+            {
+                <div class="mb-3 border p-3 rounded" style="border-color: #dee2e6 !important;">
+                    <h6 class="fw-bold mb-1">@emp.JobTitle at @emp.CompanyName</h6>
+                    <div class="small mb-2 text-muted">
+                        @emp.StartDate.ToString("MMM yyyy") - @(emp.EndDate.HasValue ? emp.EndDate.Value.ToString("MMM yyyy") : "Present")
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(emp.City) || !string.IsNullOrWhiteSpace(emp.State))
+                    {
+                        <div><strong>City/State:</strong> @(string.Join(", ", new[] { emp.City, emp.State }.Where(s => !string.IsNullOrWhiteSpace(s))))</div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(emp.CompanyPhone) || !string.IsNullOrWhiteSpace(emp.CompanyEmail))
+                    {
+                        <div><strong>Contact:</strong> @(string.Join(" | ", new[] { emp.CompanyPhone, emp.CompanyEmail }.Where(s => !string.IsNullOrWhiteSpace(s))))</div>
+                    }
+                    <div><strong>May We Contact?</strong> @(emp.MayWeContact ? "Yes" : "No")</div>
+                    @if (emp.PayType.HasValue)
+                    {
+                        <div><strong>Pay Type:</strong> @emp.PayType.Value.GetDescriptionValue()</div>
+                    }
+                    <div><strong>Average Weekly Miles:</strong> @emp.AverageWeeklyMiles</div>
+                    @if (emp.GetTrailerTypeValues().Any())
+                    {
+                        <div><strong>Equipment Driven:</strong> @string.Join(", ", emp.GetTrailerTypeValues().Select(t => t.GetDescriptionValue()))</div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(emp.ReasonForLeaving))
+                    {
+                        <div><strong>Reason for Leaving:</strong> @emp.ReasonForLeaving</div>
+                    }
+                </div>
+            }
+        }
+        else
+        {
+            <p class="fst-italic text-muted">No employment history provided.</p>
+        }
+
+        <!-- Preferences -->
+        <h4 class="border-bottom pb-2 mt-4 text-uppercase fw-bold fs-6">Preferences</h4>
+        <div class="row g-3 mb-4">
+            <div class="col-6">
+                <strong>Preferred Route:</strong> @(profile.PreferredRouteType?.GetDescriptionValue() ?? "Not set")
+            </div>
+            <div class="col-6">
+                <strong>Preferred Position:</strong> @(string.IsNullOrWhiteSpace(profile.PreferredPosition) ? "Not set" : profile.PreferredPosition)
+            </div>
+            <div class="col-6">
+                <strong>Min Weekly Pay:</strong> @(string.IsNullOrWhiteSpace(profile.MinimumWeeklyPay) ? "Not set" : profile.MinimumWeeklyPay)
+            </div>
+            <div class="col-6">
+                <strong>Available Start Date:</strong> @(profile.AvailableStartDate?.ToString("MM/dd/yyyy") ?? "Not set")
+            </div>
+            <div class="col-12 mt-2">
+                <strong>Additional Preferences:</strong><br/>
+                <span class="me-3">Drive Manual: @(profile.CanDriveManual ? "Yes" : "No")</span>
+                <span class="me-3">Pets: @(profile.WantsToDriveWithPets ? "Yes" : "No")</span>
+                <span class="me-3">Riders: @(profile.WantsToDriveWithRiders ? "Yes" : "No")</span>
+                <span class="me-3">Team Driving: @(profile.CanDriveInTeam ? "Yes" : "No")</span>
+            </div>
+            @if (profile.PreferredFreight?.Any() == true)
+            {
+                <div class="col-12 mt-2">
+                    <strong>Preferred Freight:</strong> @string.Join(", ", profile.PreferredFreight)
+                </div>
+            }
+            @if (profile.PreferredRegions?.Any() == true)
+            {
+                <div class="col-12 mt-2">
+                    <strong>Preferred Regions:</strong> @string.Join(", ", profile.PreferredRegions)
+                </div>
+            }
+        </div>
+
+        <!-- Education -->
+        <h4 class="border-bottom pb-2 mt-4 text-uppercase fw-bold fs-6">Education</h4>
+        @if (profile.Educations.Any())
+        {
+            <div class="row g-3 mb-4">
+            @foreach (var edu in profile.Educations)
+            {
+                <div class="col-12">
+                    <strong>@(edu.Level?.GetDescriptionValue() ?? "Education")</strong>
+                    @if (!string.IsNullOrWhiteSpace(edu.SchoolName))
+                    {
+                        <span> at @edu.SchoolName</span>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(edu.City) || !string.IsNullOrWhiteSpace(edu.State))
+                    {
+                        <span> (@(string.Join(", ", new[] { edu.City, edu.State }.Where(s => !string.IsNullOrWhiteSpace(s)))))</span>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(edu.GraduationYear))
+                    {
+                        <span>, Graduated @edu.GraduationYear</span>
+                    }
+                </div>
+            }
+            </div>
+        }
+        else
+        {
+            <p class="fst-italic text-muted">No education history provided.</p>
+        }
+
+        <!-- Safety & Background -->
+        <h4 class="border-bottom pb-2 mt-4 text-uppercase fw-bold fs-6">Safety & Background</h4>
+        <div class="row g-3 mb-4">
+            <div class="col-12">
+                <strong>License
+                    Suspended/Revoked?</strong> @(profile.HasLicenseSuspension ? $"Yes ({profile.LicenseSuspensionDate:MM/yyyy} - {profile.LicenseSuspensionReason})" : "No")
+            </div>
+            <div class="col-12">
+                <strong>Failed Drug/Alcohol Test?</strong> @(profile.HasFailedDrugTest ? "Yes" : "No")
+            </div>
+            <div class="col-12">
+                <strong>Refused Drug/Alcohol Test?</strong> @(profile.HasRefusedDrugTest ? "Yes" : "No")
+            </div>
+        </div>
+
+        @if (profile.ViolationHistory.Any())
+        {
+            <table class="table table-sm table-bordered">
+                <thead class="table-light">
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th>Resolution</th>
+                    <th>At Fault</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var v in profile.ViolationHistory.OrderByDescending(x => x.OccurredDate))
+                {
+                    <tr>
+                        <td>@v.OccurredDate.ToString("MM/dd/yyyy")</td>
+                        <td>@v.Type.GetDescriptionValue()</td>
+                        <td>@v.Description</td>
+                        <td>@v.Resolution</td>
+                        <td>@(v.AtFault ? "Yes" : "No")</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <p class="fst-italic text-muted">No traffic violations or accidents reported.</p>
+        }
+
+        <!-- Consents & Signatures -->
+        <h4 class="border-bottom pb-2 mt-4 text-uppercase fw-bold fs-6">Consents & Signatures</h4>
+        <div class="row g-3 mb-4">
+            <div class="col-6">
+                <strong>MVR Consent:</strong> @(profile.ConsentMVR ? "Signed" : "Not Signed")
+            </div>
+            <div class="col-6">
+                <strong>Clearinghouse Consent:</strong> @(profile.ConsentClearinghouse ? "Signed" : "Not Signed")
+            </div>
+            <div class="col-12 mt-3">
+                <strong>Electronic Signature:</strong> @(profile.ElectronicSignatureName ?? "Not Signed") <br/>
+                <strong>Date:</strong> @(profile.SignatureDate?.ToString("MM/dd/yyyy") ?? "N/A")
+            </div>
+        </div>
+
+    </div>
+}
+
+<style>
+    /* Add print-specific styles */
+    @@media print {
+        body {
+            background: white !important;
+        }
+
+        .print-container {
+            width: 100%;
+            max-width: 100%;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        nav, header, aside, .sidebar, footer, .d-print-none, .top-row {
+            display: none !important;
+        }
+
+        /* Reset Blazor layout elements */
+        main, article, .content {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        .page {
+            flex-direction: column !important;
+        }
+
+        h1, h4, h5, h6 {
+            color: black !important;
+        }
+
+        .border-bottom {
+            border-color: #dee2e6 !important;
+        }
+
+        .table {
+            border-color: #dee2e6 !important;
+        }
+
+        .table th, .table td {
+            color: black !important;
+        }
+
+        /* Avoid breaking inside important sections */
+        .mb-3.border, .row {
+            page-break-inside: avoid;
+        }
+
+        h4 {
+            page-break-after: avoid;
+        }
+
+        /* Print layout adjustments */
+        @@page {
+            margin: 1cm;
+        }
+    }
+</style>
+
+@code {
+    [Parameter] public int? Id { get; set; }
+    [Parameter] public DriverProfile? Profile { get; set; }
+
+    private DriverProfile? profile;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Profile != null)
+        {
+            profile = Profile;
+        }
+        else if (Id.HasValue)
+        {
+            profile = await ProfileService.GetByIdAsync(Id.Value);
+        }
+    }
+
+}

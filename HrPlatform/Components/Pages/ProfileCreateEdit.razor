@@ -166,13 +166,7 @@
                                 <div></div>
                             }
 
-                            @if (profile!.IsApplicationCompleted)
-                            {
-                                <button type="button" class="btn btn-primary px-3 px-md-4 fw-medium" @onclick="SaveAndExitAsync">
-                                    Save
-                                </button>
-                            }
-                            else if (activeTab < 9)
+                            @if (activeTab < 9)
                             {
                                 <div class="d-flex gap-2 gap-sm-3">
                                     <button type="button" class="btn btn-outline-primary px-3 px-md-4 fw-medium d-none d-sm-block" @onclick="SaveAndExitAsync">
@@ -189,9 +183,18 @@
                                     <button type="button" class="btn btn-outline-primary px-3 px-md-4 fw-medium d-none d-sm-block" @onclick="SaveAndExitAsync">
                                         Save & Exit
                                     </button>
-                                    <button type="button" class="btn btn-primary px-3 px-md-5 fw-bold" @onclick="SubmitApplicationAsync">
-                                        <span class="d-none d-sm-inline">Submit Profile</span><span class="d-inline d-sm-none">Submit</span> <i class="bi bi-check-circle ms-1 ms-sm-2"></i>
-                                    </button>
+                                    @if (profile!.IsApplicationCompleted)
+                                    {
+                                        <button type="button" class="btn btn-primary px-3 px-md-5 fw-bold" @onclick="SaveAndExitAsync">
+                                            <span class="d-none d-sm-inline">Save Changes</span><span class="d-inline d-sm-none">Save</span> <i class="bi bi-check-circle ms-1 ms-sm-2"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" class="btn btn-primary px-3 px-md-5 fw-bold" @onclick="SubmitApplicationAsync">
+                                            <span class="d-none d-sm-inline">Submit Profile</span><span class="d-inline d-sm-none">Submit</span> <i class="bi bi-check-circle ms-1 ms-sm-2"></i>
+                                        </button>
+                                    }
                                 </div>
                             }
                         </div>
