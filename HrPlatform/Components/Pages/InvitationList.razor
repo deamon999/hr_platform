@@ -9,22 +9,30 @@
 @inject IInvitationService InvitationService
 @inject ICompanyService CompanyService
 
-<div class="d-flex justify-content-between align-items-center gap-2 mb-3">
-    <div class="d-flex gap-2" style="max-width:600px; flex: 1;">
-        <div style="max-width:450px; flex: 1;">
-            <DebounceInput class="form-control"
-                           placeholder="Search by email, phone, or company"
-                           @bind-Value="_searchTerm"
-                           @bind-Value:after="ResetPageAndLoad"
-                           disabled="@isLoading"/>
-        </div>
-        <button type="button" class="btn btn-primary px-4 text-nowrap" @onclick="GoToInvite"><i class="bi bi-person-plus me-1"></i> Invite User
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div class="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2">
+        <DebounceInput class="form-control form-control-sm bg-dark text-light border-secondary shadow-sm"
+                       placeholder="Search by email, phone, or company"
+                       @bind-Value="_searchTerm"
+                       @bind-Value:after="ResetPageAndLoad"
+                       disabled="@isLoading"/>
+        <select class="form-select form-select-sm bg-dark text-light border-secondary shadow-sm" style="min-width: 140px;" @bind="_filterStatus" @bind:after="ResetPageAndLoad" disabled="@isLoading">
+            <option value="">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="Used">Used</option>
+            <option value="Expired">Expired</option>
+        </select>
+        @if (!string.IsNullOrWhiteSpace(_searchTerm) || !string.IsNullOrWhiteSpace(_filterStatus))
+        {
+            <button class="btn btn-sm btn-outline-secondary text-nowrap" @onclick="ClearFilters" disabled="@isLoading">Clear</button>
+        }
+        <button type="button" class="btn btn-sm btn-primary px-4 text-nowrap" @onclick="GoToInvite"><i class="bi bi-person-plus me-1"></i> Invite User
         </button>
     </div>
 
     <div class="d-flex align-items-center gap-2">
         <span class="text-secondary small fw-medium text-nowrap d-none d-md-inline">Items per page:</span>
-        <select class="form-select form-select-sm border-0 bg-white shadow-sm" style="width: 70px;" @bind="PageSize" @bind:after="ResetPageAndLoad">
+        <select class="form-select form-select-sm bg-dark text-light border-secondary shadow-sm" style="width: 70px;" @bind="PageSize" @bind:after="ResetPageAndLoad">
             <option value="10">10</option>
             <option value="50">50</option>
             <option value="100">100</option>
@@ -38,10 +46,6 @@
         <div class="spinner-border spinner-border-sm" role="status"></div>
         Loading invitations…
     </div>
-}
-else if (!pagedInvitations.Any() && string.IsNullOrEmpty(_searchTerm))
-{
-    <div class="alert alert-info">No invitations found.</div>
 }
 else
 {
@@ -143,9 +147,9 @@ else
         </style>
     </div>
 
-    @if (pagedInvitations.Count == 0 && !string.IsNullOrEmpty(_searchTerm))
+    @if (pagedInvitations.Count == 0)
     {
-        <div class="alert alert-info">No invitations match your search.</div>
+        <div class="alert alert-info mt-3">No invitations found matching the selected filters.</div>
     }
 
     @if (totalPages > 1)
@@ -184,6 +188,7 @@ else
     public int PageSize { get; set; } = 10;
     private int totalPages = 1;
     private string? _searchTerm;
+    private string? _filterStatus;
     private bool isLoading;
     private string? _statusMessage;
     private string _statusClass = "alert-success";
@@ -228,8 +233,9 @@ else
         var query = QueryHelpers.ParseQuery(uri.Query);
 
         _searchTerm = query.TryGetValue("q", out var q) ? (string?)q : null;
+        _filterStatus = query.TryGetValue("status", out var s) ? (string?)s : null;
         currentPage = query.TryGetValue("page", out var p) && int.TryParse(p, out var page) ? page : 1;
-        PageSize = query.TryGetValue("size", out var s) && int.TryParse(s, out var size) ? size : 10;
+        PageSize = query.TryGetValue("size", out var sz) && int.TryParse(sz, out var size) ? size : 10;
 
         if (currentPage < 1) currentPage = 1;
         if (PageSize < 1) PageSize = 10;
@@ -280,6 +286,24 @@ else
                     .ToList();
             }
 
+            // 2.5 Status Filtering
+            if (!string.IsNullOrWhiteSpace(_filterStatus))
+            {
+                var now = DateTime.UtcNow;
+                if (_filterStatus.Equals("Used", StringComparison.OrdinalIgnoreCase))
+                {
+                    filteredInvitations = filteredInvitations.Where(i => i.IsUsed).ToList();
+                }
+                else if (_filterStatus.Equals("Expired", StringComparison.OrdinalIgnoreCase))
+                {
+                    filteredInvitations = filteredInvitations.Where(i => !i.IsUsed && i.ExpiresAt < now).ToList();
+                }
+                else if (_filterStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase))
+                {
+                    filteredInvitations = filteredInvitations.Where(i => !i.IsUsed && i.ExpiresAt >= now).ToList();
+                }
+            }
+
             // 3. Calculate Pages
             totalPages = (int)Math.Ceiling(filteredInvitations.Count / (double)PageSize);
             if (totalPages < 1) totalPages = 1;
@@ -312,9 +336,11 @@ else
         currentPage = 1;
         var uri = Nav.GetUriWithQueryParameters(new Dictionary<string, object?>
         {
+            ["tab"] = "invitations",
             ["page"] = null,
             ["size"] = PageSize == 10 ? null : PageSize,
-            ["q"] = string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm
+            ["q"] = string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm,
+            ["status"] = string.IsNullOrWhiteSpace(_filterStatus) ? null : _filterStatus
         });
         await JSRuntime.InvokeVoidAsync("history.replaceState", null, "", uri);
         await LoadAsync(_searchTerm);
@@ -324,11 +350,20 @@ else
     {
         var uri = Nav.GetUriWithQueryParameters(new Dictionary<string, object?>
         {
+            ["tab"] = "invitations",
             ["page"] = page,
             ["size"] = PageSize,
-            ["q"] = string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm
+            ["q"] = string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm,
+            ["status"] = string.IsNullOrWhiteSpace(_filterStatus) ? null : _filterStatus
         });
         Nav.NavigateTo(uri);
+    }
+
+    private async Task ClearFilters()
+    {
+        _searchTerm = null;
+        _filterStatus = null;
+        await ResetPageAndLoad();
     }
 
     private void GoToInvite()

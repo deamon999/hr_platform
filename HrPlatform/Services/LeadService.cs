@@ -52,7 +52,7 @@ public class LeadService : ILeadService
 
         if (actionableOnly)
         {
-            query = query.Where(l => l.Status != LeadStatus.Hired && l.Status != LeadStatus.NotInterested && l.Status != LeadStatus.Rejected);
+            query = query.Where(l => l.Status != LeadStatus.New && l.Status != LeadStatus.Hired && l.Status != LeadStatus.NotInterested && l.Status != LeadStatus.Rejected && l.Status != LeadStatus.NotQualified);
         }
 
         var results = await query
@@ -103,7 +103,7 @@ public class LeadService : ILeadService
         }
 
         return await query
-            .Where(l => l.ReminderDate != null && l.ReminderDate <= now && l.Status != LeadStatus.Hired && l.Status != LeadStatus.NotInterested)
+            .Where(l => l.ReminderDate != null && l.ReminderDate <= now && l.Status != LeadStatus.Hired && l.Status != LeadStatus.NotInterested && l.Status != LeadStatus.Rejected && l.Status != LeadStatus.NotQualified)
             .OrderBy(l => l.ReminderDate)
             .ToListAsync();
     }

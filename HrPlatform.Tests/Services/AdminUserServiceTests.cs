@@ -36,12 +36,15 @@ namespace HrPlatform.Tests.Services
             using var context = new ApplicationDbContext(_options);
             var user = new ApplicationUser { Id = "user1", UserName = "testuser", Email = "test@example.com" };
             context.Users.Add(user);
+            
+            var role = new Microsoft.AspNetCore.Identity.IdentityRole { Id = "role1", Name = "Admin", NormalizedName = "ADMIN" };
+            context.Roles.Add(role);
+            
+            context.UserRoles.Add(new Microsoft.AspNetCore.Identity.IdentityUserRole<string> { UserId = "user1", RoleId = "role1" });
+            
             await context.SaveChangesAsync();
 
             var mockUserManager = GetMockUserManager();
-            mockUserManager.Setup(um => um.GetRolesAsync(It.IsAny<ApplicationUser>()))
-                .ReturnsAsync(new List<string> { "Admin" });
-
             var service = new AdminUserService(context, mockUserManager.Object);
 
             // Act

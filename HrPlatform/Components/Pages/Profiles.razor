@@ -26,9 +26,9 @@
     }
 </div>
 
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
-    <div class="d-flex flex-wrap align-items-center gap-2">
-        <select class="form-select form-select-sm w-auto" style="min-width: 160px;"
+<div class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-center gap-3 mb-4">
+    <div class="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2">
+        <select class="form-select form-select-sm bg-dark text-light border-secondary" style="min-width: 160px;"
                 @bind="searchAvailString" @bind:after="ResetPageAndLoad">
             <option value="">Any Availability</option>
             @foreach (var s in Enum.GetValues<AvailabilityStatus>())
@@ -36,12 +36,11 @@
                 <option value="@s.ToString()">@s.GetDescriptionValue()</option>
             }
         </select>
-        <DebounceInput class="form-control form-control-sm"
-                       style="max-width:200px"
+        <DebounceInput class="form-control form-control-sm bg-dark text-light border-secondary"
                        placeholder="Search name..."
                        @bind-Value="searchName"
                        @bind-Value:after="ResetPageAndLoad"/>
-        <select class="form-select form-select-sm w-auto" style="min-width: 160px;"
+        <select class="form-select form-select-sm bg-dark text-light border-secondary" style="min-width: 160px;"
                 @bind="searchCdlString" @bind:after="ResetPageAndLoad">
             <option value="">Any CDL class</option>
             @foreach (var c in Enum.GetValues<CdlClass>())
@@ -49,7 +48,7 @@
                 <option value="@c.ToString()">@c.GetDescriptionValue()</option>
             }
         </select>
-        <select class="form-select form-select-sm w-auto" style="min-width: 180px;"
+        <select class="form-select form-select-sm bg-dark text-light border-secondary" style="min-width: 180px;"
                 @bind="searchEndString" @bind:after="ResetPageAndLoad">
             <option value="">Any endorsement</option>
             @foreach (var e in Enum.GetValues<CdlEndorsement>())
@@ -57,12 +56,15 @@
                 <option value="@e.ToString()">@e.GetDescriptionValue()</option>
             }
         </select>
-        <button class="btn btn-sm btn-outline-secondary" @onclick="ClearFilters">Clear</button>
+        @if (!string.IsNullOrWhiteSpace(searchName) || !string.IsNullOrWhiteSpace(searchAvailString) || !string.IsNullOrWhiteSpace(searchCdlString) || !string.IsNullOrWhiteSpace(searchEndString))
+        {
+            <button class="btn btn-sm btn-outline-secondary text-nowrap" @onclick="ClearFilters">Clear</button>
+        }
     </div>
     
     <div class="d-flex align-items-center gap-2">
         <span class="text-secondary small fw-medium text-nowrap d-none d-md-inline">Items per page:</span>
-        <select class="form-select form-select-sm border-0 bg-white shadow-sm" style="width: 70px;" @bind="PageSize" @bind:after="ResetPageAndLoad">
+        <select class="form-select form-select-sm bg-dark text-light border-secondary shadow-sm" style="width: 70px;" @bind="PageSize" @bind:after="ResetPageAndLoad">
             <option value="10">10</option>
             <option value="25">25</option>
             <option value="50">50</option>

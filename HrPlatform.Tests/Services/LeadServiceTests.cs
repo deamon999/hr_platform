@@ -74,7 +74,7 @@ namespace HrPlatform.Tests.Services
         {
             // Arrange
             _db.Leads.AddRange(
-                new Lead { Id = 1, FirstName = "A", LastName = "B", CompanyId = 1, Status = LeadStatus.New, CreatedAt = DateTime.UtcNow },
+                new Lead { Id = 1, FirstName = "A", LastName = "B", CompanyId = 1, Status = LeadStatus.AttemptContact, CreatedAt = DateTime.UtcNow },
                 new Lead { Id = 2, FirstName = "C", LastName = "D", CompanyId = 1, Status = LeadStatus.Hired, CreatedAt = DateTime.UtcNow }
             );
             await _db.SaveChangesAsync();

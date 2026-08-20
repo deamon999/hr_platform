@@ -1,4 +1,4 @@
-﻿
+
 namespace HrPlatform.Models;
 
 /// <summary>
@@ -30,14 +30,25 @@ public static class PaginationExtensions
     }
 
     /// <summary>
-    /// Asynchronously paginates an IQueryable collection
+    /// Asynchronously paginates an IQueryable collection using EF Core async methods
     /// </summary>
     public static async Task<PaginationResult<T>> PaginateAsync<T>(
         this IQueryable<T> source,
         int pageNumber,
         int pageSize)
     {
-        return await Task.FromResult(source.AsEnumerable().Paginate(pageNumber, pageSize));
+        var totalCount = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync(source);
+        var items = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync(
+            source.Skip((pageNumber - 1) * pageSize).Take(pageSize)
+        );
+
+        return new PaginationResult<T>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
     }
 }
 

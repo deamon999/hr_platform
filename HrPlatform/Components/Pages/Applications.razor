@@ -3,7 +3,7 @@
 @rendermode InteractiveServer
 <TimezoneInitializer />
 
-@attribute [Authorize(Roles = $"{RoleConstants.Driver},{RoleConstants.Manager}")]
+@attribute [Authorize(Roles = $"{RoleConstants.Driver},{RoleConstants.Manager},{RoleConstants.Admin}")]
 @inject IJobApplicationService AppSvc
 @inject IJobMatchService JobMatchService
 @inject AuthenticationStateProvider AuthState
@@ -26,18 +26,29 @@
     </div>
 </div>
 
-<div class="d-flex justify-content-between align-items-center gap-2 mb-3">
-    <div style="flex: 1;">
-        <select class="form-select form-select-sm w-auto" style="min-width: 180px;" @bind="sortBy" @bind:after="HandleSortChange">
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+    <div class="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2">
+        <select class="form-select form-select-sm bg-dark text-light border-secondary" style="min-width: 140px;" @bind="filterStatus" @bind:after="ResetPageAndLoad">
+            <option value="">All Statuses</option>
+            @foreach (var s in Enum.GetValues<ApplicationStatus>())
+            {
+                <option value="@s.ToString()">@s</option>
+            }
+        </select>
+        <select class="form-select form-select-sm bg-dark text-light border-secondary" style="min-width: 180px;" @bind="sortBy" @bind:after="ResetPageAndLoad">
             <option value="date">Sort: Date Applied</option>
             <option value="status">Sort: Status</option>
             <option value="driver">Sort: Driver Name</option>
             <option value="job">Sort: Job Title</option>
         </select>
+        @if (!string.IsNullOrWhiteSpace(filterStatus) || sortBy != "date")
+        {
+            <button class="btn btn-sm btn-outline-secondary text-nowrap" @onclick="ClearFilters">Clear</button>
+        }
     </div>
     <div class="d-flex align-items-center gap-2">
         <span class="text-secondary small fw-medium text-nowrap d-none d-md-inline">Items per page:</span>
-        <select class="form-select form-select-sm border-0 bg-white shadow-sm" style="width: 70px;" @bind="PageSize" @bind:after="OnPageSizeChanged">
+        <select class="form-select form-select-sm bg-dark text-light border-secondary shadow-sm" style="width: 70px;" @bind="PageSize" @bind:after="ResetPageAndLoad">
             <option value="10">10</option>
             <option value="50">50</option>
             <option value="100">100</option>
@@ -289,7 +300,9 @@ else
     private List<JobApplication>? pagedApps;
     private bool isAdmin;
     private Dictionary<int, int> unreadCounts = new();
-    private string sortBy = "date";
+    [SupplyParameterFromQuery(Name = "sort")]
+    public string sortBy { get; set; } = "date";
+    
     private int? reviewing;
     private ApplicationStatus reviewStatus = ApplicationStatus.UnderReview;
     private string? reviewNotes;
@@ -311,6 +324,9 @@ else
 
     [SupplyParameterFromQuery(Name = "size")]
     public int PageSize { get; set; } = 10;
+    
+    [SupplyParameterFromQuery(Name = "status")]
+    public string? filterStatus { get; set; }
 
     private int totalPages = 1;
 
@@ -343,17 +359,21 @@ else
     {
         if (currentPage < 1) currentPage = 1;
         if (PageSize < 1) PageSize = 10;
+        if (string.IsNullOrWhiteSpace(sortBy)) sortBy = "date";
         await LoadAsync();
     }
 
-    private void HandleSortChange()
+    private async Task ResetPageAndLoad()
     {
+        currentPage = 1;
         ChangePage(1);
     }
-
-    private void OnPageSizeChanged()
+    
+    private async Task ClearFilters()
     {
-        ChangePage(1);
+        filterStatus = null;
+        sortBy = "date";
+        await ResetPageAndLoad();
     }
 
     private async Task LoadAsync()
@@ -370,6 +390,11 @@ else
         {
             pagedApps = new List<JobApplication>();
             return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(filterStatus) && Enum.TryParse<ApplicationStatus>(filterStatus, out var sFilter))
+        {
+            allApps = allApps.Where(a => a.Status == sFilter).ToList();
         }
 
         // 2. Calculate Pages
@@ -397,8 +422,10 @@ else
     {
         var uri = Nav.GetUriWithQueryParameters(new Dictionary<string, object?>
         {
-            ["page"] = page,
-            ["size"] = PageSize
+            ["page"] = page == 1 ? null : page,
+            ["size"] = PageSize == 10 ? null : PageSize,
+            ["status"] = string.IsNullOrWhiteSpace(filterStatus) ? null : filterStatus,
+            ["sort"] = string.IsNullOrWhiteSpace(sortBy) || sortBy == "date" ? null : sortBy
         });
         Nav.NavigateTo(uri);
     }

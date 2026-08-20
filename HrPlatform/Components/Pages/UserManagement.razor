@@ -1,4 +1,5 @@
 @page "/users"
+@page "/invitations"
 @using Microsoft.AspNetCore.WebUtilities
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.Manager}")]
@@ -12,11 +13,11 @@
 <div class="mb-4">
     <div class="d-flex gap-3 mb-4 pb-3 border-bottom">
         <button class="btn @(activeTab == "users" ? "btn-primary fw-bold" : "btn-outline-secondary") rounded-pill px-5"
-                @onclick="@(() => activeTab = "users")">
+                @onclick='@(() => NavManager.NavigateTo("/users"))'>
             Users
         </button>
         <button class="btn @(activeTab == "invitations" ? "btn-primary fw-bold" : "btn-outline-secondary") rounded-pill px-5"
-                @onclick="@(() => activeTab = "invitations")">
+                @onclick='@(() => NavManager.NavigateTo("/users?tab=invitations"))'>
             Invitations
         </button>
     </div>
@@ -56,7 +57,12 @@
     private void ParseTabFromUri()
     {
         var uri = NavManager.ToAbsoluteUri(NavManager.Uri);
-        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("Tab", out var tabValue))
+        
+        if (uri.AbsolutePath.Equals("/invitations", StringComparison.OrdinalIgnoreCase))
+        {
+            Tab = "invitations";
+        }
+        else if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("Tab", out var tabValue))
         {
             Tab = tabValue;
         }

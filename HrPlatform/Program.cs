@@ -40,7 +40,7 @@ public class Program
             // Suppress pending model changes warning - migrations are properly defined
             options.ConfigureWarnings(w =>
                 w.Ignore(RelationalEventId.PendingModelChangesWarning));
-        });
+        }, ServiceLifetime.Transient);
         builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
         builder.Services.AddIdentityCore<ApplicationUser>(options =>
@@ -59,20 +59,20 @@ public class Program
         builder.Services.AddSingleton<IJobMatchService, JobMatchService>();
 
         builder.Services.AddScoped<IUserClaimsPrincipalFactory<ApplicationUser>, AppUserClaimsPrincipalFactory>();
-        builder.Services.AddScoped<IJobService, JobService>();
-        builder.Services.AddScoped<IJobApplicationService, JobApplicationService>();
-        builder.Services.AddScoped<IDriverProfileService, DriverProfileService>();
-        builder.Services.AddScoped<ICompanyService, CompanyService>();
-        builder.Services.AddScoped<IApplicationMessageService, ApplicationMessageService>();
-        builder.Services.AddScoped<IAdminUserService, AdminUserService>();
-        builder.Services.AddScoped<IInvitationService, InvitationService>();
-        builder.Services.AddScoped<IJobInvitationService, JobInvitationService>();
-        builder.Services.AddScoped<IDashboardService, DashboardService>();
-        builder.Services.AddScoped<ILeadService, LeadService>();
-        builder.Services.AddScoped<ILeadNoteService, LeadNoteService>();
+        builder.Services.AddTransient<IJobService, JobService>();
+        builder.Services.AddTransient<IJobApplicationService, JobApplicationService>();
+        builder.Services.AddTransient<IDriverProfileService, DriverProfileService>();
+        builder.Services.AddTransient<ICompanyService, CompanyService>();
+        builder.Services.AddTransient<IApplicationMessageService, ApplicationMessageService>();
+        builder.Services.AddTransient<IAdminUserService, AdminUserService>();
+        builder.Services.AddTransient<IInvitationService, InvitationService>();
+        builder.Services.AddTransient<IJobInvitationService, JobInvitationService>();
+        builder.Services.AddTransient<IDashboardService, DashboardService>();
+        builder.Services.AddTransient<ILeadService, LeadService>();
+        builder.Services.AddTransient<ILeadNoteService, LeadNoteService>();
 
         builder.Services.AddHttpContextAccessor();
-        builder.Services.AddScoped<IDocumentStorageService, DatabaseDocumentStorageService>();
+        builder.Services.AddTransient<IDocumentStorageService, DatabaseDocumentStorageService>();
         // Register background job
         builder.Services.AddHostedService<DailyMaintenanceService>();
         var app = builder.Build();

@@ -26,6 +26,8 @@ public enum LeadStatus
     // Legacy statuses to prevent EF Core crashes on existing data
     [Description("Contacted")]
     Contacted,
+    [Description("Not Qualified")]
+    NotQualified,
     [Description("Rejected")]
     Rejected,
     [Description("Invited")]

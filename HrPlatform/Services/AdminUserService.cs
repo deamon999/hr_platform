@@ -115,22 +115,35 @@ public class AdminUserService : IAdminUserService
 
     private async Task<List<UserViewModel>> BuildUserViewModelsAsync(List<ApplicationUser> users)
     {
+        var userIds = users.Select(u => u.Id).ToList();
+
+        // Get all user roles for the given users in one query using the Transient DbContext
+        var userRolesMap = await (from ur in _context.UserRoles
+                                  join r in _context.Roles on ur.RoleId equals r.Id
+                                  where userIds.Contains(ur.UserId)
+                                  select new { ur.UserId, RoleName = r.Name })
+                                  .ToListAsync();
+
+        var rolesByUserId = userRolesMap
+            .GroupBy(x => x.UserId)
+            .ToDictionary(g => g.Key, g => g.Select(x => x.RoleName).ToList());
+
         var userList = new List<UserViewModel>();
 
         foreach (var user in users)
         {
-            var userRoles = await _userManager.GetRolesAsync(user);
+            var userRoles = rolesByUserId.TryGetValue(user.Id, out var roles) ? roles : new List<string?>();
 
             userList.Add(new UserViewModel
             {
                 UserId = user.Id,
-                Username = user.UserName ?? string.Empty,
-                Email = user.Email ?? string.Empty,
-                Phone = user.PhoneNumber ?? string.Empty,
-                CompanyId = user.CompanyId,
-                CompanyName = user.Company?.Name,
+                Username = user.UserName ?? "Unknown",
+                Email = user.Email ?? "Unknown",
+                Phone = user.PhoneNumber ?? "",
                 IsConfirmed = user.EmailConfirmed,
-                Roles = string.Join(", ", userRoles)
+                Roles = string.Join(", ", userRoles),
+                CompanyId = user.CompanyId,
+                CompanyName = user.Company?.Name ?? ""
             });
         }
 

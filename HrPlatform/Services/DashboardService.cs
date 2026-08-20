@@ -38,8 +38,9 @@ public class DashboardService(ApplicationDbContext db) : IDashboardService
             ExpiringLicenses: await db.DriverLicenses
                 .CountAsync(l => l.ExpiryDate <= in30
                                  && l.ExpiryDate >= DateOnly.FromDateTime(now)),
+            NewLeads: await db.Leads.CountAsync(l => l.Status == LeadStatus.New),
             ActiveLeads: await db.Leads
-                .CountAsync(l => l.Status != LeadStatus.Hired && l.Status != LeadStatus.NotInterested && l.Status != LeadStatus.Rejected),
+                .CountAsync(l => l.Status != LeadStatus.New && l.Status != LeadStatus.Hired && l.Status != LeadStatus.NotInterested && l.Status != LeadStatus.Rejected && l.Status != LeadStatus.NotQualified),
             ApplicationsByStatus: byStatus);
     }
 
@@ -85,8 +86,10 @@ public class DashboardService(ApplicationDbContext db) : IDashboardService
                 .CountAsync(i => i.CompanyId == companyId
                                  && !i.IsUsed && i.ExpiresAt > now),
             ExpiringLicenses: expiringInPool,
+            NewLeads: await db.Leads
+                .CountAsync(l => l.CompanyId == companyId && l.Status == LeadStatus.New),
             ActiveLeads: await db.Leads
-                .CountAsync(l => l.CompanyId == companyId && l.Status != LeadStatus.Hired && l.Status != LeadStatus.NotInterested && l.Status != LeadStatus.Rejected),
+                .CountAsync(l => l.CompanyId == companyId && l.Status != LeadStatus.New && l.Status != LeadStatus.Hired && l.Status != LeadStatus.NotInterested && l.Status != LeadStatus.Rejected && l.Status != LeadStatus.NotQualified),
             ApplicationsByStatus: byStatus);
     }
 }

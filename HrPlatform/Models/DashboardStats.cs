@@ -9,5 +9,6 @@ public record DashboardStats(
     int AcceptedThisMonth,
     int InvitationsPending,
     int ExpiringLicenses,
+    int NewLeads,
     int ActiveLeads,
     Dictionary<string, int> ApplicationsByStatus);

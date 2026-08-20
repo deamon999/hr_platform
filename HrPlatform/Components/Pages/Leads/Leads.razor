@@ -21,27 +21,24 @@
 </div>
 
 <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
-    <div class="d-flex flex-column flex-md-row flex-grow-1 gap-2" style="max-width: 800px;">
-        <div class="input-group shadow-sm flex-grow-1">
-            <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-search"></i></span>
-            <DebounceInput class="form-control bg-dark text-light border-secondary border-start-0 ps-0 shadow-none"
-                           placeholder="Search..."
-                           @bind-Value="_searchTerm"
-                           @bind-Value:after="ResetPageAndLoad"
-                           disabled="@isLoading"/>
-        </div>
+    <div class="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2">
+        <DebounceInput class="form-control form-control-sm bg-dark text-light border-secondary"
+                       placeholder="Search leads..."
+                       @bind-Value="_searchTerm"
+                       @bind-Value:after="ResetPageAndLoad"
+                       disabled="@isLoading"/>
 
-        <select class="form-select shadow-sm bg-dark text-light border-secondary" style="min-width: 140px; max-width: 250px;" @bind="_filterStatusStr"
+        <select class="form-select form-select-sm bg-dark text-light border-secondary" style="min-width: 140px;" @bind="_filterStatusStr"
                 @bind:after="ResetPageAndLoad">
             <option value="">All Statuses</option>
-            <option value="Actionable">Actionable</option>
+            <option value="Actionable">Needs Action</option>
             @foreach (var status in Enum.GetValues<LeadStatus>().Where(s => s != LeadStatus.Contacted && s != LeadStatus.Invited && s != LeadStatus.Converted))
             {
                 <option value="@status">@(status.GetDescriptionValue() ?? status.ToString())</option>
             }
         </select>
 
-        <select class="form-select shadow-sm bg-dark text-light border-secondary" style="min-width: 140px; max-width: 250px;" @bind="_filterUserId"
+        <select class="form-select form-select-sm bg-dark text-light border-secondary" style="min-width: 140px;" @bind="_filterUserId"
                 @bind:after="ResetPageAndLoad">
             <option value="">All Users</option>
             @foreach (var u in _users)
@@ -49,6 +46,11 @@
                 <option value="@u.Id">@u.Email</option>
             }
         </select>
+        
+        @if (!string.IsNullOrWhiteSpace(_searchTerm) || !string.IsNullOrWhiteSpace(_filterStatusStr) || !string.IsNullOrWhiteSpace(_filterUserId))
+        {
+            <button class="btn btn-sm btn-outline-secondary text-nowrap" @onclick="ClearFilters" disabled="@isLoading">Clear</button>
+        }
     </div>
     <div class="d-flex align-items-center gap-3">
         @if (isAdmin)
@@ -64,7 +66,7 @@
         }
         <div class="d-flex align-items-center gap-2">
             <span class="text-secondary small fw-medium text-nowrap d-none d-md-inline">Items per page:</span>
-            <select class="form-select shadow-sm" style="width: 75px;" @bind="PageSize" @bind:after="ResetPageAndLoad">
+            <select class="form-select form-select-sm bg-dark text-light border-secondary shadow-sm" style="width: 70px;" @bind="PageSize" @bind:after="ResetPageAndLoad">
                 <option value="10">10</option>
                 <option value="50">50</option>
                 <option value="100">100</option>
@@ -79,10 +81,6 @@
         <div class="spinner-border spinner-border-sm" role="status"></div>
         Loading leads…
     </div>
-}
-else if (!pagedLeads.Any() && string.IsNullOrEmpty(_searchTerm))
-{
-    <div class="alert alert-info">No leads found in the CRM. Start by adding one!</div>
 }
 else
 {
@@ -203,9 +201,9 @@ else
         }
     </div>
 
-    @if (pagedLeads.Count == 0 && !string.IsNullOrEmpty(_searchTerm))
+    @if (pagedLeads.Count == 0)
     {
-        <div class="alert alert-info mt-3">No leads match your search.</div>
+        <div class="alert alert-info mt-3">No leads found matching the selected filters.</div>
     }
 
     @if (totalPages > 1)
@@ -421,19 +419,28 @@ else
         Nav.NavigateTo(uri);
     }
 
+    private async Task ClearFilters()
+    {
+        _searchTerm = null;
+        _filterStatusStr = null;
+        _filterUserId = null;
+        await ResetPageAndLoad();
+    }
+
     private string GetStatusClass(LeadStatus status)
     {
         return status switch
         {
             LeadStatus.New => "text-primary bg-primary bg-opacity-10",
-            LeadStatus.NotInterested => "text-danger bg-danger bg-opacity-10",
+            LeadStatus.NotInterested => "text-secondary bg-secondary bg-opacity-10",
+            LeadStatus.NotQualified => "text-danger bg-danger bg-opacity-10",
             LeadStatus.ReadyToStart => "text-success bg-success bg-opacity-10",
             LeadStatus.AttemptContact => "text-warning bg-warning bg-opacity-10",
             LeadStatus.NeedsToBeContacted => "text-warning bg-warning bg-opacity-10",
             LeadStatus.ReadyIn2Weeks => "text-info bg-info bg-opacity-10",
             LeadStatus.Hired => "text-success bg-success bg-opacity-25 border border-success",
-            LeadStatus.Contacted => "text-warning bg-warning bg-opacity-10",
-            LeadStatus.Invited => "text-warning bg-warning bg-opacity-10",
+            LeadStatus.Contacted => "text-info bg-info bg-opacity-10",
+            LeadStatus.Invited => "text-primary bg-primary bg-opacity-10",
             LeadStatus.Rejected => "text-danger bg-danger bg-opacity-10 border border-danger",
             _ => "text-secondary bg-light"
         };
@@ -444,12 +451,15 @@ else
         return status switch
         {
             LeadStatus.New => "background-color: rgba(var(--bs-primary-rgb), 0.1) !important; border-color: var(--bs-primary) !important;",
-            LeadStatus.NotInterested => "background-color: rgba(var(--bs-danger-rgb), 0.1) !important; border-color: var(--bs-danger) !important;",
+            LeadStatus.NotInterested => "background-color: rgba(var(--bs-secondary-rgb), 0.1) !important; border-color: var(--bs-secondary) !important;",
+            LeadStatus.NotQualified => "background-color: rgba(var(--bs-danger-rgb), 0.1) !important; border-color: var(--bs-danger) !important;",
             LeadStatus.ReadyToStart => "background-color: rgba(var(--bs-success-rgb), 0.1) !important; border-color: var(--bs-success) !important;",
             LeadStatus.AttemptContact => "background-color: rgba(var(--bs-warning-rgb), 0.1) !important; border-color: var(--bs-warning) !important;",
             LeadStatus.NeedsToBeContacted => "background-color: rgba(var(--bs-warning-rgb), 0.1) !important; border-color: var(--bs-warning) !important;",
             LeadStatus.ReadyIn2Weeks => "background-color: rgba(var(--bs-info-rgb), 0.1) !important; border-color: var(--bs-info) !important;",
             LeadStatus.Hired => "background-color: rgba(var(--bs-success-rgb), 0.25) !important; border-color: var(--bs-success) !important; border-width: 2px !important;",
+            LeadStatus.Contacted => "background-color: rgba(var(--bs-info-rgb), 0.1) !important; border-color: var(--bs-info) !important;",
+            LeadStatus.Invited => "background-color: rgba(var(--bs-primary-rgb), 0.1) !important; border-color: var(--bs-primary) !important;",
             LeadStatus.Rejected => "background-color: rgba(var(--bs-danger-rgb), 0.1) !important; border-color: var(--bs-danger) !important;",
             _ => "border-color: var(--bs-secondary) !important;"
         };

@@ -20,42 +20,25 @@
 }
 else
 {
-    <h5 class="fw-bold mb-3 border-bottom pb-2 text-secondary">Active Operations</h5>
+    <h5 class="fw-bold mb-3 border-bottom pb-2 text-secondary">Candidates & Leads</h5>
     <div class="row g-4 mb-4">
-        @KpiCard("Active Jobs", stats.OpenJobs, "bi-briefcase", "primary")
-        @KpiCard("Pending review", stats.PendingApplications, "bi-hourglass", "warning")
-        @KpiCard("Pending invites", stats.InvitationsPending, "bi-envelope", "secondary")
-    </div>
-
-    <h5 class="fw-bold mb-3 border-bottom pb-2 text-secondary mt-4">Alerts</h5>
-    <div class="row g-4 mb-4">
+        @KpiCard("Driver Profiles", stats.TotalDrivers, "bi-person-badge", "info", href: "/profiles")
+        @KpiCard("New Leads", stats.NewLeads, "bi-star", "success", href: "/leads?status=New")
         @KpiCard("Actionable Leads", stats.ActiveLeads, "bi-exclamation-circle", "warning", href: "/leads?status=Actionable")
-        @KpiCard("Expiring licenses", stats.ExpiringLicenses, "bi-exclamation-triangle", "danger")
     </div>
 
-    <h5 class="fw-bold mb-3 border-bottom pb-2 text-secondary mt-4">Statistics</h5>
+    <h5 class="fw-bold mb-3 border-bottom pb-2 text-secondary mt-4">Recruitment & Jobs</h5>
     <div class="row g-4 mb-4">
+        @KpiCard("Active Jobs", stats.OpenJobs, "bi-briefcase", "primary", href: "/jobs")
+        @KpiCard("Pending Applications", stats.PendingApplications, "bi-hourglass", "warning", href: "/applications?status=Pending")
+        @KpiCard("Pending invites", stats.InvitationsPending, "bi-envelope", "secondary", href: "/users?tab=invitations&status=Pending")
+    </div>
+
+    <h5 class="fw-bold mb-3 border-bottom pb-2 text-secondary mt-4">Compliance & Statistics</h5>
+    <div class="row g-4 mb-4">
+        @KpiCard("Expiring licenses", stats.ExpiringLicenses, "bi-exclamation-triangle", "danger")
         @KpiCard("Applications (7d)", stats.ApplicationsThisWeek, "bi-graph-up", "primary")
         @KpiCard("Accepted (month)", stats.AcceptedThisMonth, "bi-check-circle", "success")
-    </div>
-
-    <div class="card shadow-sm border-0 app-card mb-4">
-        <div class="card-body p-4">
-            <h4 class="fw-bold mb-4 border-bottom pb-3">Applications by status</h4>
-            <div class="row g-3">
-                @foreach (var kv in stats.ApplicationsByStatus)
-                {
-                    <div class="col-6 col-sm-4 col-md-3">
-                        <div class="card shadow-sm h-100" style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color);">
-                            <div class="card-body text-center p-3">
-                                <div class="fs-2 fw-bold mb-1" style="color: var(--accent-primary);">@kv.Value</div>
-                                <div class="text-secondary small fw-medium text-uppercase" style="letter-spacing: 0.05em;">@kv.Key</div>
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
-        </div>
     </div>
 }
 
@@ -146,11 +129,14 @@ else
 
 <style>
     .app-card {
-        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, border-color 0.2s;
     }
     .app-card:hover {
         transform: translateY(-2px);
         box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+    }
+    a:hover .app-card {
+        border-color: rgba(255,255,255,0.3) !important;
     }
 </style>
 

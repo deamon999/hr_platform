@@ -15,22 +15,34 @@
         Loading users…
     </div>
 }
-else if (!pagedUsers.Any() && string.IsNullOrEmpty(_searchTerm))
-{
-    <p>No registered users found.</p>
-}
 else
 {
-    <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
-        <div style="max-width:450px; flex: 1;">
-            <DebounceInput class="form-control"
-                           placeholder="Search by email or user name or company name"
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div class="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2">
+            <DebounceInput class="form-control form-control-sm bg-dark text-light border-secondary shadow-sm"
+                           placeholder="Search by email, username, or company"
                            @bind-Value="_searchTerm"
                            @bind-Value:after="HandleSearchInput"/>
+            <select class="form-select form-select-sm bg-dark text-light border-secondary shadow-sm" style="min-width: 140px;" @bind="_filterRole" @bind:after="HandleSearchInput">
+                <option value="">All Roles</option>
+                <option value="Admin">Admin</option>
+                <option value="Manager">Manager</option>
+                <option value="Driver">Driver</option>
+            </select>
+            <select class="form-select form-select-sm bg-dark text-light border-secondary shadow-sm" style="min-width: 140px;" @bind="_filterVerified" @bind:after="HandleSearchInput">
+                <option value="">All Verification</option>
+                <option value="Verified">Verified</option>
+                <option value="Unverified">Unverified</option>
+            </select>
+            @if (!string.IsNullOrWhiteSpace(_searchTerm) || !string.IsNullOrWhiteSpace(_filterRole) || !string.IsNullOrWhiteSpace(_filterVerified))
+            {
+                <button class="btn btn-sm btn-outline-secondary text-nowrap" @onclick="ClearFilters">Clear</button>
+            }
         </div>
+
         <div class="d-flex align-items-center gap-2">
             <span class="text-secondary small fw-medium text-nowrap d-none d-md-inline">Items per page:</span>
-            <select class="form-select form-select-sm border-0 bg-white shadow-sm" style="width: 70px;" @bind="PageSize" @bind:after="ResetPageAndLoad">
+            <select class="form-select form-select-sm bg-dark text-light border-secondary shadow-sm" style="width: 70px;" @bind="PageSize" @bind:after="ResetPageAndLoad">
                 <option value="10">10</option>
                 <option value="50">50</option>
                 <option value="100">100</option>
@@ -116,9 +128,9 @@ else
             }
         </style>
 
-        @if (pagedUsers.Count == 0 && !string.IsNullOrEmpty(_searchTerm))
+        @if (pagedUsers.Count == 0)
         {
-            <div class="alert alert-info mt-3">No users match your search.</div>
+            <div class="alert alert-info mt-3">No users found matching the selected filters.</div>
         }
     </div>
 
@@ -184,6 +196,8 @@ else
     public int PageSize { get; set; } = 10;
     private int totalPages = 1;
     private string? _searchTerm;
+    private string? _filterRole;
+    private string? _filterVerified;
     private bool isLoading = true;
     private UserViewModel? deleteTarget;
 
@@ -219,7 +233,9 @@ else
         {
             { "page", null }, // reset to page 1
             { "size", PageSize == 10 ? null : PageSize },
-            { "q", string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm }
+            { "q", string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm },
+            { "role", string.IsNullOrWhiteSpace(_filterRole) ? null : _filterRole },
+            { "verified", string.IsNullOrWhiteSpace(_filterVerified) ? null : _filterVerified }
         });
         Nav.NavigateTo(url);
     }
@@ -240,6 +256,8 @@ else
         var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
         
         _searchTerm = query.TryGetValue("q", out var q) ? (string?)q : null;
+        _filterRole = query.TryGetValue("role", out var r) ? (string?)r : null;
+        _filterVerified = query.TryGetValue("verified", out var v) ? (string?)v : null;
         currentPage = query.TryGetValue("page", out var p) && int.TryParse(p, out var page) ? page : 1;
         PageSize = query.TryGetValue("size", out var s) && int.TryParse(s, out var size) ? size : 10;
         
@@ -282,6 +300,18 @@ else
                     .ToList();
             }
 
+            // 2.5 Apply Dropdown Filters
+            if (!string.IsNullOrWhiteSpace(_filterRole))
+            {
+                filteredUsers = filteredUsers.Where(u => u.Roles.Contains(_filterRole, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+
+            if (!string.IsNullOrWhiteSpace(_filterVerified))
+            {
+                bool wantVerified = _filterVerified.Equals("Verified", StringComparison.OrdinalIgnoreCase);
+                filteredUsers = filteredUsers.Where(u => u.IsConfirmed == wantVerified).ToList();
+            }
+
             // 3. Calculate Pages
             totalPages = (int)Math.Ceiling(filteredUsers.Count / (double)PageSize);
             if (totalPages < 1) totalPages = 1;
@@ -311,9 +341,11 @@ else
         currentPage = 1; // Always reset to page 1 when typing a new search
         var url = Nav.GetUriWithQueryParameters(new Dictionary<string, object?>
         {
-            { "page", null },
+            { "page", null }, // reset to page 1
             { "size", PageSize == 10 ? null : PageSize },
-            { "q", string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm }
+            { "q", string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm },
+            { "role", string.IsNullOrWhiteSpace(_filterRole) ? null : _filterRole },
+            { "verified", string.IsNullOrWhiteSpace(_filterVerified) ? null : _filterVerified }
         });
         await JSRuntime.InvokeVoidAsync("history.replaceState", null, "", url);
         await LoadAsync(_searchTerm);
@@ -326,9 +358,19 @@ else
         {
             { "page", page == 1 ? null : page },
             { "size", PageSize == 10 ? null : PageSize },
-            { "q", string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm }
+            { "q", string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm },
+            { "role", string.IsNullOrWhiteSpace(_filterRole) ? null : _filterRole },
+            { "verified", string.IsNullOrWhiteSpace(_filterVerified) ? null : _filterVerified }
         });
         Nav.NavigateTo(url);
+    }
+
+    private async Task ClearFilters()
+    {
+        _searchTerm = null;
+        _filterRole = null;
+        _filterVerified = null;
+        await HandleSearchInput();
     }
 
     private void GoToView(string id)
