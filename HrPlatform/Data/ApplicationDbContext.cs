@@ -258,8 +258,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .OnDelete(DeleteBehavior.SetNull);
             e.Property(x => x.Status).HasConversion<string>();
 
-            e.HasIndex(x => new { x.CompanyId, x.Email }).IsUnique().AreNullsDistinct(false);
-            e.HasIndex(x => new { x.CompanyId, x.Phone }).IsUnique().AreNullsDistinct(false);
+            e.HasIndex(x => new { x.CompanyId, x.Email });
+            e.HasIndex(x => new { x.CompanyId, x.Phone });
         });
 
         b.Entity<LeadNote>(e =>
