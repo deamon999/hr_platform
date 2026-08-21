@@ -12,8 +12,6 @@ public class DocumentFile
 
     [Required] [MaxLength(100)] public string ContentType { get; set; } = default!;
 
-    [Required] public byte[] Data { get; set; } = [];
-
     public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
 
     public int? DriverProfileId { get; set; }

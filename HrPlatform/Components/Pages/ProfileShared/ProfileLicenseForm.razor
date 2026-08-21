@@ -1,25 +1,18 @@
-@using HrPlatform.Data.Models
-@using HrPlatform.Data.Enums
+@using HrPlatform.Data.Entities
 @using HrPlatform.Utils
-@using HrPlatform.Services
-@using System.Security.Claims
-
-@inject IDriverProfileService ProfileService
-@inject AuthenticationStateProvider AuthState
-@inject NavigationManager Nav
-
 @if (Profile.License != null && Profile.MedicalCard != null)
 {
     <div class="row g-4">
         <div class="col-12"><h6 class="fw-bold border-bottom pb-2 text-white">CDL License</h6></div>
-        
+
         <div class="col-md-4">
             <label class="form-label fw-semibold text-secondary small">CDL Number *</label>
             <InputText disabled="@IsReadOnly" class="form-control bg-dark text-white border-secondary" @bind-Value="Profile.License.LicenseNumber"/>
         </div>
         <div class="col-md-4">
             <label class="form-label fw-semibold text-secondary small">Issuing State *</label>
-            <InputText disabled="@IsReadOnly" class="form-control bg-dark text-white border-secondary" maxlength="2" @bind-Value="Profile.License.IssuingState"/>
+            <InputText disabled="@IsReadOnly" class="form-control bg-dark text-white border-secondary" maxlength="2"
+                       @bind-Value="Profile.License.IssuingState"/>
         </div>
         <div class="col-md-4">
             <label class="form-label fw-semibold text-secondary small">CDL Class *</label>
@@ -30,7 +23,7 @@
                 }
             </InputSelect>
         </div>
-        
+
         <div class="col-md-4">
             <label class="form-label fw-semibold text-secondary small">Issue Date *</label>
             <InputDate disabled="@IsReadOnly" class="form-control bg-dark text-white border-secondary" @bind-Value="Profile.License.IssuedDate"/>
@@ -50,9 +43,9 @@
                 @foreach (var end in Enum.GetValues<CdlEndorsement>())
                 {
                     <div class="form-check">
-                        <input type="checkbox" disabled="@IsReadOnly" class="form-check-input darker-border-checkbox" id="end_@end" 
-                               checked="@Profile.License.HasEndorsement(end)" 
-                               @onchange="e => ToggleEndorsement(end, (bool)e.Value!)" />
+                        <input type="checkbox" disabled="@IsReadOnly" class="form-check-input darker-border-checkbox" id="end_@end"
+                               checked="@Profile.License.HasEndorsement(end)"
+                               @onchange="e => ToggleEndorsement(end, (bool)e.Value!)"/>
                         <label class="form-check-label text-secondary small" for="end_@end">@end.GetDescriptionValue()</label>
                     </div>
                 }
@@ -60,22 +53,25 @@
         </div>
 
         <div class="col-12 mt-5"><h6 class="fw-bold border-bottom pb-2 text-white">DOT Medical Card</h6></div>
-        
+
         <div class="col-md-3">
             <label class="form-label fw-semibold text-secondary small">Medical Card Expiration *</label>
             <InputDate disabled="@IsReadOnly" class="form-control bg-dark text-white border-secondary" @bind-Value="Profile.MedicalCard.ExpiryDate"/>
         </div>
         <div class="col-md-3">
             <label class="form-label fw-semibold text-secondary small">DOT Examiner Name *</label>
-            <InputText disabled="@IsReadOnly" class="form-control bg-dark text-white border-secondary" @bind-Value="Profile.MedicalCard.MedicalExaminerName"/>
+            <InputText disabled="@IsReadOnly" class="form-control bg-dark text-white border-secondary"
+                       @bind-Value="Profile.MedicalCard.MedicalExaminerName"/>
         </div>
         <div class="col-md-3">
             <label class="form-label fw-semibold text-secondary small">DOT Examiner Cert #</label>
-            <InputText disabled="@IsReadOnly" class="form-control bg-dark text-white border-secondary" @bind-Value="Profile.MedicalCard.MedicalExaminerCertNumber"/>
+            <InputText disabled="@IsReadOnly" class="form-control bg-dark text-white border-secondary"
+                       @bind-Value="Profile.MedicalCard.MedicalExaminerCertNumber"/>
         </div>
         <div class="col-md-3">
             <label class="form-label fw-semibold text-secondary small">Self Certification *</label>
-            <InputSelect disabled="@IsReadOnly" class="form-select bg-dark text-white border-secondary" @bind-Value="Profile.MedicalCard.SelfCertification">
+            <InputSelect disabled="@IsReadOnly" class="form-select bg-dark text-white border-secondary"
+                         @bind-Value="Profile.MedicalCard.SelfCertification">
                 <option value="">-- Select --</option>
                 @foreach (var cert in Enum.GetValues<SelfCertificationCategory>())
                 {
@@ -96,18 +92,23 @@
                         <div>
                             @if (!string.IsNullOrEmpty(CdlDocument.Id) && !CdlDocument.IsUnsaved)
                             {
-                                <button type="button" class="btn btn-sm text-primary fw-medium text-decoration-none p-0 me-3" @onclick="() => PreviewDocument(CdlDocument)">View</button>
+                                <button type="button" class="btn btn-sm text-primary fw-medium text-decoration-none p-0 me-3"
+                                        @onclick="() => PreviewDocument(CdlDocument)">View
+                                </button>
                             }
                             @if (!IsReadOnly)
                             {
-                                <button type="button" class="btn btn-sm text-danger fw-medium text-decoration-none p-0" @onclick="DeleteLicenseDocument">Remove</button>
+                                <button type="button" class="btn btn-sm text-danger fw-medium text-decoration-none p-0"
+                                        @onclick="DeleteLicenseDocument">Remove
+                                </button>
                             }
                         </div>
                     </div>
                 }
                 else if (!IsReadOnly)
                 {
-                    <InputFile class="form-control form-control-sm bg-dark text-white border-secondary" accept=".pdf,.jpg,.jpeg,.png" OnChange="UploadLicenseDocumentAsync"/>
+                    <InputFile class="form-control form-control-sm bg-dark text-white border-secondary" accept=".pdf,.jpg,.jpeg,.png"
+                               OnChange="UploadLicenseDocumentAsync"/>
                 }
                 else
                 {
@@ -115,7 +116,7 @@
                 }
             </div>
         </div>
-        
+
         <div class="col-md-6">
             <div class="p-3 border border-secondary rounded-3 bg-dark">
                 <label class="form-label fw-semibold text-secondary small mb-3"><i class="bi bi-file-earmark-medical me-1"></i> Medical Card</label>
@@ -126,18 +127,23 @@
                         <div>
                             @if (!string.IsNullOrEmpty(MedicalCardDocument.Id) && !MedicalCardDocument.IsUnsaved)
                             {
-                                <button type="button" class="btn btn-sm text-primary fw-medium text-decoration-none p-0 me-3" @onclick="() => PreviewDocument(MedicalCardDocument)">View</button>
+                                <button type="button" class="btn btn-sm text-primary fw-medium text-decoration-none p-0 me-3"
+                                        @onclick="() => PreviewDocument(MedicalCardDocument)">View
+                                </button>
                             }
                             @if (!IsReadOnly)
                             {
-                                <button type="button" class="btn btn-sm text-danger fw-medium text-decoration-none p-0" @onclick="DeleteMedicalCardDocument">Remove</button>
+                                <button type="button" class="btn btn-sm text-danger fw-medium text-decoration-none p-0"
+                                        @onclick="DeleteMedicalCardDocument">Remove
+                                </button>
                             }
                         </div>
                     </div>
                 }
                 else if (!IsReadOnly)
                 {
-                    <InputFile class="form-control form-control-sm bg-dark text-white border-secondary" accept=".pdf,.jpg,.jpeg,.png" OnChange="UploadMedicalCardDocumentAsync"/>
+                    <InputFile class="form-control form-control-sm bg-dark text-white border-secondary" accept=".pdf,.jpg,.jpeg,.png"
+                               OnChange="UploadMedicalCardDocumentAsync"/>
                 }
                 else
                 {
@@ -161,16 +167,16 @@
                     @if (previewDoc.ContentType.StartsWith("image/"))
                     {
                         <div class="w-100 h-100 d-flex justify-content-center align-items-center bg-black">
-                            <img src="/api/documents/@previewDoc.Id" alt="@previewDoc.FileName" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+                            <img src="@previewUrl" alt="@previewDoc.FileName" style="max-width: 100%; max-height: 100%; object-fit: contain;"/>
                         </div>
                     }
                     else
                     {
-                        <iframe src="/api/documents/@previewDoc.Id" style="width: 100%; height: 100%; border: none;"></iframe>
+                        <iframe src="@previewUrl" style="width: 100%; height: 100%; border: none;"></iframe>
                     }
                 </div>
                 <div class="modal-footer border-secondary border-top">
-                    <a href="/api/documents/@previewDoc.Id?download=true" class="btn btn-primary rounded-pill px-4">
+                    <a href="@previewUrl" target="_blank" download="@previewDoc.FileName" class="btn btn-primary rounded-pill px-4">
                         <i class="bi bi-download me-2"></i> Download
                     </a>
                     <button type="button" class="btn btn-secondary rounded-pill px-4" @onclick="ClosePreview">Close</button>
@@ -181,20 +187,22 @@
 }
 
 @code {
-    [Parameter, EditorRequired] public DriverProfile Profile { get; set; } = default!;
+    [Parameter] [EditorRequired] public DriverProfile Profile { get; set; } = default!;
     [Parameter] public bool IsReadOnly { get; set; }
-    
-    private HrPlatform.Data.Entities.DocumentFile? CdlDocument => Profile.Documents.FirstOrDefault(d => d.DocumentType == "CDL License");
-    private HrPlatform.Data.Entities.DocumentFile? MedicalCardDocument => Profile.Documents.FirstOrDefault(d => d.DocumentType == "Medical Card");
-    
+
+    [Inject] private IDocumentStorageService StorageService { get; set; } = default!;
+    private DocumentFile? CdlDocument => Profile.Documents.FirstOrDefault(d => d.DocumentType == "CDL License");
+    private DocumentFile? MedicalCardDocument => Profile.Documents.FirstOrDefault(d => d.DocumentType == "Medical Card");
+
     private bool showPreviewModal;
-    private HrPlatform.Data.Entities.DocumentFile? previewDoc;
+    private DocumentFile? previewDoc;
+    private string previewUrl = "";
 
     protected override void OnInitialized()
     {
         Profile.License ??= new DriverLicense();
         Profile.MedicalCard ??= new DriverMedicalCard();
-        Profile.Documents ??= new List<HrPlatform.Data.Entities.DocumentFile>();
+        Profile.Documents ??= new List<DocumentFile>();
     }
 
     private void ToggleEndorsement(CdlEndorsement endorsement, bool add)
@@ -210,20 +218,44 @@
         var file = e.File;
         if (file.Size > 5 * 1024 * 1024) return;
 
-        using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
-        using var ms = new MemoryStream();
-        await stream.CopyToAsync(ms);
+        using var stream = file.OpenReadStream(5 * 1024 * 1024);
+        var blobId = await StorageService.UploadAsync(stream, file.Name, file.ContentType, Profile.Id.ToString());
 
         var existing = CdlDocument;
         if (existing != null) Profile.Documents.Remove(existing);
 
-        Profile.Documents.Add(new HrPlatform.Data.Entities.DocumentFile
+        Profile.Documents.Add(new DocumentFile
         {
+            Id = blobId,
             DriverProfileId = Profile.Id,
             DocumentType = "CDL License",
             FileName = file.Name,
             ContentType = file.ContentType,
-            Data = ms.ToArray(),
+            FilePath = $"{Profile.Id}/{blobId}",
+            UploadedAt = DateTime.UtcNow,
+            IsUnsaved = true
+        });
+    }
+
+    private async Task UploadMedicalCardDocumentAsync(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file.Size > 5 * 1024 * 1024) return;
+
+        using var stream = file.OpenReadStream(5 * 1024 * 1024);
+        var blobId = await StorageService.UploadAsync(stream, file.Name, file.ContentType, Profile.Id.ToString());
+
+        var existing = MedicalCardDocument;
+        if (existing != null) Profile.Documents.Remove(existing);
+
+        Profile.Documents.Add(new DocumentFile
+        {
+            Id = blobId,
+            DriverProfileId = Profile.Id,
+            DocumentType = "Medical Card",
+            FileName = file.Name,
+            ContentType = file.ContentType,
+            FilePath = $"{Profile.Id}/{blobId}",
             UploadedAt = DateTime.UtcNow,
             IsUnsaved = true
         });
@@ -235,39 +267,16 @@
         if (existing != null) Profile.Documents.Remove(existing);
     }
 
-    private async Task UploadMedicalCardDocumentAsync(InputFileChangeEventArgs e)
-    {
-        var file = e.File;
-        if (file.Size > 5 * 1024 * 1024) return;
-
-        using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
-        using var ms = new MemoryStream();
-        await stream.CopyToAsync(ms);
-
-        var existing = MedicalCardDocument;
-        if (existing != null) Profile.Documents.Remove(existing);
-
-        Profile.Documents.Add(new HrPlatform.Data.Entities.DocumentFile
-        {
-            DriverProfileId = Profile.Id,
-            DocumentType = "Medical Card",
-            FileName = file.Name,
-            ContentType = file.ContentType,
-            Data = ms.ToArray(),
-            UploadedAt = DateTime.UtcNow,
-            IsUnsaved = true
-        });
-    }
-
     private void DeleteMedicalCardDocument()
     {
         var existing = MedicalCardDocument;
         if (existing != null) Profile.Documents.Remove(existing);
     }
-    
-    private void PreviewDocument(HrPlatform.Data.Entities.DocumentFile doc)
+
+    private async Task PreviewDocument(DocumentFile doc)
     {
         previewDoc = doc;
+        previewUrl = await StorageService.GetSignedUrlAsync(doc.Id);
         showPreviewModal = true;
     }
 
@@ -275,5 +284,7 @@
     {
         showPreviewModal = false;
         previewDoc = null;
+        previewUrl = "";
     }
+
 }

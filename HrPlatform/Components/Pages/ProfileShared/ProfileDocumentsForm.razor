@@ -84,17 +84,17 @@
                         @if (previewDoc.ContentType.StartsWith("image/"))
                         {
                             <div class="w-100 h-100 d-flex justify-content-center align-items-center bg-black">
-                                <img src="/api/documents/@previewDoc.Id" alt="@previewDoc.FileName"
+                                <img src="@previewUrl" alt="@previewDoc.FileName"
                                      style="max-width: 100%; max-height: 100%; object-fit: contain;"/>
                             </div>
                         }
                         else
                         {
-                            <iframe src="/api/documents/@previewDoc.Id" style="width: 100%; height: 100%; border: none;"></iframe>
+                            <iframe src="@previewUrl" style="width: 100%; height: 100%; border: none;"></iframe>
                         }
                     </div>
                     <div class="modal-footer border-secondary border-top">
-                        <a href="/api/documents/@previewDoc.Id?download=true" class="btn btn-primary rounded-pill px-4">
+                        <a href="@previewUrl" target="_blank" download="@previewDoc.FileName" class="btn btn-primary rounded-pill px-4">
                             <i class="bi bi-download me-2"></i> Download
                         </a>
                         <button type="button" class="btn btn-secondary rounded-pill px-4" @onclick="ClosePreview">Close</button>
@@ -108,16 +108,19 @@
 @code {
     [Parameter][EditorRequired] public DriverProfile Profile { get; set; } = default!;
     [Parameter] public bool IsReadOnly { get; set; }
+    [Inject] private IDocumentStorageService StorageService { get; set; } = default!;
 
     private IEnumerable<DocumentFile> OtherDocs => Profile.Documents.Where(d => d.DocumentType != "CDL License" && d.DocumentType != "Medical Card");
 
     private string newDocType = "TWIC";
     private bool showPreviewModal;
     private DocumentFile? previewDoc;
+    private string previewUrl = "";
 
-    private void PreviewDocument(DocumentFile doc)
+    private async Task PreviewDocument(DocumentFile doc)
     {
         previewDoc = doc;
+        previewUrl = await StorageService.GetSignedUrlAsync(doc.Id);
         showPreviewModal = true;
     }
 
@@ -125,6 +128,7 @@
     {
         showPreviewModal = false;
         previewDoc = null;
+        previewUrl = "";
     }
 
     private async Task HandleFileSelected(InputFileChangeEventArgs e)
@@ -133,16 +137,16 @@
         if (file.Size > 5 * 1024 * 1024) return;
 
         using var stream = file.OpenReadStream(5 * 1024 * 1024);
-        using var ms = new MemoryStream();
-        await stream.CopyToAsync(ms);
+        var blobId = await StorageService.UploadAsync(stream, file.Name, file.ContentType, Profile.Id.ToString());
 
         var docFile = new DocumentFile
         {
+            Id = blobId,
             DriverProfileId = Profile.Id,
             DocumentType = newDocType,
             FileName = file.Name,
             ContentType = file.ContentType,
-            Data = ms.ToArray(),
+            FilePath = $"{Profile.Id}/{blobId}",
             UploadedAt = DateTime.UtcNow,
             IsUnsaved = true
         };

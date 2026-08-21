@@ -72,7 +72,7 @@ public class Program
         builder.Services.AddTransient<ILeadNoteService, LeadNoteService>();
 
         builder.Services.AddHttpContextAccessor();
-        builder.Services.AddTransient<IDocumentStorageService, DatabaseDocumentStorageService>();
+        builder.Services.AddTransient<IDocumentStorageService, AzureBlobDocumentStorageService>();
         // Register background job
         builder.Services.AddHostedService<DailyMaintenanceService>();
         var app = builder.Build();
@@ -113,17 +113,6 @@ public class Program
 
         // Add additional endpoints required by the Identity /Account Razor components.
         app.MapAdditionalIdentityEndpoints();
-
-        app.MapGet("/api/documents/{id}", async (string id, bool? download, ApplicationDbContext db) =>
-        {
-            var doc = await db.DocumentFiles.FindAsync(id);
-            if (doc == null) return Results.NotFound();
-
-            if (download == true)
-                return Results.File(doc.Data, doc.ContentType, doc.FileName);
-
-            return Results.File(doc.Data, doc.ContentType);
-        }).RequireAuthorization();
 
         app.Run();
     }

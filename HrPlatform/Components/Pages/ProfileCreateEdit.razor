@@ -35,17 +35,24 @@
                 <!-- Sidebar Progress -->
                 <div class="col-lg-3 p-4" style="background-color: var(--bg-card); border-right: 1px solid var(--border-color);">
                     <div class="mb-4">
-                        <h4 class="fw-bold mb-4">Complete Profile</h4>
+                        @if (isNew)
+                        {
+                            <h4 class="fw-bold mb-4">Complete Profile</h4>
 
-                        <h5 class="text-secondary fw-bold text-uppercase mb-2" style="font-size: 0.8rem; letter-spacing: 1px;">Application
-                            Progress</h5>
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <small class="text-muted fw-medium">@Math.Min((activeTab + 1) * 100 / tabs.Length, 100)% Complete</small>
-                        </div>
-                        <div class="progress mb-4" style="height: 6px; background-color: rgba(255,255,255,0.1);">
-                            <div class="progress-bar bg-primary"
-                                 style="width: @Math.Min((activeTab + 1) * 100 / tabs.Length, 100)%; transition: width 0.3s ease;"></div>
-                        </div>
+                            <h5 class="text-secondary fw-bold text-uppercase mb-2" style="font-size: 0.8rem; letter-spacing: 1px;">Application
+                                Progress</h5>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <small class="text-muted fw-medium">@Math.Min((activeTab + 1) * 100 / tabs.Length, 100)% Complete</small>
+                            </div>
+                            <div class="progress mb-4" style="height: 6px; background-color: rgba(255,255,255,0.1);">
+                                <div class="progress-bar bg-primary"
+                                     style="width: @Math.Min((activeTab + 1) * 100 / tabs.Length, 100)%; transition: width 0.3s ease;"></div>
+                            </div>
+                        }
+                        else
+                        {
+                            <h4 class="fw-bold mb-4">Edit Profile</h4>
+                        }
 
                         <ul class="nav flex-column gap-3 wizard-steps">
                             @foreach (var (label, index) in tabs.Select((l, i) => (l, i)))

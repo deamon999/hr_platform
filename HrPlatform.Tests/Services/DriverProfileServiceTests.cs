@@ -8,6 +8,8 @@ using HrPlatform.Data.Models;
 using HrPlatform.Models;
 using HrPlatform.Services;
 using Microsoft.EntityFrameworkCore;
+using Moq;
+using HrPlatform.Data.Entities;
 using Xunit;
 
 namespace HrPlatform.Tests.Services;
@@ -38,7 +40,7 @@ public class DriverProfileServiceTests
 
         using (var context = GetDbContext(dbName))
         {
-            var service = new DriverProfileService(context);
+            var service = new DriverProfileService(context, new Mock<IDocumentStorageService>().Object);
             
             var byUser = await service.GetByUserIdAsync("user1");
             Assert.NotNull(byUser);
@@ -70,7 +72,7 @@ public class DriverProfileServiceTests
 
         using (var context = GetDbContext(dbName))
         {
-            var service = new DriverProfileService(context);
+            var service = new DriverProfileService(context, new Mock<IDocumentStorageService>().Object);
 
             var all = await service.GetAllPagedAsync(new ProfileSearch());
             Assert.Equal(3, all.TotalCount);
@@ -115,7 +117,7 @@ public class DriverProfileServiceTests
 
         using (var context = GetDbContext(dbName))
         {
-            var service = new DriverProfileService(context);
+            var service = new DriverProfileService(context, new Mock<IDocumentStorageService>().Object);
 
             var result = await service.GetByCompanyPagedAsync(new ProfileSearch(), companyId: 1);
             Assert.Single(result.Items);
@@ -129,7 +131,7 @@ public class DriverProfileServiceTests
         var dbName = Guid.NewGuid().ToString();
         using (var context = GetDbContext(dbName))
         {
-            var service = new DriverProfileService(context);
+            var service = new DriverProfileService(context, new Mock<IDocumentStorageService>().Object);
             var result = await service.CreateAsync(new DriverProfile { FirstName = "New", LastName = "Driver", UserId = "user", Email="e@e.com", PhoneNumber="1" });
             Assert.NotEqual(0, result.Id);
         }
@@ -152,7 +154,7 @@ public class DriverProfileServiceTests
 
         using (var context = GetDbContext(dbName))
         {
-            var service = new DriverProfileService(context);
+            var service = new DriverProfileService(context, new Mock<IDocumentStorageService>().Object);
             var profile = new DriverProfile { Id = 1, UserId = "hacker", FirstName = "F", LastName = "L", Email = "e@e.com", PhoneNumber = "1" };
             
             await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.UpdateAsync(profile, "hacker"));
@@ -179,7 +181,7 @@ public class DriverProfileServiceTests
 
         using (var context = GetDbContext(dbName))
         {
-            var service = new DriverProfileService(context);
+            var service = new DriverProfileService(context, new Mock<IDocumentStorageService>().Object);
             
             var updateProfile = new DriverProfile 
             { 
@@ -217,7 +219,7 @@ public class DriverProfileServiceTests
 
         using (var context = GetDbContext(dbName))
         {
-            var service = new DriverProfileService(context);
+            var service = new DriverProfileService(context, new Mock<IDocumentStorageService>().Object);
             await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.DeleteAsync(1, "hacker", false));
         }
     }
@@ -228,14 +230,16 @@ public class DriverProfileServiceTests
         var dbName = Guid.NewGuid().ToString();
         using (var context = GetDbContext(dbName))
         {
-            context.DriverProfiles.Add(new DriverProfile { Id = 1, UserId = "owner", FirstName="F", LastName="L", Email="e", PhoneNumber="1" });
+            context.DriverProfiles.Add(new DriverProfile { Id = 1, UserId = "owner", FirstName="F", LastName="L", Email="e", PhoneNumber="1", Documents = [new DocumentFile { Id = "doc1", FilePath = "path1", ContentType = "pdf", FileName="f.pdf" }] });
             context.DriverProfiles.Add(new DriverProfile { Id = 2, UserId = "owner", FirstName="F", LastName="L", Email="e", PhoneNumber="1" });
             await context.SaveChangesAsync();
         }
 
+        var mockStorage = new Mock<IDocumentStorageService>();
+
         using (var context = GetDbContext(dbName))
         {
-            var service = new DriverProfileService(context);
+            var service = new DriverProfileService(context, mockStorage.Object);
             
             // Delete as owner
             await service.DeleteAsync(1, "owner", false);
@@ -246,7 +250,11 @@ public class DriverProfileServiceTests
 
         using (var context = GetDbContext(dbName))
         {
-            Assert.Equal(0, await context.DriverProfiles.CountAsync());
+            Assert.Null(await context.DriverProfiles.FindAsync(1));
+            Assert.Null(await context.DriverProfiles.FindAsync(2));
+            Assert.Empty(context.DocumentFiles);
         }
+
+        mockStorage.Verify(x => x.DeleteAsync("doc1"), Times.Once);
     }
 }
