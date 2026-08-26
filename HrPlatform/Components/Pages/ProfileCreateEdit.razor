@@ -537,9 +537,34 @@
     {
         try
         {
-            if (!profile!.EmploymentHistory.Any())
+            if (profile!.License == null || string.IsNullOrWhiteSpace(profile.License.LicenseNumber))
             {
-                errorMessage = "Please add at least 1 employment history record before submitting.";
+                errorMessage = "CDL License details are required before submitting.";
+                return;
+            }
+            if (profile.MedicalCard == null || string.IsNullOrWhiteSpace(profile.MedicalCard.MedicalExaminerName))
+            {
+                errorMessage = "DOT Medical Card details are required before submitting.";
+                return;
+            }
+            if (!profile.Documents.Any(d => d.DocumentType == "CDL License") || !profile.Documents.Any(d => d.DocumentType == "Medical Card"))
+            {
+                errorMessage = "CDL License and DOT Medical Card documents are required before submitting.";
+                return;
+            }
+            if (!profile.EmploymentHistory.Any())
+            {
+                errorMessage = "Please list your last 3 years of employment history (at least 1 record required) before submitting.";
+                return;
+            }
+            if (!(profile.ConsentMVR && profile.ConsentClearinghouse && profile.ConsentPSP && profile.ConsentEmployment))
+            {
+                errorMessage = "All background check consents must be signed before submitting.";
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(profile.ElectronicSignatureName))
+            {
+                errorMessage = "Electronic signature is required before submitting.";
                 return;
             }
 
