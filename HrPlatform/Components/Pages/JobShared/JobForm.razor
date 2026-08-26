@@ -33,7 +33,17 @@
             </div>
             <div class="col-md-3">
                 <label class="form-label fw-medium small text-uppercase">State</label>
-                <InputText class="form-control dark-input" @bind-Value="Job.State" placeholder="e.g. TX" />
+                <InputSelect class="form-select dark-input" @bind-Value="Job.State">
+                    <option value="">Select Location...</option>
+                    <option value="Nationwide">Nationwide (All 50 States)</option>
+                    <option value="Remote">Remote</option>
+                    <optgroup label="Specific States">
+                        @foreach (var state in HrPlatform.Utils.USStates.States)
+                        {
+                            <option value="@state.Key">@state.Value</option>
+                        }
+                    </optgroup>
+                </InputSelect>
             </div>
             <div class="col-md-4">
                 <label class="form-label fw-medium small text-uppercase">Zip Code</label>

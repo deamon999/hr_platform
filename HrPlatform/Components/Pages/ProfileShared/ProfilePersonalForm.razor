@@ -65,7 +65,13 @@
         </div>
         <div class="col-md-4">
             <label class="form-label fw-semibold text-secondary small text-uppercase">State</label>
-            <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" maxlength="2" @bind-Value="Profile.State"/>
+            <InputSelect disabled="@IsReadOnly" class="form-select bg-light border-0 shadow-sm" @bind-Value="Profile.State">
+                <option value="">Select State</option>
+                @foreach (var state in HrPlatform.Utils.USStates.States)
+                {
+                    <option value="@state.Key">@state.Value</option>
+                }
+            </InputSelect>
         </div>
         <div class="col-md-4">
             <label class="form-label fw-semibold text-secondary small text-uppercase">Zip Code</label>
