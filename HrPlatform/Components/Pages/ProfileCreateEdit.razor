@@ -385,6 +385,12 @@
                 return;
             }
 
+            if (activeTab == 3 && index > activeTab && !profile.EmploymentHistory.Any())
+            {
+                errorMessage = "Please list your last 3 years of employment history (at least 1 record required) before proceeding.";
+                return;
+            }
+
             activeTab = index;
         }
         catch (Exception ex)
@@ -418,6 +424,12 @@
             if (activeTab == 1 && (!profile!.Documents.Any(d => d.DocumentType == "CDL License") || !profile.Documents.Any(d => d.DocumentType == "Medical Card")))
             {
                 errorMessage = "CDL License and DOT Medical Card documents are required before proceeding.";
+                return;
+            }
+
+            if (activeTab == 3 && !profile!.EmploymentHistory.Any())
+            {
+                errorMessage = "Please list your last 3 years of employment history (at least 1 record required) before proceeding.";
                 return;
             }
 
@@ -498,22 +510,21 @@
         try
         {
             errorMessage = null;
-
-            if (ValidateProfileSafe())
+            
+            if (profile!.IsApplicationCompleted && !profile.EmploymentHistory.Any())
             {
-                try
-                {
-                    await SaveProfileToDbAsync();
-                    Nav.NavigateTo(ReturnUrl ?? "/my-profile");
-                }
-                catch (Exception ex)
-                {
-                    errorMessage = "An error occurred while saving the profile: " + ex.Message;
-                }
+                errorMessage = "At least 1 employment history record is required to maintain a complete profile. Please add your employment history before saving changes.";
+                return;
             }
-            else
+
+            try
             {
-                errorMessage = "Validation failed. Please fill in all required fields.";
+                await SaveProfileToDbAsync();
+                Nav.NavigateTo(ReturnUrl ?? "/my-profile");
+            }
+            catch (Exception ex)
+            {
+                errorMessage = "An error occurred while saving the profile: " + ex.Message;
             }
         }
         catch (Exception ex)
@@ -526,6 +537,12 @@
     {
         try
         {
+            if (!profile!.EmploymentHistory.Any())
+            {
+                errorMessage = "Please add at least 1 employment history record before submitting.";
+                return;
+            }
+
             if (ValidateProfileSafe())
             {
                 profile!.IsApplicationCompleted = true;
@@ -569,20 +586,25 @@
             medicalCardWasEmpty = true;
         }
 
-        if (isNew)
+        try
         {
-            profile.UserId = currentUserId;
-            await ProfileService.CreateAsync(profile!);
-            isNew = false;
+            if (isNew)
+            {
+                profile.UserId = currentUserId;
+                await ProfileService.CreateAsync(profile!);
+                isNew = false;
+            }
+            else
+            {
+                await ProfileService.UpdateAsync(profile!, currentUserId);
+            }
         }
-        else
+        finally
         {
-            await ProfileService.UpdateAsync(profile!, currentUserId);
+            // Always restore for UI binding, even if save threw an exception
+            if (licenseWasEmpty) profile.License = new DriverLicense();
+            if (medicalCardWasEmpty) profile.MedicalCard = new DriverMedicalCard();
         }
-
-        // Restore for UI binding
-        if (licenseWasEmpty) profile.License = new DriverLicense();
-        if (medicalCardWasEmpty) profile.MedicalCard = new DriverMedicalCard();
 
         // Reset IsUnsaved for all documents since they are now saved
         foreach (var doc in profile.Documents)

@@ -3,7 +3,7 @@
 @using HrPlatform.Utils
 
 <div>
-    <p class="text-secondary small mb-4">Please list your last 10 years of employment history.</p>
+    <p class="text-secondary small mb-4">Please list your last 3 years of employment history (at least 1 record is mandatory).</p>
 
     @if (!Profile.EmploymentHistory.Any())
     {
@@ -61,7 +61,7 @@
                                 <option value="">Select...</option>
                                 @foreach (var p in Enum.GetValues<PayPeriod>())
                                 {
-                                    <option value="@p">Per @p.ToString()</option>
+                                    <option value="@p">@(p.GetDescriptionValue() ?? p.ToString())</option>
                                 }
                             </InputSelect>
                         </div>

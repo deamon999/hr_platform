@@ -332,6 +332,12 @@
             return;
         }
 
+        if (!_isManager && activeTab == 3 && index > activeTab && !_profile.EmploymentHistory.Any())
+        {
+            errorMessage = "Please list your last 3 years of employment history (at least 1 record required) before proceeding.";
+            return;
+        }
+
         activeTab = index;
     }
 
@@ -347,6 +353,12 @@
         if (!_isManager && activeTab == 1 && (!_profile.Documents.Any(d => d.DocumentType == "CDL License") || !_profile.Documents.Any(d => d.DocumentType == "Medical Card")))
         {
             errorMessage = "CDL License and DOT Medical Card documents are required before proceeding.";
+            return;
+        }
+
+        if (!_isManager && activeTab == 3 && !_profile.EmploymentHistory.Any())
+        {
+            errorMessage = "Please list your last 3 years of employment history (at least 1 record required) before proceeding.";
             return;
         }
 
@@ -429,6 +441,13 @@
     private async Task SubmitRegistrationAsync()
     {
         errorMessage = null;
+
+        if (!_isManager && !_profile.EmploymentHistory.Any())
+        {
+            errorMessage = "Please list your last 3 years of employment history (at least 1 record required) before submitting.";
+            return;
+        }
+
         if (!ValidateProfileSafe())
         {
             errorMessage = "Please ensure all required fields are filled correctly.";
@@ -472,6 +491,7 @@
             if (!_isManager)
             {
                 _profile.IsApplicationCompleted = true;
+                _profile.LastWizardStep = tabs.Length - 1;
                 _profile.UserId = user.Id;
 
                 if (_profile.License != null && string.IsNullOrWhiteSpace(_profile.License.LicenseNumber)) _profile.License = null;
@@ -482,7 +502,19 @@
                     doc.IsUnsaved = false;
                 }
 
-                await ProfileService.CreateAsync(_profile);
+                try
+                {
+                    await ProfileService.CreateAsync(_profile);
+                }
+                catch (Exception profileEx)
+                {
+                    // Profile creation failed — roll back the user to prevent orphaned accounts.
+                    // Without a profile, the user would be redirected to /profiles/new on login
+                    // with all their wizard data lost.
+                    await UserManager.DeleteAsync(user);
+                    throw new InvalidOperationException(
+                        $"Failed to create driver profile. Your account was not created. Please try again. Details: {profileEx.Message}", profileEx);
+                }
 
                 if (_invitation!.JobId.HasValue)
                 {

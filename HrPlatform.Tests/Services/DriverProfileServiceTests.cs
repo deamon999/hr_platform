@@ -64,8 +64,8 @@ public class DriverProfileServiceTests
         {
             context.DriverProfiles.AddRange(
                 new DriverProfile { Id = 1, UserId = "u1", Email = "a@a.com", PhoneNumber="1", FirstName = "Alice", LastName = "Smith", YearsOfExperience = 5, License = new DriverLicense { Class = CdlClass.A, IssuingState="TX", LicenseNumber="1" } },
-                new DriverProfile { Id = 2, UserId = "u2", Email = "b@a.com", PhoneNumber="2", FirstName = "Bob", LastName = "Jones", YearsOfExperience = 2, License = new DriverLicense { Class = CdlClass.B, IssuingState="TX", LicenseNumber="1" } },
-                new DriverProfile { Id = 3, UserId = "u3", Email = "c@a.com", PhoneNumber="3", FirstName = "Charlie", LastName = "Brown", YearsOfExperience = 10, License = new DriverLicense { Class = CdlClass.A, IssuingState="TX", LicenseNumber="1", Endorsements = new List<DriverLicenseEndorsement> { new DriverLicenseEndorsement { Endorsement = CdlEndorsement.Hazmat } } } }
+                new DriverProfile { Id = 2, UserId = "u2", Email = "b@a.com", PhoneNumber="2", FirstName = "Bob", LastName = "Jones", YearsOfExperience = 2, License = new DriverLicense { Class = CdlClass.B, IssuingState="TX", LicenseNumber="2" } },
+                new DriverProfile { Id = 3, UserId = "u3", Email = "c@a.com", PhoneNumber="3", FirstName = "Charlie", LastName = "Brown", YearsOfExperience = 10, License = new DriverLicense { Class = CdlClass.A, IssuingState="TX", LicenseNumber="3", Endorsements = new List<DriverLicenseEndorsement> { new DriverLicenseEndorsement { Endorsement = CdlEndorsement.Hazmat } } } }
             );
             await context.SaveChangesAsync();
         }
@@ -256,5 +256,271 @@ public class DriverProfileServiceTests
         }
 
         mockStorage.Verify(x => x.DeleteAsync("doc1"), Times.Once);
+    }
+
+    // ============================================================================
+    // NEW REGRESSION TESTS — Wizard flow bug fixes
+    // ============================================================================
+
+    [Fact]
+    public async Task UpdateAsync_DeletesOrphanedEducations()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using (var context = GetDbContext(dbName))
+        {
+            context.DriverProfiles.Add(new DriverProfile
+            {
+                Id = 1, UserId = "owner", FirstName = "F", LastName = "L", Email = "e@e.com", PhoneNumber = "1",
+                Educations = new List<DriverEducation>
+                {
+                    new DriverEducation { Id = 1, SchoolName = "School A", City = "Dallas", State = "TX", Level = EducationLevel.HighSchoolDiploma },
+                    new DriverEducation { Id = 2, SchoolName = "School B", City = "Austin", State = "TX", Level = EducationLevel.BachelorDegree }
+                }
+            });
+            await context.SaveChangesAsync();
+        }
+
+        using (var context = GetDbContext(dbName))
+        {
+            var service = new DriverProfileService(context, new Mock<IDocumentStorageService>().Object);
+            var updateProfile = new DriverProfile
+            {
+                Id = 1, UserId = "owner", FirstName = "F", LastName = "L", Email = "e@e.com", PhoneNumber = "1",
+                Educations = new List<DriverEducation>
+                {
+                    // Keep School A (Id=1), remove School B (Id=2)
+                    new DriverEducation { Id = 1, SchoolName = "School A Updated", City = "Dallas", State = "TX", Level = EducationLevel.HighSchoolDiploma }
+                }
+            };
+            await service.UpdateAsync(updateProfile, "owner");
+        }
+
+        using (var context = GetDbContext(dbName))
+        {
+            var updated = await context.DriverProfiles.Include(p => p.Educations).FirstAsync(p => p.Id == 1);
+            Assert.Single(updated.Educations);
+            Assert.Equal("School A Updated", updated.Educations.First().SchoolName);
+            Assert.DoesNotContain(updated.Educations, e => e.SchoolName == "School B");
+        }
+    }
+
+    [Fact]
+    public async Task UpdateAsync_PreservesExistingEducations()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using (var context = GetDbContext(dbName))
+        {
+            context.DriverProfiles.Add(new DriverProfile
+            {
+                Id = 1, UserId = "owner", FirstName = "F", LastName = "L", Email = "e@e.com", PhoneNumber = "1",
+                Educations = new List<DriverEducation>
+                {
+                    new DriverEducation { Id = 1, SchoolName = "School A", City = "Dallas", State = "TX", Level = EducationLevel.HighSchoolDiploma }
+                }
+            });
+            await context.SaveChangesAsync();
+        }
+
+        using (var context = GetDbContext(dbName))
+        {
+            var service = new DriverProfileService(context, new Mock<IDocumentStorageService>().Object);
+            var updateProfile = new DriverProfile
+            {
+                Id = 1, UserId = "owner", FirstName = "Updated", LastName = "L", Email = "e@e.com", PhoneNumber = "1",
+                Educations = new List<DriverEducation>
+                {
+                    new DriverEducation { Id = 1, SchoolName = "School A", City = "Dallas", State = "TX", Level = EducationLevel.HighSchoolDiploma },
+                    new DriverEducation { Id = 0, SchoolName = "New School", City = "Houston", State = "TX", Level = EducationLevel.BachelorDegree }
+                }
+            };
+            await service.UpdateAsync(updateProfile, "owner");
+        }
+
+        using (var context = GetDbContext(dbName))
+        {
+            var updated = await context.DriverProfiles.Include(p => p.Educations).FirstAsync(p => p.Id == 1);
+            Assert.Equal("Updated", updated.FirstName);
+            Assert.Equal(2, updated.Educations.Count);
+            Assert.Contains(updated.Educations, e => e.SchoolName == "School A");
+            Assert.Contains(updated.Educations, e => e.SchoolName == "New School");
+        }
+    }
+
+    [Fact]
+    public async Task CreateAsync_WithCompletedApplication_PersistsAllFields()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using (var context = GetDbContext(dbName))
+        {
+            var service = new DriverProfileService(context, new Mock<IDocumentStorageService>().Object);
+            var profile = new DriverProfile
+            {
+                UserId = "driver1", FirstName = "Jane", LastName = "Doe", Email = "jane@test.com", PhoneNumber = "555-0101",
+                IsApplicationCompleted = true,
+                LastWizardStep = 9,
+                License = new DriverLicense
+                {
+                    LicenseNumber = "CDL-999", Class = CdlClass.A, IssuingState = "TX",
+                    Endorsements = new List<DriverLicenseEndorsement>
+                    {
+                        new DriverLicenseEndorsement { Endorsement = CdlEndorsement.Hazmat }
+                    }
+                },
+                MedicalCard = new DriverMedicalCard
+                {
+                    MedicalExaminerName = "Dr. Smith",
+                    SelfCertification = SelfCertificationCategory.NonExceptedInterstate
+                },
+                EmploymentHistory = new List<DriverEmployment>
+                {
+                    new DriverEmployment { CompanyName = "Acme Trucking", JobTitle = "OTR Driver" }
+                },
+                Educations = new List<DriverEducation>
+                {
+                    new DriverEducation { SchoolName = "CDL School", City = "Dallas", State = "TX", Level = EducationLevel.VocationalCertificate }
+                },
+                Skills = new List<DriverProfileSkill>
+                {
+                    new DriverProfileSkill { Skill = "Hazmat" }
+                },
+                ViolationHistory = new List<DriverViolation>
+                {
+                    new DriverViolation { Type = ViolationType.MovingViolation, Description = "5mph over", OccurredDate = DateOnly.FromDateTime(DateTime.Today) }
+                }
+            };
+
+            var created = await service.CreateAsync(profile);
+            Assert.True(created.Id > 0);
+        }
+
+        using (var context = GetDbContext(dbName))
+        {
+            var loaded = await context.DriverProfiles
+                .Include(p => p.License).ThenInclude(l => l!.Endorsements)
+                .Include(p => p.MedicalCard)
+                .Include(p => p.EmploymentHistory)
+                .Include(p => p.Educations)
+                .Include(p => p.Skills)
+                .Include(p => p.ViolationHistory)
+                .FirstAsync();
+
+            Assert.True(loaded.IsApplicationCompleted);
+            Assert.Equal(9, loaded.LastWizardStep);
+            Assert.NotNull(loaded.License);
+            Assert.Equal("CDL-999", loaded.License.LicenseNumber);
+            Assert.Single(loaded.License.Endorsements);
+            Assert.NotNull(loaded.MedicalCard);
+            Assert.Single(loaded.EmploymentHistory);
+            Assert.Single(loaded.Educations);
+            Assert.Equal("CDL School", loaded.Educations.First().SchoolName);
+            Assert.Single(loaded.Skills);
+            Assert.Single(loaded.ViolationHistory);
+        }
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WithNullLicense_DoesNotCrash()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using (var context = GetDbContext(dbName))
+        {
+            context.DriverProfiles.Add(new DriverProfile
+            {
+                Id = 1, UserId = "owner", FirstName = "F", LastName = "L", Email = "e@e.com", PhoneNumber = "1",
+                License = new DriverLicense { Id = 1, LicenseNumber = "CDL-1", Class = CdlClass.A, IssuingState = "TX" }
+            });
+            await context.SaveChangesAsync();
+        }
+
+        using (var context = GetDbContext(dbName))
+        {
+            var service = new DriverProfileService(context, new Mock<IDocumentStorageService>().Object);
+            var updateProfile = new DriverProfile
+            {
+                Id = 1, UserId = "owner", FirstName = "Updated", LastName = "L", Email = "e@e.com", PhoneNumber = "1",
+                License = null, // Removing license
+                MedicalCard = null
+            };
+            await service.UpdateAsync(updateProfile, "owner");
+        }
+
+        using (var context = GetDbContext(dbName))
+        {
+            var updated = await context.DriverProfiles.Include(p => p.License).Include(p => p.MedicalCard).FirstAsync(p => p.Id == 1);
+            Assert.Equal("Updated", updated.FirstName);
+            Assert.Null(updated.License);
+            Assert.Null(updated.MedicalCard);
+        }
+    }
+
+    [Fact]
+    public async Task UpdateAsync_DeletesDocumentsFromBlobStorage()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using (var context = GetDbContext(dbName))
+        {
+            context.DriverProfiles.Add(new DriverProfile
+            {
+                Id = 1, UserId = "owner", FirstName = "F", LastName = "L", Email = "e@e.com", PhoneNumber = "1",
+                Documents = new List<DocumentFile>
+                {
+                    new DocumentFile { Id = "doc-keep", FilePath = "1/keep", ContentType = "pdf", FileName = "keep.pdf" },
+                    new DocumentFile { Id = "doc-remove", FilePath = "1/remove", ContentType = "pdf", FileName = "remove.pdf" }
+                }
+            });
+            await context.SaveChangesAsync();
+        }
+
+        var mockStorage = new Mock<IDocumentStorageService>();
+        using (var context = GetDbContext(dbName))
+        {
+            var service = new DriverProfileService(context, mockStorage.Object);
+            var updateProfile = new DriverProfile
+            {
+                Id = 1, UserId = "owner", FirstName = "F", LastName = "L", Email = "e@e.com", PhoneNumber = "1",
+                Documents = new List<DocumentFile>
+                {
+                    new DocumentFile { Id = "doc-keep", FilePath = "1/keep", ContentType = "pdf", FileName = "keep.pdf" }
+                    // doc-remove is omitted — should be deleted
+                }
+            };
+            await service.UpdateAsync(updateProfile, "owner");
+        }
+
+        mockStorage.Verify(x => x.DeleteAsync("doc-remove"), Times.Once);
+        mockStorage.Verify(x => x.DeleteAsync("doc-keep"), Times.Never);
+
+        using (var context = GetDbContext(dbName))
+        {
+            var docs = await context.DocumentFiles.ToListAsync();
+            Assert.Single(docs);
+            Assert.Equal("doc-keep", docs[0].Id);
+        }
+    }
+
+    [Fact]
+    public async Task CreateAsync_SetsLastWizardStepCorrectly()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        using (var context = GetDbContext(dbName))
+        {
+            var service = new DriverProfileService(context, new Mock<IDocumentStorageService>().Object);
+            var profile = new DriverProfile
+            {
+                UserId = "user1", FirstName = "F", LastName = "L", Email = "e@e.com", PhoneNumber = "1",
+                LastWizardStep = 5,
+                IsApplicationCompleted = false
+            };
+            var created = await service.CreateAsync(profile);
+
+            Assert.Equal(5, created.LastWizardStep);
+            Assert.False(created.IsApplicationCompleted);
+        }
+
+        using (var context = GetDbContext(dbName))
+        {
+            var loaded = await context.DriverProfiles.FirstAsync();
+            Assert.Equal(5, loaded.LastWizardStep);
+        }
     }
 }

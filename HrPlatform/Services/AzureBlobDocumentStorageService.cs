@@ -60,7 +60,22 @@ public class AzureBlobDocumentStorageService : IDocumentStorageService
         var containerClient = _blobServiceClient.GetBlobContainerClient(_containerName);
         var blobClient = containerClient.GetBlobClient(document.FilePath);
 
-        if (!await blobClient.ExistsAsync()) return string.Empty;
+        if (!await blobClient.ExistsAsync())
+        {
+            // Fallback: If blob was uploaded during invite registration, its physical path might be 0/{blobId}
+            var fallbackClient = containerClient.GetBlobClient($"0/{documentId}");
+            if (await fallbackClient.ExistsAsync())
+            {
+                blobClient = fallbackClient;
+                // Correct the database path to match physical reality
+                document.FilePath = $"0/{documentId}";
+                await db.SaveChangesAsync();
+            }
+            else
+            {
+                return string.Empty;
+            }
+        }
 
         var sasBuilder = new BlobSasBuilder
         {

@@ -274,10 +274,16 @@ else
         <h4 class="border-bottom pb-2 mt-4 text-uppercase fw-bold fs-6">Consents & Signatures</h4>
         <div class="row g-3 mb-4">
             <div class="col-6">
+                <strong>PSP Consent:</strong> @(profile.ConsentPSP ? "Signed" : "Not Signed")
+            </div>
+            <div class="col-6">
                 <strong>MVR Consent:</strong> @(profile.ConsentMVR ? "Signed" : "Not Signed")
             </div>
             <div class="col-6">
                 <strong>Clearinghouse Consent:</strong> @(profile.ConsentClearinghouse ? "Signed" : "Not Signed")
+            </div>
+            <div class="col-6">
+                <strong>Employment Consent:</strong> @(profile.ConsentEmployment ? "Signed" : "Not Signed")
             </div>
             <div class="col-12 mt-3">
                 <strong>Electronic Signature:</strong> @(profile.ElectronicSignatureName ?? "Not Signed") <br/>

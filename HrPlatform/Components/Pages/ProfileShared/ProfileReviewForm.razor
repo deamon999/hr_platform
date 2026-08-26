@@ -74,9 +74,9 @@
                         <i class="bi @(HasEquipmentExperience ? "bi-check-circle-fill text-success" : "bi-exclamation-circle-fill text-warning") me-2"></i>
                         <span class="fw-medium me-1">Equipment Experience:</span> @(HasEquipmentExperience ? "Provided" : "None specified")
                     </li>
-                    <li class="mb-2 d-flex align-items-center text-secondary">
-                        <i class="bi bi-info-circle me-2"></i> 
-                        <span class="fw-medium me-1">Optional:</span> Special Endorsements
+                    <li class="mb-2 d-flex align-items-center">
+                        <i class="bi @(Profile.License?.Endorsements?.Any() == true ? "bi-check-circle-fill text-success" : "bi-exclamation-circle-fill text-warning") me-2"></i> 
+                        <span class="fw-medium me-1">Special Endorsements:</span> @(Profile.License?.Endorsements?.Any() == true ? $"{Profile.License.Endorsements.Count} endorsements" : "Not set")
                     </li>
                 </ul>
             </div>
@@ -97,7 +97,7 @@
                     {
                         <li class="mb-2 d-flex align-items-center text-danger">
                             <i class="bi bi-exclamation-triangle me-2"></i> 
-                            Requires at least 3 years (or 10 years for CDL) of history.
+                            Requires at least 3 years of employment history.
                         </li>
                     }
                 </ul>
@@ -138,16 +138,16 @@
             <div class="card-body">
                 <h6 class="fw-bold mb-3"><i class="bi bi-heart text-primary me-2"></i> 6. Preferences (Optional)</h6>
                 <ul class="list-unstyled mb-0 small">
-                    <li class="mb-2 d-flex align-items-center text-secondary">
-                        <i class="bi @(string.IsNullOrWhiteSpace(Profile.PreferredPosition) ? "bi-circle" : "bi-check-circle-fill text-success") me-2"></i> 
+                    <li class="mb-2 d-flex align-items-center">
+                        <i class="bi @(string.IsNullOrWhiteSpace(Profile.PreferredPosition) ? "bi-exclamation-circle-fill text-warning" : "bi-check-circle-fill text-success") me-2"></i> 
                         <span class="fw-medium me-1">Preferred Position:</span> @(string.IsNullOrWhiteSpace(Profile.PreferredPosition) ? "Not set" : Profile.PreferredPosition)
                     </li>
-                    <li class="mb-2 d-flex align-items-center text-secondary">
-                        <i class="bi @(Profile.PreferredRouteType == null ? "bi-circle" : "bi-check-circle-fill text-success") me-2"></i> 
+                    <li class="mb-2 d-flex align-items-center">
+                        <i class="bi @(Profile.PreferredRouteType == null ? "bi-exclamation-circle-fill text-warning" : "bi-check-circle-fill text-success") me-2"></i> 
                         <span class="fw-medium me-1">Route Type:</span> @(Profile.PreferredRouteType == null ? "Not set" : Profile.PreferredRouteType.ToString())
                     </li>
-                    <li class="mb-2 d-flex align-items-center text-secondary">
-                        <i class="bi @(Profile.MinimumWeeklyPay == null ? "bi-circle" : "bi-check-circle-fill text-success") me-2"></i> 
+                    <li class="mb-2 d-flex align-items-center">
+                        <i class="bi @(Profile.MinimumWeeklyPay == null ? "bi-exclamation-circle-fill text-warning" : "bi-check-circle-fill text-success") me-2"></i> 
                         <span class="fw-medium me-1">Min Weekly Pay:</span> @(Profile.MinimumWeeklyPay == null ? "Not set" : $"${Profile.MinimumWeeklyPay}")
                     </li>
                 </ul>
@@ -161,8 +161,8 @@
             <div class="card-body">
                 <h6 class="fw-bold mb-3"><i class="bi bi-book text-primary me-2"></i> 7. Education (Optional)</h6>
                 <ul class="list-unstyled mb-0 small">
-                    <li class="mb-2 d-flex align-items-center text-secondary">
-                        <i class="bi @(Profile.Educations.Any() ? "bi-check-circle-fill text-success" : "bi-circle") me-2"></i> 
+                    <li class="mb-2 d-flex align-items-center">
+                        <i class="bi @(Profile.Educations.Any() ? "bi-check-circle-fill text-success" : "bi-exclamation-circle-fill text-warning") me-2"></i> 
                         <span class="fw-medium me-1">Education Records:</span> @(Profile.Educations.Any() ? $"{Profile.Educations.Count} records provided" : "Not set")
                     </li>
                 </ul>
@@ -176,8 +176,8 @@
             <div class="card-body">
                 <h6 class="fw-bold mb-3"><i class="bi bi-file-earmark-medical text-primary me-2"></i> 8. Other Documents (Optional)</h6>
                 <ul class="list-unstyled mb-0 small">
-                    <li class="mb-2 d-flex align-items-center text-secondary">
-                        <i class="bi @(Profile.Documents.Count(d => d.DocumentType != "CDL License" && d.DocumentType != "Medical Card") == 0 ? "bi-circle" : "bi-check-circle-fill text-success") me-2"></i> 
+                    <li class="mb-2 d-flex align-items-center">
+                        <i class="bi @(Profile.Documents.Count(d => d.DocumentType != "CDL License" && d.DocumentType != "Medical Card") == 0 ? "bi-exclamation-circle-fill text-warning" : "bi-check-circle-fill text-success") me-2"></i> 
                         <span class="fw-medium me-1">Additional Files:</span> @Profile.Documents.Count(d => d.DocumentType != "CDL License" && d.DocumentType != "Medical Card") uploaded
                     </li>
                 </ul>
@@ -192,8 +192,8 @@
                 <h6 class="fw-bold mb-3"><i class="bi bi-pen text-primary me-2"></i> 9. Consents & Signature</h6>
                 <ul class="list-unstyled mb-0 small">
                     <li class="mb-2 d-flex align-items-center">
-                        <i class="bi @(!(Profile.ConsentMVR && Profile.ConsentClearinghouse) ? "bi-x-circle-fill text-danger" : "bi-check-circle-fill text-success") me-2"></i> 
-                        <span class="fw-medium me-1">Background Consents:</span> @(Profile.ConsentMVR && Profile.ConsentClearinghouse ? "Signed" : "Missing")
+                        <i class="bi @(!(Profile.ConsentMVR && Profile.ConsentClearinghouse && Profile.ConsentPSP && Profile.ConsentEmployment) ? "bi-x-circle-fill text-danger" : "bi-check-circle-fill text-success") me-2"></i> 
+                        <span class="fw-medium me-1">Background Consents:</span> @(Profile.ConsentMVR && Profile.ConsentClearinghouse && Profile.ConsentPSP && Profile.ConsentEmployment ? "Signed" : "Missing")
                     </li>
                     <li class="mb-2 d-flex align-items-center">
                         <i class="bi @(string.IsNullOrWhiteSpace(Profile.ElectronicSignatureName) ? "bi-x-circle-fill text-danger" : "bi-check-circle-fill text-success") me-2"></i> 

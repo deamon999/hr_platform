@@ -56,12 +56,10 @@
                 <label class="form-label fw-medium small text-uppercase">Pay Type</label>
                 <InputSelect TValue="PayPeriod?" class="form-select dark-input" @bind-Value="Job.PayPeriod">
                     <option value="">-- select --</option>
-                    <option value="@PayPeriod.Mile">Cents Per Mile (CPM)</option>
-                    <option value="@PayPeriod.PercentageOfLoad">Percentage of Load</option>
-                    <option value="@PayPeriod.Hour">Hourly</option>
-                    <option value="@PayPeriod.Week">Weekly Salary</option>
-                    <option value="@PayPeriod.Month">Monthly Salary</option>
-                    <option value="@PayPeriod.Year">Annual Salary</option>
+                    @foreach (var p in Enum.GetValues<PayPeriod>())
+                    {
+                        <option value="@p">@(p.GetDescriptionValue() ?? p.ToString())</option>
+                    }
                 </InputSelect>
             </div>
                     

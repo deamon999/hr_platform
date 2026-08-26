@@ -107,6 +107,11 @@ public class DriverProfileService(ApplicationDbContext db, IDocumentStorageServi
             if (!incomingViolations.Contains(viol.Id))
                 SafeDelete(viol, v => v.Id);
 
+        var incomingEducations = profile.Educations.Select(e => e.Id).ToHashSet();
+        foreach (var edu in existing.Educations)
+            if (!incomingEducations.Contains(edu.Id))
+                SafeDelete(edu, e => e.Id);
+
         var incomingDocs = profile.Documents.Select(e => e.Id).ToHashSet();
         foreach (var doc in existing.Documents)
             if (!incomingDocs.Contains(doc.Id))
