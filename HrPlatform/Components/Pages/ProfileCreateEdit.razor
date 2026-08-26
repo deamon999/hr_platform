@@ -111,10 +111,45 @@
                             <h4 class="mb-0 fw-bold text-uppercase d-flex align-items-center">
                                 <span class="text-primary me-2">@(activeTab + 1).</span> @tabs[activeTab]
                             </h4>
-                            <div>
+                            <div class="d-flex gap-2 gap-sm-3 align-items-center flex-wrap">
                                 <button type="button" class="btn btn-link text-muted text-decoration-none" @onclick="CancelEdit">
                                     <i class="bi bi-x-circle me-1"></i> Cancel
                                 </button>
+                                
+                                @if (activeTab > 0)
+                                {
+                                    <button type="button" class="btn btn-outline-secondary px-3 px-md-4" @onclick="GoPrevious">
+                                        <i class="bi bi-arrow-left d-none d-sm-inline me-2"></i><i class="bi bi-arrow-left d-inline d-sm-none"></i> <span class="d-none d-sm-inline">Previous</span>
+                                    </button>
+                                }
+                                
+                                @if (activeTab < 9)
+                                {
+                                    <button type="button" class="btn btn-outline-primary px-3 px-md-4 fw-medium d-none d-sm-block" @onclick="SaveAndExitAsync">
+                                        Save & Exit
+                                    </button>
+                                    <button type="button" class="btn btn-primary px-3 px-md-4 fw-medium" @onclick="SaveAndContinueAsync">
+                                        <span class="d-none d-sm-inline">Save & Continue</span><span class="d-inline d-sm-none">Next</span> <i class="bi bi-arrow-right ms-1 ms-sm-2"></i>
+                                    </button>
+                                }
+                                else if (activeTab == 9)
+                                {
+                                    <button type="button" class="btn btn-outline-primary px-3 px-md-4 fw-medium d-none d-sm-block" @onclick="SaveAndExitAsync">
+                                        Save & Exit
+                                    </button>
+                                    @if (profile!.IsApplicationCompleted)
+                                    {
+                                        <button type="button" class="btn btn-primary px-3 px-md-5 fw-bold" @onclick="SaveAndExitAsync">
+                                            <span class="d-none d-sm-inline">Save Changes</span><span class="d-inline d-sm-none">Save</span> <i class="bi bi-check-circle ms-1 ms-sm-2"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" class="btn btn-primary px-3 px-md-5 fw-bold" @onclick="SubmitApplicationAsync">
+                                            <span class="d-none d-sm-inline">Submit Profile</span><span class="d-inline d-sm-none">Submit</span> <i class="bi bi-check-circle ms-1 ms-sm-2"></i>
+                                        </button>
+                                    }
+                                }
                             </div>
                         </div>
 
@@ -160,51 +195,6 @@
                             </div>
                         </div>
 
-                        <!-- Bottom Nav Bar -->
-                        <div class="px-3 px-md-5 py-3 py-md-4 border-top d-flex justify-content-between align-items-center mt-auto" style="border-color: var(--border-color) !important; background-color: var(--bg-card);">
-                            @if (activeTab > 0)
-                            {
-                                <button type="button" class="btn btn-outline-secondary px-3 px-md-4" @onclick="GoPrevious">
-                                    <i class="bi bi-arrow-left d-none d-sm-inline me-2"></i><i class="bi bi-arrow-left d-inline d-sm-none"></i> <span class="d-none d-sm-inline">Previous</span>
-                                </button>
-                            }
-                            else
-                            {
-                                <div></div>
-                            }
-
-                            @if (activeTab < 9)
-                            {
-                                <div class="d-flex gap-2 gap-sm-3">
-                                    <button type="button" class="btn btn-outline-primary px-3 px-md-4 fw-medium d-none d-sm-block" @onclick="SaveAndExitAsync">
-                                        Save & Exit
-                                    </button>
-                                    <button type="button" class="btn btn-primary px-3 px-md-4 fw-medium" @onclick="SaveAndContinueAsync">
-                                        <span class="d-none d-sm-inline">Save & Continue</span><span class="d-inline d-sm-none">Next</span> <i class="bi bi-arrow-right ms-1 ms-sm-2"></i>
-                                    </button>
-                                </div>
-                            }
-                            else if (activeTab == 9)
-                            {
-                                <div class="d-flex gap-2 gap-sm-3">
-                                    <button type="button" class="btn btn-outline-primary px-3 px-md-4 fw-medium d-none d-sm-block" @onclick="SaveAndExitAsync">
-                                        Save & Exit
-                                    </button>
-                                    @if (profile!.IsApplicationCompleted)
-                                    {
-                                        <button type="button" class="btn btn-primary px-3 px-md-5 fw-bold" @onclick="SaveAndExitAsync">
-                                            <span class="d-none d-sm-inline">Save Changes</span><span class="d-inline d-sm-none">Save</span> <i class="bi bi-check-circle ms-1 ms-sm-2"></i>
-                                        </button>
-                                    }
-                                    else
-                                    {
-                                        <button type="button" class="btn btn-primary px-3 px-md-5 fw-bold" @onclick="SubmitApplicationAsync">
-                                            <span class="d-none d-sm-inline">Submit Profile</span><span class="d-inline d-sm-none">Submit</span> <i class="bi bi-check-circle ms-1 ms-sm-2"></i>
-                                        </button>
-                                    }
-                                </div>
-                            }
-                        </div>
                     </EditForm>
                 </div>
             </div>
