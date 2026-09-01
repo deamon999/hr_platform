@@ -9,6 +9,7 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject AuthenticationStateProvider AuthState
 @inject NavigationManager Nav
+@inject IJSRuntime JS
 
 <PageTitle>@(isNew ? "Driver Application" : "Edit Application")</PageTitle>
 
@@ -33,28 +34,27 @@
         <div class="card shadow-sm border-0 mb-5 overflow-hidden">
             <div class="row g-0">
                 <!-- Sidebar Progress -->
-                <div class="col-lg-3 p-4" style="background-color: var(--bg-card); border-right: 1px solid var(--border-color);">
+                <div class="col-lg-3 p-4 @(isNew ? "" : "d-none d-lg-block")" style="background-color: var(--bg-card);" id="sidebar-progress">
                     <div class="mb-4">
                         @if (isNew)
                         {
-                            <h4 class="fw-bold mb-4">Complete Profile</h4>
+                            <h4 class="fw-bold mb-4 d-none d-lg-block">Complete Profile</h4>
 
-                            <h5 class="text-secondary fw-bold text-uppercase mb-2" style="font-size: 0.8rem; letter-spacing: 1px;">Application
-                                Progress</h5>
+                            <h5 class="text-secondary fw-bold text-uppercase mb-2 d-none d-lg-block" style="font-size: 0.8rem; letter-spacing: 1px;">Application Progress</h5>
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <small class="text-muted fw-medium">@Math.Min((activeTab + 1) * 100 / tabs.Length, 100)% Complete</small>
+                                <small class="text-muted fw-medium">@(activeTab * 100 / (tabs.Length - 1))% Complete</small>
                             </div>
                             <div class="progress mb-4" style="height: 6px; background-color: rgba(255,255,255,0.1);">
                                 <div class="progress-bar bg-primary"
-                                     style="width: @Math.Min((activeTab + 1) * 100 / tabs.Length, 100)%; transition: width 0.3s ease;"></div>
+                                     style="width: @(activeTab * 100 / (tabs.Length - 1))%; transition: width 0.3s ease;"></div>
                             </div>
                         }
                         else
                         {
-                            <h4 class="fw-bold mb-4">Edit Profile</h4>
+                            <h4 class="fw-bold mb-4 d-none d-lg-block">Edit Profile</h4>
                         }
 
-                        <ul class="nav flex-column gap-3 wizard-steps">
+                        <ul class="nav flex-column gap-3 wizard-steps d-none d-lg-flex">
                             @foreach (var (label, index) in tabs.Select((l, i) => (l, i)))
                             {
                                 var locked = index > maxReachedTab;
@@ -86,7 +86,7 @@
                         </ul>
                     </div>
 
-                    <div class="mt-auto pt-5">
+                    <div class="mt-auto pt-5 d-none d-lg-block">
                         <div class="d-flex align-items-center text-muted">
                             <i class="bi bi-question-circle fs-4 me-3 text-primary"></i>
                             <div>
@@ -108,10 +108,21 @@
 
                         <!-- Top Bar -->
                         <div class="px-3 px-md-5 py-3 py-md-4 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center border-bottom gap-3" style="border-color: var(--border-color) !important;">
-                            <h4 class="mb-0 fw-bold text-uppercase d-flex align-items-center">
+                            <!-- Desktop Title -->
+                            <h4 class="mb-0 fw-bold text-uppercase d-none d-lg-flex align-items-center">
                                 <span class="text-primary me-2">@(activeTab + 1).</span> @tabs[activeTab]
                             </h4>
-                            <div class="d-flex gap-2 gap-sm-3 align-items-center flex-wrap">
+                            
+                            <!-- Mobile Dropdown Navigation -->
+                            <div class="d-lg-none w-100 flex-grow-1 me-sm-3">
+                                <select class="form-select bg-light fw-bold text-uppercase" style="border-color: var(--border-color);" value="@activeTab" @onchange="MobileTabSelected">
+                                    @for (int i = 0; i < tabs.Length; i++)
+                                    {
+                                        <option value="@i" disabled="@(i > maxReachedTab)">@(i + 1). @tabs[i]</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="d-none d-sm-flex gap-2 gap-sm-3 align-items-center flex-wrap">
                                 <button type="button" class="btn btn-link text-muted text-decoration-none" @onclick="CancelEdit">
                                     <i class="bi bi-x-circle me-1"></i> Cancel
                                 </button>
@@ -154,13 +165,6 @@
                         </div>
 
                         <div class="px-3 px-md-5 py-3 py-md-4">
-                            @if (!string.IsNullOrEmpty(errorMessage))
-                            {
-                                <div class="alert alert-danger shadow-sm rounded-3 mb-4 d-flex align-items-center">
-                                    <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
-                                    <div>@errorMessage</div>
-                                </div>
-                            }
                             <ValidationSummary class="text-danger mb-4"/>
 
                             <div class="@(activeTab == 0 ? "" : "d-none")">
@@ -192,6 +196,42 @@
                             </div>
                             <div class="@(activeTab == 9 ? "" : "d-none")">
                                 <HrPlatform.Components.Pages.ProfileShared.ProfileReviewForm Profile="profile" />
+                            </div>
+                        </div>
+
+                        <!-- Mobile Bottom Navigation -->
+                        <div class="d-flex d-sm-none justify-content-between align-items-center p-3 border-top mt-auto" style="border-color: var(--border-color) !important;">
+                            <button type="button" class="btn btn-link text-muted px-0 text-decoration-none" @onclick="CancelEdit">
+                                Cancel
+                            </button>
+                            <div class="d-flex gap-2">
+                                @if (activeTab > 0)
+                                {
+                                    <button type="button" class="btn btn-outline-secondary" @onclick="GoPrevious">
+                                        <i class="bi bi-arrow-left"></i>
+                                    </button>
+                                }
+                                @if (activeTab < 9)
+                                {
+                                    <button type="button" class="btn btn-primary fw-medium" @onclick="SaveAndContinueAsync">
+                                        Next <i class="bi bi-arrow-right ms-1"></i>
+                                    </button>
+                                }
+                                else
+                                {
+                                    @if (profile!.IsApplicationCompleted)
+                                    {
+                                        <button type="button" class="btn btn-primary fw-bold" @onclick="SaveAndExitAsync">
+                                            Save <i class="bi bi-check-circle ms-1"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" class="btn btn-primary fw-bold" @onclick="SubmitApplicationAsync">
+                                            Submit <i class="bi bi-check-circle ms-1"></i>
+                                        </button>
+                                    }
+                                }
                             </div>
                         </div>
 
@@ -234,6 +274,17 @@
                 background-color: transparent;
                 color: var(--text-secondary);
             }
+            
+            /* Sidebar: bottom border on mobile, right border on desktop */
+            #sidebar-progress {
+                border-bottom: 1px solid var(--border-color);
+            }
+            @@media (min-width: 992px) {
+                #sidebar-progress {
+                    border-bottom: none;
+                    border-right: 1px solid var(--border-color);
+                }
+            }
         </style>
 
         @if (showCancelConfirm)
@@ -252,6 +303,26 @@
                                 Cancel
                             </button>
                             <button type="button" class="btn btn-danger px-4" @onclick="ConfirmCancel">Exit</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Error Modal -->
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); backdrop-filter: blur(5px);">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow-lg" style="background-color: var(--bg-card); color: var(--text-color);">
+                        <div class="modal-header border-bottom border-danger">
+                            <h5 class="modal-title fw-bold text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i> Error</h5>
+                        </div>
+                        <div class="modal-body p-4 fs-5 text-center">
+                            @errorMessage
+                        </div>
+                        <div class="modal-footer border-0 d-flex justify-content-center">
+                            <button type="button" class="btn btn-primary px-4 fw-bold" @onclick="() => errorMessage = null">Got it</button>
                         </div>
                     </div>
                 </div>
@@ -361,6 +432,14 @@
         editContext = new EditContext(profile!);
     }
 
+    private void MobileTabSelected(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int index))
+        {
+            ActivateTab(index);
+        }
+    }
+
     private void ActivateTab(int index)
     {
         try
@@ -382,6 +461,7 @@
             }
 
             activeTab = index;
+            _ = JS.InvokeVoidAsync("window.scrollTo", 0, 0);
         }
         catch (Exception ex)
         {
@@ -398,12 +478,17 @@
 
         if (activeTab > maxReachedTab)
             maxReachedTab = activeTab;
+            
+        _ = JS.InvokeVoidAsync("window.scrollTo", 0, 0);
     }
 
     private void GoPrevious()
     {
         if (activeTab > 0)
+        {
             activeTab--;
+            _ = JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+        }
     }
 
     private async Task SaveAndContinueAsync()
@@ -437,6 +522,7 @@
                 if (activeTab < 9)
                 {
                     activeTab++;
+                    _ = JS.InvokeVoidAsync("window.scrollTo", 0, 0);
                 }
             }
         }

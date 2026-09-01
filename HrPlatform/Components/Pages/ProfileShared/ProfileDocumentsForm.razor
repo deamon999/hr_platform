@@ -63,10 +63,26 @@
                     </div>
                     <div class="col-md-8">
                         <label class="form-label fw-semibold text-secondary small text-uppercase">Select File *</label>
-                        <InputFile class="form-control bg-white border-0 shadow-sm" accept=".pdf,.jpg,.jpeg,.png" OnChange="HandleFileSelected"/>
-                        <small class="text-muted mt-2 d-block"><i class="bi bi-paperclip me-1"></i> PDF, JPG, or PNG. Max 5 MB.</small>
+                        @if (isUploading)
+                        {
+                            <div class="d-flex align-items-center text-primary mt-2 fw-medium">
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                Uploading...
+                            </div>
+                        }
+                        else
+                        {
+                            <InputFile class="form-control bg-white border-0 shadow-sm" accept=".pdf,.jpg,.jpeg,.png" OnChange="HandleFileSelected"/>
+                        }
+                        <small class="text-muted mt-2 d-block"><i class="bi bi-paperclip me-1"></i> PDF, JPG, or PNG. Max 15 MB.</small>
                     </div>
                 </div>
+                @if (!string.IsNullOrEmpty(uploadErrorMessage))
+                {
+                    <div class="alert alert-danger py-2 mt-3 mb-0 small">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i> @uploadErrorMessage
+                    </div>
+                }
             </div>
         </div>
     }
@@ -116,6 +132,11 @@
     private bool showPreviewModal;
     private DocumentFile? previewDoc;
     private string previewUrl = "";
+    
+    private bool isUploading;
+    private string? uploadErrorMessage;
+    
+    private const long MaxFileSize = 15 * 1024 * 1024; // 15 MB
 
     private async Task PreviewDocument(DocumentFile doc)
     {
@@ -133,25 +154,51 @@
 
     private async Task HandleFileSelected(InputFileChangeEventArgs e)
     {
+        uploadErrorMessage = null;
         var file = e.File;
-        if (file.Size > 5 * 1024 * 1024) return;
-
-        using var stream = file.OpenReadStream(5 * 1024 * 1024);
-        var blobId = await StorageService.UploadAsync(stream, file.Name, file.ContentType, Profile.Id.ToString());
-
-        var docFile = new DocumentFile
+        
+        if (file.Size > MaxFileSize)
         {
-            Id = blobId,
-            DriverProfileId = Profile.Id,
-            DocumentType = newDocType,
-            FileName = file.Name,
-            ContentType = file.ContentType,
-            FilePath = $"{Profile.Id}/{blobId}",
-            UploadedAt = DateTime.UtcNow,
-            IsUnsaved = true
-        };
+            uploadErrorMessage = $"File '{file.Name}' exceeds the maximum allowed size of 15MB.";
+            return;
+        }
 
-        Profile.Documents.Add(docFile);
+        try
+        {
+            // Read file into memory BEFORE removing InputFile from DOM
+            using var memoryStream = new MemoryStream();
+            await file.OpenReadStream(MaxFileSize).CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+            
+            isUploading = true;
+            StateHasChanged();
+            
+            var blobId = await StorageService.UploadAsync(memoryStream, file.Name, file.ContentType, Profile.Id.ToString());
+
+            var docFile = new DocumentFile
+            {
+                Id = blobId,
+                DriverProfileId = Profile.Id,
+                DocumentType = newDocType,
+                FileName = file.Name,
+                ContentType = file.ContentType,
+                FilePath = $"{Profile.Id}/{blobId}",
+                UploadedAt = DateTime.UtcNow,
+                IsUnsaved = true
+            };
+
+            Profile.Documents.Add(docFile);
+            newDocType = "TWIC"; // Reset dropdown
+        }
+        catch (Exception ex)
+        {
+            uploadErrorMessage = $"Failed to upload document: {ex.Message}";
+        }
+        finally
+        {
+            isUploading = false;
+            StateHasChanged();
+        }
     }
 
     private Task DeleteDocumentAsync(DocumentFile doc)
@@ -159,5 +206,4 @@
         Profile.Documents.Remove(doc);
         return Task.CompletedTask;
     }
-
 }

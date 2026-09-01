@@ -85,12 +85,27 @@
             </InputSelect>
         </div>
 
-        <div class="col-12 mt-5"><h6 class="fw-bold border-bottom pb-2 text-white">Upload Documents</h6></div>
+        <div class="col-12 mt-5">
+            <h6 class="fw-bold border-bottom pb-2 text-white">Upload Documents</h6>
+            @if (!string.IsNullOrEmpty(uploadErrorMessage))
+            {
+                <div class="alert alert-danger py-2 mt-2 mb-0 small">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> @uploadErrorMessage
+                </div>
+            }
+        </div>
 
         <div class="col-md-6">
             <div class="p-3 border border-secondary rounded-3 bg-dark">
                 <label class="form-label fw-semibold text-secondary small mb-3"><i class="bi bi-file-earmark-text me-1"></i> CDL Document</label>
-                @if (CdlDocument != null)
+                @if (isUploadingCdl)
+                {
+                    <div class="d-flex align-items-center text-primary small fw-medium">
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        Uploading...
+                    </div>
+                }
+                else if (CdlDocument != null)
                 {
                     <div class="d-flex align-items-center justify-content-between">
                         <span class="text-success small fw-medium"><i class="bi bi-check-circle-fill me-1"></i> Uploaded</span>
@@ -125,7 +140,14 @@
         <div class="col-md-6">
             <div class="p-3 border border-secondary rounded-3 bg-dark">
                 <label class="form-label fw-semibold text-secondary small mb-3"><i class="bi bi-file-earmark-medical me-1"></i> Medical Card</label>
-                @if (MedicalCardDocument != null)
+                @if (isUploadingMedical)
+                {
+                    <div class="d-flex align-items-center text-primary small fw-medium">
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        Uploading...
+                    </div>
+                }
+                else if (MedicalCardDocument != null)
                 {
                     <div class="d-flex align-items-center justify-content-between">
                         <span class="text-success small fw-medium"><i class="bi bi-check-circle-fill me-1"></i> Uploaded</span>
@@ -203,6 +225,12 @@
     private DocumentFile? previewDoc;
     private string previewUrl = "";
 
+    private bool isUploadingCdl;
+    private bool isUploadingMedical;
+    private string? uploadErrorMessage;
+    
+    private const long MaxFileSize = 15 * 1024 * 1024; // 15 MB for modern mobile photos
+
     protected override void OnInitialized()
     {
         Profile.License ??= new DriverLicense();
@@ -220,50 +248,100 @@
 
     private async Task UploadLicenseDocumentAsync(InputFileChangeEventArgs e)
     {
+        uploadErrorMessage = null;
         var file = e.File;
-        if (file.Size > 5 * 1024 * 1024) return;
-
-        using var stream = file.OpenReadStream(5 * 1024 * 1024);
-        var blobId = await StorageService.UploadAsync(stream, file.Name, file.ContentType, Profile.Id.ToString());
-
-        var existing = CdlDocument;
-        if (existing != null) Profile.Documents.Remove(existing);
-
-        Profile.Documents.Add(new DocumentFile
+        
+        if (file.Size > MaxFileSize)
         {
-            Id = blobId,
-            DriverProfileId = Profile.Id,
-            DocumentType = "CDL License",
-            FileName = file.Name,
-            ContentType = file.ContentType,
-            FilePath = $"{Profile.Id}/{blobId}",
-            UploadedAt = DateTime.UtcNow,
-            IsUnsaved = true
-        });
+            uploadErrorMessage = $"CDL file '{file.Name}' exceeds the maximum allowed size of 15MB.";
+            return;
+        }
+
+        try
+        {
+            // Read file into memory BEFORE removing InputFile from DOM
+            using var memoryStream = new MemoryStream();
+            await file.OpenReadStream(MaxFileSize).CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+            
+            isUploadingCdl = true;
+            StateHasChanged();
+            
+            var blobId = await StorageService.UploadAsync(memoryStream, file.Name, file.ContentType, Profile.Id.ToString());
+
+            var existing = CdlDocument;
+            if (existing != null) Profile.Documents.Remove(existing);
+
+            Profile.Documents.Add(new DocumentFile
+            {
+                Id = blobId,
+                DriverProfileId = Profile.Id,
+                DocumentType = "CDL License",
+                FileName = file.Name,
+                ContentType = file.ContentType,
+                FilePath = $"{Profile.Id}/{blobId}",
+                UploadedAt = DateTime.UtcNow,
+                IsUnsaved = true
+            });
+        }
+        catch (Exception ex)
+        {
+            uploadErrorMessage = $"Failed to upload CDL document: {ex.Message}";
+        }
+        finally
+        {
+            isUploadingCdl = false;
+            StateHasChanged();
+        }
     }
 
     private async Task UploadMedicalCardDocumentAsync(InputFileChangeEventArgs e)
     {
+        uploadErrorMessage = null;
         var file = e.File;
-        if (file.Size > 5 * 1024 * 1024) return;
-
-        using var stream = file.OpenReadStream(5 * 1024 * 1024);
-        var blobId = await StorageService.UploadAsync(stream, file.Name, file.ContentType, Profile.Id.ToString());
-
-        var existing = MedicalCardDocument;
-        if (existing != null) Profile.Documents.Remove(existing);
-
-        Profile.Documents.Add(new DocumentFile
+        
+        if (file.Size > MaxFileSize)
         {
-            Id = blobId,
-            DriverProfileId = Profile.Id,
-            DocumentType = "Medical Card",
-            FileName = file.Name,
-            ContentType = file.ContentType,
-            FilePath = $"{Profile.Id}/{blobId}",
-            UploadedAt = DateTime.UtcNow,
-            IsUnsaved = true
-        });
+            uploadErrorMessage = $"Medical Card file '{file.Name}' exceeds the maximum allowed size of 15MB.";
+            return;
+        }
+
+        try
+        {
+            // Read file into memory BEFORE removing InputFile from DOM
+            using var memoryStream = new MemoryStream();
+            await file.OpenReadStream(MaxFileSize).CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+            
+            isUploadingMedical = true;
+            StateHasChanged();
+            
+            var blobId = await StorageService.UploadAsync(memoryStream, file.Name, file.ContentType, Profile.Id.ToString());
+
+            var existing = MedicalCardDocument;
+            if (existing != null) Profile.Documents.Remove(existing);
+
+            Profile.Documents.Add(new DocumentFile
+            {
+                Id = blobId,
+                DriverProfileId = Profile.Id,
+                DocumentType = "Medical Card",
+                FileName = file.Name,
+                ContentType = file.ContentType,
+                FilePath = $"{Profile.Id}/{blobId}",
+                UploadedAt = DateTime.UtcNow,
+                IsUnsaved = true
+            });
+        }
+        catch (Exception ex)
+        {
+            uploadErrorMessage = $"Failed to upload Medical Card: {ex.Message}";
+        }
+        finally
+        {
+            isUploadingMedical = false;
+            StateHasChanged();
+        }
     }
 
     private void DeleteLicenseDocument()
@@ -291,5 +369,4 @@
         previewDoc = null;
         previewUrl = "";
     }
-
 }
