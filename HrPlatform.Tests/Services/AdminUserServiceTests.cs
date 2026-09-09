@@ -93,6 +93,41 @@ namespace HrPlatform.Tests.Services
         }
         
         [Fact]
+        public async Task DeleteAsync_DoesNotDeleteAssociatedLeads()
+        {
+            // Arrange
+            using var context = new ApplicationDbContext(_options);
+            var user = new ApplicationUser { Id = "admin1", Email = "admin@example.com", UserName = "admin1" };
+            context.Users.Add(user);
+            
+            var lead = new Data.Entities.Lead 
+            { 
+                FirstName = "Test", 
+                LastName = "Lead", 
+                AddedByUserId = "admin1" 
+            };
+            context.Leads.Add(lead);
+            await context.SaveChangesAsync();
+
+            var mockUserManager = GetMockUserManager();
+            var service = new AdminUserService(context, mockUserManager.Object);
+
+            // Act
+            await service.DeleteAsync("admin1");
+
+            // Assert
+            Assert.Empty(context.Users);
+            
+            // The lead should still exist (no cascade deletion)
+            var remainingLeads = await context.Leads.ToListAsync();
+            Assert.Single(remainingLeads);
+            
+            // In EF Core InMemory, depending on tracking, AddedByUserId might be null or still "admin1".
+            // The core requirement is that the Lead is NOT deleted.
+            Assert.Equal("Test", remainingLeads[0].FirstName);
+        }
+        
+        [Fact]
         public async Task HandleRoleTransitionCleanupAsync_CleansUpDriverData_WhenOldRoleIsDriver()
         {
             // Arrange

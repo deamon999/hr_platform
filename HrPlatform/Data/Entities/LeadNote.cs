@@ -10,8 +10,7 @@ public class LeadNote
     public int LeadId { get; set; }
     public Lead? Lead { get; set; }
 
-    [Required]
-    public string AuthorUserId { get; set; } = default!;
+    public string? AuthorUserId { get; set; }
     public ApplicationUser? AuthorUser { get; set; }
 
     [Required]

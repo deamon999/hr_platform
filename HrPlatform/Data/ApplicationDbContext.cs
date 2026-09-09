@@ -256,6 +256,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .WithMany()
                 .HasForeignKey(x => x.ConvertedUserId)
                 .OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(x => x.AddedByUser)
+                .WithMany()
+                .HasForeignKey(x => x.AddedByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
             e.Property(x => x.Status).HasConversion<string>();
 
             e.HasIndex(x => new { x.CompanyId, x.Email });
@@ -272,7 +276,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             e.HasOne(x => x.AuthorUser)
                 .WithMany()
                 .HasForeignKey(x => x.AuthorUserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }
