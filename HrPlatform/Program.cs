@@ -40,7 +40,9 @@ public class Program
             // Suppress pending model changes warning - migrations are properly defined
             options.ConfigureWarnings(w =>
                 w.Ignore(RelationalEventId.PendingModelChangesWarning));
-        }, ServiceLifetime.Transient);
+        }, 
+        contextLifetime: ServiceLifetime.Transient,
+        optionsLifetime: ServiceLifetime.Transient);
         builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
         builder.Services.AddIdentityCore<ApplicationUser>(options =>
