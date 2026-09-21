@@ -1,4 +1,5 @@
 @page "/invite/{Token}"
+@page "/apply"
 @using HrPlatform.Data.Entities
 @rendermode InteractiveServer
 @inject IInvitationService InvitationService
@@ -23,9 +24,9 @@ else if (_tokenInvalid)
         </div>
     </div>
 }
-else if (_invitation != null)
+else if (_isPublicApply || _invitation != null)
 {
-    @if (RoleConstants.Driver.Equals(_invitation.Role, StringComparison.OrdinalIgnoreCase))
+    @if (_isPublicApply || RoleConstants.Driver.Equals(_invitation!.Role, StringComparison.OrdinalIgnoreCase))
     {
         <div class="row g-0 h-100 p-4" style="min-height: calc(100vh - 4.5rem); background-color: var(--bg-color);">
             <div class="col-12 col-xl-10 mx-auto">
@@ -83,15 +84,23 @@ else if (_invitation != null)
 }
 
 @code {
-    [Parameter] public string Token { get; set; } = string.Empty;
+    [Parameter] public string? Token { get; set; }
 
     private bool _loading = true;
     private bool _tokenInvalid;
+    private bool _isPublicApply;
     private Invitation? _invitation;
     private string? _companyName;
 
     protected override async Task OnInitializedAsync()
     {
+        if (string.IsNullOrEmpty(Token))
+        {
+            _isPublicApply = true;
+            _loading = false;
+            return;
+        }
+
         _invitation = await InvitationService.GetValidAsync(Token);
 
         if (_invitation is null)
@@ -116,7 +125,13 @@ else if (_invitation != null)
 
     private void StartRegistration()
     {
-        Nav.NavigateTo($"/invite/{Token}/register");
+        if (_isPublicApply)
+        {
+            Nav.NavigateTo("/apply/register");
+        }
+        else
+        {
+            Nav.NavigateTo($"/invite/{Token}/register");
+        }
     }
-
 }

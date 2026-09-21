@@ -1,4 +1,5 @@
 @page "/invite/{Token}/register"
+@page "/apply/register"
 @using System.Text
 @using HrPlatform.Data.Entities
 @using Microsoft.AspNetCore.WebUtilities
@@ -312,7 +313,7 @@
 </div>
 
 @code {
-    [Parameter] public string Token { get; set; } = string.Empty;
+    [Parameter] public string? Token { get; set; }
 
     private bool _loading = true;
     private bool _tokenInvalid;
@@ -339,6 +340,23 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if (string.IsNullOrEmpty(Token))
+        {
+            _isManager = false;
+            tabs = driverTabs;
+            _companyName = "CDL Pool Group";
+            _profile = new DriverProfile
+            {
+                UserId = "temp-user-id", // Satisfies [Required] validation before actual user is created
+                DateOfBirth = DateOnly.FromDateTime(DateTime.Today.AddYears(-21)),
+                Email = string.Empty,
+                PhoneNumber = string.Empty
+            };
+            editContext = new EditContext(_profile);
+            _loading = false;
+            return;
+        }
+
         _invitation = await InvitationService.GetValidAsync(Token);
 
         if (_invitation is null)
@@ -565,9 +583,9 @@
                 EmailConfirmed = true
             };
 
-            if (_isManager)
+            if (_isManager && _invitation != null)
             {
-                user.CompanyId = _invitation!.CompanyId;
+                user.CompanyId = _invitation.CompanyId;
             }
 
             await UserStore.SetUserNameAsync(user, _profile.Email.Trim(), CancellationToken.None);
@@ -584,7 +602,7 @@
                 return;
             }
 
-            var roleToAssign = _invitation!.Role;
+            var roleToAssign = _invitation != null ? _invitation.Role : RoleConstants.Driver;
             await UserManager.AddToRoleAsync(user, roleToAssign);
 
             if (!_isManager)
@@ -615,14 +633,20 @@
                         $"Failed to create driver profile. Your account was not created. Please try again. Details: {profileEx.Message}", profileEx);
                 }
 
-                if (_invitation!.JobId.HasValue)
+                if (_invitation != null && _invitation.JobId.HasValue)
                 {
                     await JobInvitationService.CreateFromRegistrationAsync(user.Id, _invitation.JobId.Value);
                 }
             }
 
-            _invitation!.IsUsed = true;
-            await InvitationService.MarkUsedAsync(Token);
+            if (_invitation != null)
+            {
+                _invitation.IsUsed = true;
+                if (!string.IsNullOrEmpty(Token))
+                {
+                    await InvitationService.MarkUsedAsync(Token);
+                }
+            }
             await InvitationService.MarkAllAsUsedByEmailAsync(_profile.Email);
 
             var code = await UserManager.GeneratePasswordResetTokenAsync(user);
