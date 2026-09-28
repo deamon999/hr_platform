@@ -10,7 +10,7 @@
 <PageTitle>@(Id == 0 ? "Post New Job" : "Edit Job")</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold mb-0 text-dark">@(Id == 0 ? "Post New Job" : "Edit Job")</h2>
+    <h2 class="fw-bold mb-0">@(Id == 0 ? "Post New Job" : "Edit Job")</h2>
     <button type="button" class="btn btn-outline-secondary rounded-pill px-4" @onclick="Cancel">
         <i class="bi bi-arrow-left me-1"></i> Back to Jobs
     </button>
@@ -18,7 +18,7 @@
 
 @if (job is null)
 {
-    <p>Loading...</p>
+    <LoadingSpinner Text="Loading job..." />
 }
 else
 {

@@ -21,18 +21,23 @@
 
 @if (loading)
 {
-    <p>Loading...</p>
+    <LoadingSpinner Text="Loading job details..." />
 }
 else if (job is null)
 {
-    <div class="alert alert-danger">Job not found.</div>
+    <EmptyState Icon="bi-exclamation-triangle"
+                Title="Job not found"
+                Message="The requested job could not be found or has been removed."
+                ActionText="Browse Jobs"
+                ActionIcon="bi-arrow-left"
+                ActionHref="/jobs" />
 }
 else
 {
     <div class="row justify-content-center">
         <div class="col-lg-10">
             <!-- Hero Section -->
-            <div class="card shadow-sm mb-4 border-0 app-card">
+            <div class="card shadow-sm mb-4 border bg-dark text-light app-card">
                 <div class="card-body p-4 p-md-5">
                     
                     <!-- Header -->
@@ -171,7 +176,7 @@ else
         <Authorized>
             @if (job.Company != null && (!job.IsConfidential || isAdmin))
             {
-                <div class="card mb-4 shadow-sm border-0 app-card">
+                <div class="card mb-4 shadow-sm border bg-dark text-light app-card">
                     <div class="card-header border-bottom border-secondary border-opacity-25 pt-3">
                         <h5 class="section-title mb-0">About @job.Company.Name</h5>
                     </div>
@@ -264,7 +269,7 @@ else
             }
             else
             {
-                <div class="card mb-4 border-0 app-card">
+                <div class="card mb-4 border bg-dark text-light app-card">
                     <div class="card-header border-bottom border-secondary border-opacity-25 pt-3 d-flex justify-content-between align-items-center">
                         <strong class="section-title">Step 1 - Review Your Profile</strong>
                         <button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-3" @onclick="GoToEditProfile">
@@ -314,7 +319,7 @@ else
                     </div>
                 </div>
 
-                <div class="card mb-4 border-0 app-card">
+                <div class="card mb-4 border bg-dark text-light app-card">
                     <div class="card-header border-bottom border-secondary border-opacity-25 pt-3">
                         <strong class="section-title">Step 2 - Confirm Application</strong>
                     </div>

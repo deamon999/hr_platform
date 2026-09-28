@@ -1,0 +1,87 @@
+@using HrPlatform.Data.Enums
+@using HrPlatform.Utils
+
+<span class="badge @BadgeClass @(Pill ? "rounded-pill" : "rounded") px-2 py-1 border d-inline-flex align-items-center gap-1 @Class"
+      title="@DisplayText"
+      style="@BadgeStyle">
+    @if (!string.IsNullOrEmpty(ComputedIcon))
+    {
+        <i class="bi @ComputedIcon" style="font-size: 0.8em;"></i>
+    }
+    <span>@DisplayText</span>
+</span>
+
+@code {
+    [Parameter] public object? Status { get; set; }
+    [Parameter] public string? Text { get; set; }
+    [Parameter] public string? Variant { get; set; }
+    [Parameter] public string? Icon { get; set; }
+    [Parameter] public bool Pill { get; set; } = true;
+    [Parameter] public string? Class { get; set; }
+
+    private string DisplayText => Text ?? Status switch
+    {
+        LeadStatus ls => ls.GetDescriptionValue() ?? ls.ToString(),
+        ApplicationStatus as_ => as_.ToString(),
+        JobInvitationStatus jis => jis.ToString(),
+        bool b => b ? "Active" : "Inactive",
+        _ => Status?.ToString() ?? string.Empty
+    };
+
+    private string ComputedVariant => Variant ?? Status switch
+    {
+        ApplicationStatus.Accepted => "success",
+        ApplicationStatus.UnderReview => "info",
+        ApplicationStatus.Pending => "warning",
+        ApplicationStatus.Rejected => "danger",
+
+        LeadStatus.Hired => "success",
+        LeadStatus.ReadyToStart => "success",
+        LeadStatus.New => "primary",
+        LeadStatus.AttemptContact => "warning",
+        LeadStatus.NeedsToBeContacted => "warning",
+        LeadStatus.ReadyIn2Weeks => "info",
+        LeadStatus.NotInterested => "secondary",
+        LeadStatus.Rejected => "danger",
+        LeadStatus.NotQualified => "danger",
+
+        JobInvitationStatus.Accepted => "success",
+        JobInvitationStatus.Pending => "warning",
+        JobInvitationStatus.Declined => "danger",
+
+        true => "success",
+        false => "secondary",
+
+        "Active" or "Verified" or "Used" => "success",
+        "Pending" => "warning",
+        "Inactive" or "Unverified" or "Expired" => "secondary",
+        "Rejected" or "Failed" => "danger",
+
+        _ => "secondary"
+    };
+
+    private string ComputedIcon => Icon ?? Status switch
+    {
+        ApplicationStatus.Accepted or LeadStatus.Hired or JobInvitationStatus.Accepted or "Verified" or "Used" => "bi-check-circle",
+        ApplicationStatus.Pending or LeadStatus.NeedsToBeContacted or JobInvitationStatus.Pending or "Pending" => "bi-hourglass-split",
+        ApplicationStatus.UnderReview or LeadStatus.ReadyIn2Weeks => "bi-eye",
+        ApplicationStatus.Rejected or LeadStatus.Rejected or JobInvitationStatus.Declined => "bi-x-circle",
+        LeadStatus.AttemptContact => "bi-telephone-outbound",
+        LeadStatus.New => "bi-star-fill",
+        true => "bi-check-circle",
+        false => "bi-dash-circle",
+        _ => string.Empty
+    };
+
+    private string BadgeClass => ComputedVariant switch
+    {
+        "success" => "bg-success bg-opacity-25 text-success border-success",
+        "warning" => "bg-warning bg-opacity-25 text-warning border-warning",
+        "danger" => "bg-danger bg-opacity-25 text-danger border-danger",
+        "info" => "bg-info bg-opacity-25 text-info border-info",
+        "primary" => "bg-primary bg-opacity-25 text-primary border-primary",
+        _ => "bg-secondary bg-opacity-25 text-light border-secondary"
+    };
+
+    private string BadgeStyle => "font-size: 0.75rem; letter-spacing: 0.03em; font-weight: 500;";
+}

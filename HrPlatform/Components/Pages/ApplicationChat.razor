@@ -14,24 +14,29 @@
 
 @if (_isLoading)
 {
-    <p>Loading chat...</p>
+    <LoadingSpinner Text="Loading chat..." />
 }
 else if (_application == null)
 {
-    <div class="alert alert-danger">Application not found or access denied.</div>
+    <EmptyState Icon="bi-chat-left-text"
+                Title="Application not found"
+                Message="The requested application could not be found or you do not have permission to access this conversation."
+                ActionText="Back to Applications"
+                ActionIcon="bi-arrow-left"
+                OnAction="GoBack" />
 }
 else
 {
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold mb-0 text-dark">Chat: @_application.Job.Title</h2>
+        <h2 class="fw-bold mb-0 text-light">Chat: @_application.Job.Title</h2>
         <button class="btn btn-outline-secondary rounded-pill px-4" @onclick="GoBack">
             <i class="bi bi-arrow-left me-1"></i> Back to Applications
         </button>
     </div>
 
-    <div class="card shadow-sm border-0 app-card mb-4">
-        <div class="card-header bg-white border-bottom py-3">
-            <h5 class="mb-0 fw-bold text-dark">
+    <div class="card shadow-sm border bg-dark text-light app-card mb-4" style="border-color: var(--border-color) !important;">
+        <div class="card-header border-bottom py-3" style="background-color: var(--bg-card); border-color: var(--border-color) !important;">
+            <h5 class="mb-0 fw-bold text-light">
                 @if (_isManager)
                 {
                     <text>Candidate: @_application.User.FirstName @_application.User.LastName</text>
@@ -42,10 +47,12 @@ else
                 }
             </h5>
         </div>
-        <div class="card-body bg-light" style="height: 400px; overflow-y: auto;" id="chat-container">
+        <div class="card-body" style="height: 400px; overflow-y: auto; background-color: var(--bg-dark);" id="chat-container">
             @if (!_messages.Any())
             {
-                <p class="text-muted text-center mt-5">No messages yet. Start the conversation!</p>
+                <EmptyState Icon="bi-chat-dots"
+                            Title="No messages yet"
+                            Message="Start the conversation by typing a message below." />
             }
             else
             {
@@ -53,10 +60,11 @@ else
                 {
                     var isMine = msg.SenderId == _currentUserId;
                     <div class="d-flex flex-column mb-3 @(isMine ? "align-items-end" : "align-items-start")">
-                        <div class="p-2 rounded @(isMine ? "bg-primary text-white" : "bg-light text-dark")" style="max-width: 75%;">
+                        <div class="p-3 rounded-3 shadow-sm @(isMine ? "bg-primary text-white" : "text-light")"
+                             style="@(isMine ? "" : "background-color: var(--bg-card); border: 1px solid var(--border-color);") max-width: 75%;">
                             @msg.Content
                         </div>
-                        <small class="text-muted mt-1" style="font-size: 0.75rem;">
+                        <small class="text-secondary mt-1" style="font-size: 0.75rem;">
                             @TimeZoneService.ToUserTime(msg.SentAt).ToString("g")
                             @if (!isMine && msg.IsRead)
                             {

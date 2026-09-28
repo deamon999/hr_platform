@@ -127,8 +127,8 @@
                 </div>
 
                 <div class="col-lg-9">
-                    <div class="card shadow-sm border-0 app-card">
-                        <div class="card-header bg-white border-bottom p-4">
+                    <div class="card shadow-sm border bg-dark text-light app-card">
+                        <div class="card-header bg-transparent border-bottom border-secondary p-4">
                             <h4 class="mb-0 fw-bold">@tabs[activeTab]</h4>
                         </div>
 
@@ -185,33 +185,26 @@
             </style>
         }
 
-        @if (showDeleteConfirm && profile is not null)
-        {
-            <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
-                <div class="modal-dialog">
-                    <div class="modal-content bg-dark border-secondary">
-                        <div class="modal-header border-secondary">
-                            <h5 class="modal-title text-light">Confirm Delete</h5>
-                        </div>
-
-                        <div class="modal-body text-light">
-                            Permanently delete the profile for
-                            <strong>@profile.FirstName @profile.LastName</strong>?
-                            This will also remove all their applications.
-                        </div>
-
-                        <div class="modal-footer border-secondary">
-                            <button class="btn btn-secondary" @onclick="() => showDeleteConfirm = false">
-                                Cancel
-                            </button>
-                            <button class="btn btn-danger" @onclick="DeleteAsync">
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        }
+        <ConfirmDialog IsOpen="@(showDeleteConfirm && profile is not null)"
+                       Title="Confirm Delete Profile"
+                       ConfirmText="Delete"
+                       ConfirmButtonClass="btn-danger"
+                       IsProcessing="@isDeleting"
+                       OnConfirm="DeleteAsync"
+                       OnCancel="() => showDeleteConfirm = false">
+            <BodyContent>
+                @if (profile is not null)
+                {
+                    <p class="mb-2">
+                        Are you sure you want to permanently delete the profile for
+                        <strong class="text-light">@profile.FirstName @profile.LastName</strong>?
+                    </p>
+                    <p class="text-secondary small mb-0">
+                        This action cannot be undone and will also remove all their job applications.
+                    </p>
+                }
+            </BodyContent>
+        </ConfirmDialog>
     </div>
 </div>
 
@@ -293,17 +286,27 @@
         showDeleteConfirm = true;
     }
 
+    private bool isDeleting;
+
     private async Task DeleteAsync()
     {
         if (profile is null)
             return;
 
-        var auth = await AuthState.GetAuthenticationStateAsync();
-        var currentUserId = auth.User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
-        var isAdmin = auth.User.IsInRole(RoleConstants.Admin);
+        try
+        {
+            isDeleting = true;
+            var auth = await AuthState.GetAuthenticationStateAsync();
+            var currentUserId = auth.User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+            var isAdmin = auth.User.IsInRole(RoleConstants.Admin);
 
-        await ProfileSvc.DeleteAsync(profile.Id, currentUserId, isAdmin);
-        Nav.NavigateTo(backUrl);
+            await ProfileSvc.DeleteAsync(profile.Id, currentUserId, isAdmin);
+            Nav.NavigateTo(backUrl);
+        }
+        finally
+        {
+            isDeleting = false;
+        }
     }
 
     private void GoToCreateProfile()

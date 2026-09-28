@@ -64,12 +64,12 @@ else
             @foreach (var inv in pagedInvitations)
             {
                 <div class="col-12">
-                    <div class="card shadow-sm border-0 bg-white h-100 app-card">
+                    <div class="card shadow-sm border bg-dark text-light h-100 app-card">
                         <div class="card-body p-4">
                             <div class="row g-3">
                                 <div class="col-md-7">
                                     <div class="d-flex flex-wrap align-items-center mb-2 gap-2">
-                                        <h4 class="fw-bold mb-0 text-dark text-break">
+                                        <h4 class="fw-bold mb-0 text-light text-break">
                                             @if (!string.IsNullOrWhiteSpace(inv.Email))
                                             {
                                                 @inv.Email
@@ -81,16 +81,15 @@ else
                                         </h4>
                                         @if (inv.IsUsed)
                                         {
-                                            <span class="badge bg-success rounded-pill" title="Used"><i class="bi bi-check-circle"></i> Used</span>
+                                            <StatusBadge Status="@("Used")" />
                                         }
                                         else if (inv.ExpiresAt < DateTime.UtcNow)
                                         {
-                                            <span class="badge bg-secondary rounded-pill" title="Expired"><i class="bi bi-exclamation-triangle"></i> Expired</span>
+                                            <StatusBadge Status="@("Expired")" />
                                         }
                                         else
                                         {
-                                            <span class="badge bg-warning text-dark rounded-pill" title="Pending"><i
-                                                    class="bi bi-hourglass-split"></i> Pending</span>
+                                            <StatusBadge Status="@("Pending")" />
                                         }
                                     </div>
 
@@ -112,10 +111,10 @@ else
                                     </div>
 
                                     <div class="d-flex flex-wrap gap-2 text-secondary small">
-                                        <span class="badge bg-info rounded-pill px-3 py-2 border"><i class="bi bi-person-badge"></i> @inv.Role</span>
-                                        <span
-                                            class="badge bg-light @(inv.ExpiresAt < DateTime.UtcNow && !inv.IsUsed ? "text-danger border-danger" : "text-dark") rounded-pill px-3 py-2 border"><i
-                                                class="bi bi-clock-history me-1"></i> Expires: @TimeZoneService.ToUserTime(inv.ExpiresAt).ToString("MMM dd, yyyy")</span>
+                                        <span class="badge bg-info bg-opacity-25 text-info border border-info rounded-pill px-3 py-2"><i class="bi bi-person-badge me-1"></i> @inv.Role</span>
+                                        <span class="badge bg-secondary bg-opacity-25 @(inv.ExpiresAt < DateTime.UtcNow && !inv.IsUsed ? "text-danger border-danger" : "text-light border-secondary") rounded-pill px-3 py-2 border">
+                                            <i class="bi bi-clock-history me-1"></i> Expires: @TimeZoneService.ToUserTime(inv.ExpiresAt).ToString("MMM dd, yyyy")
+                                        </span>
                                     </div>
                                 </div>
 
@@ -126,7 +125,7 @@ else
                                                 class="bi bi-arrow-clockwise"></i> Resend
                                         </button>
                                     }
-                                    <button type="button" class="btn btn-outline-danger" @onclick="() => DeleteInvitationAsync(inv)"><i
+                                    <button type="button" class="btn btn-outline-danger" @onclick="() => DeleteInvitationAsync(inv)" title="Delete Invitation"><i
                                             class="bi bi-trash"></i></button>
                                 </div>
                             </div>
@@ -150,7 +149,12 @@ else
 
     @if (pagedInvitations.Count == 0)
     {
-        <div class="alert alert-info mt-3">No invitations found matching the selected filters.</div>
+        <EmptyState Icon="bi-envelope-paper"
+                    Title="No invitations found"
+                    Message="No invitations matched your current search or filter criteria."
+                    ActionText="@(!string.IsNullOrWhiteSpace(_searchTerm) || !string.IsNullOrWhiteSpace(_filterStatus) ? "Clear Filters" : null)"
+                    ActionIcon="bi-x-circle"
+                    OnAction="ClearFilters" />
     }
 
     <PaginationNav TotalPages="totalPages" CurrentPage="currentPage" OnPageChanged="ChangePage" AriaLabel="Invitation list pagination" />

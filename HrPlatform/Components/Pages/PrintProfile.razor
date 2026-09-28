@@ -9,7 +9,7 @@
 
 @if (profile == null)
 {
-    <p>Loading...</p>
+    <LoadingSpinner Text="Loading profile for printing..." />
 }
 else
 {
@@ -295,17 +295,36 @@ else
 }
 
 <style>
+    .print-container {
+        background-color: #ffffff !important;
+        color: #111827 !important;
+        padding: 2.5rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        max-width: 960px;
+        margin: 1.5rem auto;
+    }
+    .print-container * {
+        color: #111827 !important;
+    }
+    .print-container .text-muted {
+        color: #6b7280 !important;
+    }
+
     /* Add print-specific styles */
     @@media print {
-        body {
+        body, html {
             background: white !important;
+            color: black !important;
         }
 
         .print-container {
-            width: 100%;
-            max-width: 100%;
+            width: 100% !important;
+            max-width: 100% !important;
             padding: 0 !important;
             margin: 0 !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
         }
 
         nav, header, aside, .sidebar, footer, .d-print-none, .top-row {

@@ -20,27 +20,24 @@
 <div>
     @if (_loading)
     {
-        <div class="d-flex align-items-center justify-content-center" style="height: 100vh;">
-            <div class="spinner-border text-primary" role="status"></div>
-            <span class="ms-3 text-muted">Loading your invitation...</span>
-        </div>
+        <LoadingSpinner Text="Loading your invitation..." Class="py-5" />
     }
     else if (_tokenInvalid)
     {
-        <div class="d-flex justify-content-center mt-5">
-            <div class="alert alert-danger shadow-sm border-0 d-inline-block">
-                <strong><i class="bi bi-x-circle-fill me-2"></i> Invalid Invitation</strong>
-                <p class="mb-0 mt-2">This invitation link is invalid or has already been used.</p>
-            </div>
-        </div>
+        <EmptyState Icon="bi-x-circle"
+                    Title="Invalid Invitation"
+                    Message="This invitation link is invalid or has already been used."
+                    ActionText="Browse Jobs"
+                    ActionIcon="bi-briefcase"
+                    ActionHref="/jobs" />
     }
     else if (_success)
     {
         <div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
-            <div class="card shadow-sm border-0 text-center" style="max-width: 500px;">
+            <div class="card shadow-sm border bg-dark text-light text-center" style="max-width: 500px;">
                 <div class="card-body p-5">
                     <i class="bi bi-check-circle-fill text-primary" style="font-size: 4rem;"></i>
-                    <h2 class="mt-4 mb-3 fw-bold text-dark">Welcome to CDL Pool!</h2>
+                    <h2 class="mt-4 mb-3 fw-bold">Welcome to CDL Pool!</h2>
                     <p class="text-secondary mb-4">Your account has been created successfully. We've sent an email to <strong>@_profile.Email</strong>
                         with instructions to set your password and log in.</p>
                 </div>
@@ -49,7 +46,7 @@
     }
     else
     {
-        <div class="card shadow-sm border-0 mb-5 overflow-hidden">
+        <div class="card shadow-sm border bg-dark text-light mb-5 overflow-hidden">
             <div class="row g-0">
                 <!-- Sidebar Progress -->
                 <div class="col-lg-3 p-4 d-lg-block" style="background-color: var(--bg-card);" id="sidebar-progress">
@@ -135,7 +132,7 @@
                             
                             <!-- Mobile Dropdown Navigation -->
                             <div class="d-lg-none w-100 flex-grow-1 me-sm-3">
-                                <select class="form-select bg-light fw-bold text-uppercase" style="border-color: var(--border-color);" value="@activeTab" @onchange="MobileTabSelected">
+                                <select class="form-select bg-dark text-light border-secondary fw-bold text-uppercase" style="border-color: var(--border-color);" value="@activeTab" @onchange="MobileTabSelected">
                                     @for (int i = 0; i < tabs.Length; i++)
                                     {
                                         <option value="@i" disabled="@(i > maxReachedTab)">@(i + 1). @tabs[i]</option>

@@ -58,11 +58,16 @@
 
 @if (pagedApps is null)
 {
-    <p>Loading...</p>
+    <LoadingSpinner Text="Loading applications..." />
 }
 else if (!pagedApps.Any())
 {
-    <div class="alert alert-info">No applications found.</div>
+    <EmptyState Icon="bi-file-earmark-text"
+                Title="No applications found"
+                Message="There are no applications matching your current filter criteria."
+                ActionText="@(!string.IsNullOrWhiteSpace(filterStatus) || sortBy != "date" ? "Clear Filters" : null)"
+                ActionIcon="bi-x-circle"
+                OnAction="ClearFilters" />
 }
 else
 {
@@ -73,22 +78,22 @@ else
                 @foreach (var app in pagedApps)
                 {
                     <div class="col-12">
-                        <div class="card shadow-sm border-0 bg-white h-100 app-card">
+                        <div class="card shadow-sm border bg-dark text-light h-100 app-card">
                             <div class="card-body p-4">
                                 <div class="row g-3">
                                     <div class="col-md-7">
                                         <div class="d-flex justify-content-between align-items-start mb-2">
-                                            <h5 class="fw-bold mb-0 text-dark">@app.Job.Title</h5>
+                                            <h5 class="fw-bold mb-0 text-light">@app.Job.Title</h5>
                                         </div>
                                         <h6 class="text-primary mb-3">@DisplayCompanyName(app.Job)</h6>
                                         
                                         <div class="mb-3">
-                                            <div class="fw-bold text-dark"><i class="bi bi-person"></i> @app.User?.FirstName @app.User?.LastName</div>
+                                            <div class="fw-bold text-light"><i class="bi bi-person"></i> @app.User?.FirstName @app.User?.LastName</div>
                                             <div class="text-secondary small">@app.User?.Email</div>
                                         </div>
 
-                                        <div class="d-flex flex-wrap gap-2 text-secondary small">
-                                            <span class="badge @StatusBadge(app.Status) rounded-pill px-3 py-2 border">@app.Status</span>
+                                        <div class="d-flex flex-wrap gap-2 text-secondary small align-items-center">
+                                            <StatusBadge Status="@app.Status" />
                                             <span class="d-flex align-items-center"><i class="bi bi-calendar3 me-1"></i> Applied @TimeZoneService.ToUserTime(app.AppliedAt).ToString("MMM dd, yyyy")</span>
                                             @if (app.ReviewedAt.HasValue)
                                             {
@@ -141,7 +146,7 @@ else
                                                 }
                                                 else
                                                 {
-                                                    <div class="d-flex flex-column gap-2 p-2 border rounded shadow-sm bg-light w-100 mt-2 mt-md-0 position-absolute" style="max-width: 300px; z-index: 10; right: 0;">
+                                                    <div class="d-flex flex-column gap-2 p-2 border border-secondary rounded shadow-sm bg-dark text-light w-100 mt-2 mt-md-0 position-absolute" style="max-width: 300px; z-index: 10; right: 0;">
                                                         <select class="form-select form-select-sm" @bind="reviewStatus">
                                                             @foreach (var s in Enum.GetValues<ApplicationStatus>())
                                                             {
@@ -192,21 +197,21 @@ else
                 {
                     var colApps = pagedApps.Where(a => a.Status == col).ToList();
                     <div class="col-md-3">
-                        <div class="card h-100 border-0 bg-light">
+                        <div class="card h-100 border border-secondary bg-dark bg-opacity-50">
                             <div class="card-header d-flex justify-content-between bg-transparent border-0 pb-0">
-                                <span class="badge @StatusBadge(col) rounded-pill w-100 text-start py-2 fs-6 shadow-sm border border-light text-dark bg-opacity-25">
+                                <span class="badge @StatusBadge(col) rounded-pill w-100 text-start py-2 fs-6 shadow-sm border border-secondary">
                                     @col (@colApps.Count)
                                 </span>
                             </div>
                             <div class="card-body p-2 overflow-auto" style="max-height:70vh">
                                 @foreach (var app in colApps)
                                 {
-                                    <div class="card mb-2 shadow-sm border-0"
+                                    <div class="card mb-2 shadow-sm border border-secondary bg-dark text-light"
                                          draggable="true"
                                          @ondragstart="() => StartDrag(app.Id)">
                                         <div class="card-body p-3">
                                             <div class="d-flex justify-content-between align-items-start mb-2">
-                                                <strong class="text-dark">
+                                                <strong class="text-light">
                                                     @app.User.FirstName @app.User.LastName
                                                 </strong>
                                                 <div class="text-muted" style="font-size:.75rem">
@@ -229,7 +234,7 @@ else
                             @if (isManager)
                             {
                                 <div class="card-footer p-2 bg-transparent border-0 text-center"
-                                     style="border: 2px dashed #dee2e6 !important; border-radius: 6px; margin: 0.5rem;"
+                                     style="border: 2px dashed rgba(255, 255, 255, 0.2) !important; border-radius: 6px; margin: 0.5rem;"
                                      @ondragover:preventDefault
                                      @ondrop="() => DropOnColumn(col)">
                                     <small class="text-muted"><i class="bi bi-arrow-down-circle me-1"></i>Drop here</small>
@@ -243,37 +248,26 @@ else
     </div>
 }
 
-@if (withdrawTarget is not null)
-{
-    <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Withdraw Application</h5>
-                </div>
-
-                <div class="modal-body">
-                    <p>
-                        Are you sure you want to withdraw your application for
-                        <strong>@withdrawTarget.Job.Title</strong>?
-                    </p>
-                    <p class=" small mb-0">
-                        This will permanently remove this application.
-                    </p>
-                </div>
-
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" @onclick="() => withdrawTarget = null">
-                        Cancel
-                    </button>
-                    <button class="btn btn-danger" @onclick="WithdrawConfirmedAsync">
-                        Withdraw Application
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-}
+<ConfirmDialog IsOpen="@(withdrawTarget is not null)"
+               Title="Withdraw Application"
+               ConfirmText="Withdraw Application"
+               ConfirmButtonClass="btn-danger"
+               IsProcessing="@isWithdrawing"
+               OnConfirm="WithdrawConfirmedAsync"
+               OnCancel="() => withdrawTarget = null">
+    <BodyContent>
+        @if (withdrawTarget is not null)
+        {
+            <p class="mb-2">
+                Are you sure you want to withdraw your application for
+                <strong class="text-light">@withdrawTarget.Job.Title</strong>?
+            </p>
+            <p class="text-secondary small mb-0">
+                This will permanently remove this application from the hiring process.
+            </p>
+        }
+    </BodyContent>
+</ConfirmDialog>
 
 @code {
     private List<JobApplication>? pagedApps;
@@ -413,11 +407,11 @@ else
     {
         return s switch
         {
-            ApplicationStatus.Pending => "bg-warning ",
-            ApplicationStatus.UnderReview => "bg-info ",
-            ApplicationStatus.Accepted => "bg-success",
-            ApplicationStatus.Rejected => "bg-danger",
-            _ => ""
+            ApplicationStatus.Pending => "bg-warning text-dark",
+            ApplicationStatus.UnderReview => "bg-info text-dark",
+            ApplicationStatus.Accepted => "bg-success text-light",
+            ApplicationStatus.Rejected => "bg-danger text-light",
+            _ => "bg-secondary text-light"
         };
     }
 
@@ -443,21 +437,31 @@ else
         withdrawTarget = app;
     }
 
+    private bool isWithdrawing;
+
     private async Task WithdrawConfirmedAsync()
     {
         if (withdrawTarget is null)
             return;
 
-        await AppSvc.WithdrawAsync(withdrawTarget.Id);
-        withdrawTarget = null;
-
-        await LoadAsync();
-
-        // Smart reload: If you withdraw the last app on page 3, drop back to page 2
-        if (pagedApps?.Count == 0 && currentPage > 1)
+        try
         {
-            currentPage--;
+            isWithdrawing = true;
+            await AppSvc.WithdrawAsync(withdrawTarget.Id);
+            withdrawTarget = null;
+
             await LoadAsync();
+
+            // Smart reload: If you withdraw the last app on page 3, drop back to page 2
+            if (pagedApps?.Count == 0 && currentPage > 1)
+            {
+                currentPage--;
+                await LoadAsync();
+            }
+        }
+        finally
+        {
+            isWithdrawing = false;
         }
     }
 

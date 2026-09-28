@@ -10,25 +10,22 @@
 
 @if (_loading)
 {
-    <div class="d-flex align-items-center justify-content-center" style="height: 100vh;">
-        <div class="spinner-border text-primary" role="status"></div>
-        <span class="ms-3 text-muted">Loading your invitation...</span>
-    </div>
+    <LoadingSpinner Text="Loading your invitation..." Class="py-5" />
 }
 else if (_tokenInvalid)
 {
-    <div class="d-flex justify-content-center mt-5">
-        <div class="alert alert-danger shadow-sm border-0 d-inline-block">
-            <strong><i class="bi bi-x-circle-fill me-2"></i> Invalid Invitation</strong>
-            <p class="mb-0 mt-2">This invitation link is invalid or has already been used.</p>
-        </div>
-    </div>
+    <EmptyState Icon="bi-x-circle"
+                Title="Invalid Invitation"
+                Message="This invitation link is invalid or has already been used."
+                ActionText="Browse Jobs"
+                ActionIcon="bi-briefcase"
+                ActionHref="/jobs" />
 }
 else if (_isPublicApply || _invitation != null)
 {
     @if (_isPublicApply || RoleConstants.Driver.Equals(_invitation!.Role, StringComparison.OrdinalIgnoreCase))
     {
-        <div class="row g-0 h-100 p-4" style="min-height: calc(100vh - 4.5rem); background-color: var(--bg-color);">
+        <div class="row g-0 h-100 p-4" style="min-height: calc(100vh - 4.5rem); background-color: var(--bg-dark);">
             <div class="col-12 col-xl-10 mx-auto">
                 <HrPlatform.Components.Pages.ProfileShared.ProfileRequirementsWelcome OnContinue="StartRegistration"/>
             </div>
@@ -37,9 +34,9 @@ else if (_isPublicApply || _invitation != null)
     else if (RoleConstants.Manager.Equals(_invitation.Role, StringComparison.OrdinalIgnoreCase))
     {
         <div class="row g-0 h-100 p-4 align-items-center justify-content-center"
-             style="min-height: calc(100vh - 4.5rem); background-color: var(--bg-color);">
+             style="min-height: calc(100vh - 4.5rem); background-color: var(--bg-dark);">
             <div class="col-12 col-md-8 col-lg-6">
-                <div class="card shadow-sm border-0">
+                <div class="card shadow-sm border bg-dark text-light">
                     <div class="card-body p-5 text-center">
                         <i class="bi bi-building text-primary mb-3" style="font-size: 3rem;"></i>
                         <h2 class="fw-bold mb-3">Welcome to the Team!</h2>
@@ -60,9 +57,9 @@ else if (_isPublicApply || _invitation != null)
     else if (RoleConstants.Admin.Equals(_invitation.Role, StringComparison.OrdinalIgnoreCase))
     {
         <div class="row g-0 h-100 p-4 align-items-center justify-content-center"
-             style="min-height: calc(100vh - 4.5rem); background-color: var(--bg-color);">
+             style="min-height: calc(100vh - 4.5rem); background-color: var(--bg-dark);">
             <div class="col-12 col-md-8 col-lg-6">
-                <div class="card shadow-sm border-0">
+                <div class="card shadow-sm border bg-dark text-light">
                     <div class="card-body p-5 text-center">
                         <i class="bi bi-shield-lock-fill text-primary mb-3" style="font-size: 3rem;"></i>
                         <h2 class="fw-bold mb-3">CDL Pool Administrator</h2>

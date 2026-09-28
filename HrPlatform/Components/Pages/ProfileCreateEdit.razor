@@ -16,10 +16,7 @@
 <div>
     @if (profile is null)
     {
-        <div class="d-flex align-items-center gap-2 text-muted">
-            <div class="spinner-border spinner-border-sm"></div>
-            Loading...
-        </div>
+        <LoadingSpinner Text="Loading driver application..." />
     }
     else if (showWelcomeOverlay)
     {
@@ -115,7 +112,7 @@
                             
                             <!-- Mobile Dropdown Navigation -->
                             <div class="d-lg-none w-100 flex-grow-1 me-sm-3">
-                                <select class="form-select bg-light fw-bold text-uppercase" style="border-color: var(--border-color);" value="@activeTab" @onchange="MobileTabSelected">
+                                <select class="form-select bg-dark text-light border-secondary fw-bold text-uppercase" style="border-color: var(--border-color);" value="@activeTab" @onchange="MobileTabSelected">
                                     @for (int i = 0; i < tabs.Length; i++)
                                     {
                                         <option value="@i" disabled="@(i > maxReachedTab)">@(i + 1). @tabs[i]</option>
@@ -287,27 +284,13 @@
             }
         </style>
 
-        @if (showCancelConfirm)
-        {
-            <div class="modal show d-block shadow" tabindex="-1" style="background:rgba(0,0,0,.5); backdrop-filter: blur(2px);">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content border-0 shadow-lg">
-                        <div class="modal-header bg-danger text-white border-0">
-                            <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i> Discard changes?</h5>
-                        </div>
-                        <div class="modal-body p-4 fs-5">
-                            You have unsaved changes. Are you sure you want to exit?
-                        </div>
-                        <div class="modal-footer border-0">
-                            <button type="button" class="btn btn-secondary px-4" @onclick="() => showCancelConfirm = false">
-                                Cancel
-                            </button>
-                            <button type="button" class="btn btn-danger px-4" @onclick="ConfirmCancel">Exit</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        }
+        <ConfirmDialog IsOpen="@showCancelConfirm"
+                       Title="Discard changes?"
+                       Message="You have unsaved changes. Are you sure you want to exit?"
+                       ConfirmText="Discard & Exit"
+                       ConfirmButtonClass="btn-danger"
+                       OnConfirm="ConfirmCancel"
+                       OnCancel="() => showCancelConfirm = false" />
 
         <!-- Error Modal -->
         @if (!string.IsNullOrEmpty(errorMessage))
@@ -338,7 +321,7 @@
                 <div class="modal-content border-0 shadow-lg" style="background-color: var(--bg-card); color: var(--text-color);">
                     <div class="modal-body text-center py-5">
                         <i class="bi bi-check-circle-fill text-primary" style="font-size: 4rem;"></i>
-                        <h2 class="mt-4 mb-3 fw-bold text-dark">Application Submitted!</h2>
+                        <h2 class="mt-4 mb-3 fw-bold text-light">Application Submitted!</h2>
                         <p class="text-secondary mb-5">Thank you! Your profile has been submitted successfully.<br/>You can now apply to jobs that
                             match your profile.</p>
                         <div class="d-flex justify-content-center gap-3">

@@ -5,16 +5,16 @@
     <div class="col-12"><h6 class="fw-bold border-bottom pb-2">Basic Information</h6></div>
     <div class="col-md-4">
         <label class="form-label fw-semibold text-secondary small text-uppercase">First Name *</label>
-        <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.FirstName"/>
+        <InputText disabled="@IsReadOnly" class="form-control bg-dark text-light border-secondary shadow-sm" @bind-Value="Profile.FirstName"/>
         <ValidationMessage For="() => Profile.FirstName" class="text-danger small mt-1"/>
     </div>
     <div class="col-md-4">
         <label class="form-label fw-semibold text-secondary small text-uppercase">Middle Name</label>
-        <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.MiddleName"/>
+        <InputText disabled="@IsReadOnly" class="form-control bg-dark text-light border-secondary shadow-sm" @bind-Value="Profile.MiddleName"/>
     </div>
     <div class="col-md-4">
         <label class="form-label fw-semibold text-secondary small text-uppercase">Last Name *</label>
-        <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.LastName"/>
+        <InputText disabled="@IsReadOnly" class="form-control bg-dark text-light border-secondary shadow-sm" @bind-Value="Profile.LastName"/>
         <ValidationMessage For="() => Profile.LastName" class="text-danger small mt-1"/>
     </div>
     
@@ -22,14 +22,14 @@
     {
         <div class="col-md-4">
             <label class="form-label fw-semibold text-secondary small text-uppercase">Date of Birth *</label>
-            <InputDate disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.DateOfBirth"/>
+            <InputDate disabled="@IsReadOnly" class="form-control bg-dark text-light border-secondary shadow-sm" @bind-Value="Profile.DateOfBirth"/>
             <ValidationMessage For="() => Profile.DateOfBirth" class="text-danger small mt-1"/>
         </div>
     }
     
     <div class="col-md-4">
         <label class="form-label fw-semibold text-secondary small text-uppercase">Phone *</label>
-        <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.PhoneNumber"/>
+        <InputText disabled="@IsReadOnly" class="form-control bg-dark text-light border-secondary shadow-sm" @bind-Value="Profile.PhoneNumber"/>
         <ValidationMessage For="() => Profile.PhoneNumber" class="text-danger small mt-1"/>
     </div>
     
@@ -37,13 +37,13 @@
     {
         <div class="col-md-4">
             <label class="form-label fw-semibold text-secondary small text-uppercase">Alternate Phone</label>
-            <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.AlternatePhone"/>
+            <InputText disabled="@IsReadOnly" class="form-control bg-dark text-light border-secondary shadow-sm" @bind-Value="Profile.AlternatePhone"/>
         </div>
     }
     
     <div class="col-12">
         <label class="form-label fw-semibold text-secondary small text-uppercase">Email Address *</label>
-        <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.Email"/>
+        <InputText disabled="@IsReadOnly" class="form-control bg-dark text-light border-secondary shadow-sm" @bind-Value="Profile.Email"/>
         <ValidationMessage For="() => Profile.Email" class="text-danger small mt-1"/>
     </div>
     
@@ -53,19 +53,19 @@
         
         <div class="col-md-6">
             <label class="form-label fw-semibold text-secondary small text-uppercase">Street Address</label>
-            <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.StreetAddress"/>
+            <InputText disabled="@IsReadOnly" class="form-control bg-dark text-light border-secondary shadow-sm" @bind-Value="Profile.StreetAddress"/>
         </div>
         <div class="col-md-6">
             <label class="form-label fw-semibold text-secondary small text-uppercase">Apt, Suite, Unit, etc. (Optional)</label>
-            <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.AddressLine2"/>
+            <InputText disabled="@IsReadOnly" class="form-control bg-dark text-light border-secondary shadow-sm" @bind-Value="Profile.AddressLine2"/>
         </div>
         <div class="col-md-4">
             <label class="form-label fw-semibold text-secondary small text-uppercase">City</label>
-            <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.City"/>
+            <InputText disabled="@IsReadOnly" class="form-control bg-dark text-light border-secondary shadow-sm" @bind-Value="Profile.City"/>
         </div>
         <div class="col-md-4">
             <label class="form-label fw-semibold text-secondary small text-uppercase">State</label>
-            <InputSelect disabled="@IsReadOnly" class="form-select bg-light border-0 shadow-sm" @bind-Value="Profile.State">
+            <InputSelect disabled="@IsReadOnly" class="form-select bg-dark text-light border-secondary shadow-sm" @bind-Value="Profile.State">
                 <option value="">Select State</option>
                 @foreach (var state in HrPlatform.Utils.USStates.States)
                 {
@@ -75,7 +75,7 @@
         </div>
         <div class="col-md-4">
             <label class="form-label fw-semibold text-secondary small text-uppercase">Zip Code</label>
-            <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.ZipCode"/>
+            <InputText disabled="@IsReadOnly" class="form-control bg-dark text-light border-secondary shadow-sm" @bind-Value="Profile.ZipCode"/>
         </div>
     }
 </div>

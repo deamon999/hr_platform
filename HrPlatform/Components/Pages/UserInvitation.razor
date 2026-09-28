@@ -18,7 +18,7 @@
 
 <div class="container-fluid px-0">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold mb-0 text-dark">Send Invitation</h2>
+        <h2 class="fw-bold mb-0">Send Invitation</h2>
         <button class="btn btn-outline-secondary rounded-pill px-4" @onclick="GoToInvitations">
             <i class="bi bi-arrow-left me-1"></i> Back to Invitations
         </button>
@@ -26,7 +26,7 @@
 
     <div class="row justify-content-center">
         <div class="col-lg-6 col-md-8">
-            <div class="card shadow-sm border-0 app-card">
+            <div class="card shadow-sm border bg-dark text-light app-card">
                 <div class="card-body p-4 p-md-5">
 
                     @if (!string.IsNullOrEmpty(_successMessage))
@@ -73,7 +73,7 @@
                         {
                             <div class="mb-4">
                                 <label class="form-label fw-semibold text-secondary small text-uppercase">Phone Number</label>
-                                <InputText class="form-control form-control-lg bg-light border-0" @bind-Value="_model.Phone" placeholder="+1234567890"/>
+                                <InputText class="form-control form-control-lg bg-dark text-light border-secondary" @bind-Value="_model.Phone" placeholder="+1234567890"/>
                                 <ValidationMessage For="() => _model.Phone" class="text-danger small mt-1"/>
                             </div>
                         }
@@ -82,7 +82,7 @@
                             <div class="mb-4">
                                 <label class="form-label fw-semibold text-secondary small text-uppercase">Email address</label>
                                 <InputText @bind-Value="_model.Email"
-                                           class="form-control form-control-lg bg-light border-0"
+                                           class="form-control form-control-lg bg-dark text-light border-secondary"
                                            placeholder="user@example.com"/>
                                 <ValidationMessage For="() => _model.Email" class="text-danger small mt-1"/>
                             </div>
@@ -90,7 +90,7 @@
 
                         <div class="mb-4">
                             <label class="form-label fw-semibold text-secondary small text-uppercase">Role</label>
-                            <InputSelect @bind-Value="_model.Role" class="form-select form-select-lg bg-light border-0">
+                            <InputSelect @bind-Value="_model.Role" class="form-select form-select-lg bg-dark text-light border-secondary">
                                 <option value="">-- Select a role --</option>
                                 @foreach (var role in _roles)
                                 {
@@ -105,7 +105,7 @@
                             <div class="mb-4">
                                 <label class="form-label fw-semibold text-secondary small text-uppercase">Company</label>
                                 <InputSelect @bind-Value="_model.CompanyId"
-                                             class="form-select form-select-lg bg-light border-0"
+                                             class="form-select form-select-lg bg-dark text-light border-secondary"
                                              disabled="@_isManager">
                                     <option value="">-- Select a company --</option>
                                     @foreach (var company in _companies)

@@ -13,7 +13,7 @@
 <PageTitle>@Title</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold mb-0 text-dark">@Title</h2>
+    <h2 class="fw-bold mb-0">@Title</h2>
     @if (isView && company != null && user != null)
     {
         <div class="d-flex gap-2">
@@ -35,10 +35,7 @@
 
 @if (company is null)
 {
-    <div class="d-flex align-items-center gap-2 text-muted">
-        <div class="spinner-border spinner-border-sm"></div>
-        Loading...
-    </div>
+    <LoadingSpinner Text="Loading company details..." />
 }
 else
 {

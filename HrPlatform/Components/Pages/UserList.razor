@@ -11,10 +11,7 @@
 
 @if (isLoading)
 {
-    <div class="d-flex align-items-center gap-2">
-        <div class="spinner-border spinner-border-sm" role="status"></div>
-        Loading users…
-    </div>
+    <LoadingSpinner Text="Loading users..." />
 }
 else
 {
@@ -65,20 +62,13 @@ else
             @foreach (var user in pagedUsers)
             {
                 <div class="col-12">
-                    <div class="card shadow-sm border-0 bg-white h-100 app-card">
+                    <div class="card shadow-sm border bg-dark text-light h-100 app-card">
                         <div class="card-body p-4">
                             <div class="row g-3">
                                 <div class="col-md-7">
                                     <div class="d-flex flex-wrap align-items-center mb-2 gap-2">
-                                        <h4 class="fw-bold mb-0 text-dark text-break">@user.Username</h4>
-                                        @if (user.IsConfirmed)
-                                        {
-                                            <span class="badge bg-success rounded-pill" title="Confirmed"><i class="bi bi-check-circle"></i> Verified</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-secondary rounded-pill" title="Not Confirmed"><i class="bi bi-x-circle"></i> Unverified</span>
-                                        }
+                                        <h4 class="fw-bold mb-0 text-light text-break">@user.Username</h4>
+                                        <StatusBadge Status="@user.IsConfirmed" Text="@(user.IsConfirmed ? "Verified" : "Unverified")" />
                                     </div>
                                     
                                     <div class="mb-3 text-secondary small">
@@ -98,11 +88,11 @@ else
                                     <div class="d-flex flex-wrap gap-2 text-secondary small">
                                         @if (!string.IsNullOrEmpty(user.Roles))
                                         {
-                                            <span class="badge bg-info rounded-pill px-3 py-2 border"><i class="bi bi-person-badge"></i> @user.Roles</span>
+                                            <span class="badge bg-info bg-opacity-25 text-info border border-info rounded-pill px-3 py-2"><i class="bi bi-person-badge me-1"></i> @user.Roles</span>
                                         }
                                         else
                                         {
-                                            <span class="badge bg-light text-dark rounded-pill px-3 py-2 border">No Roles</span>
+                                            <span class="badge bg-secondary bg-opacity-25 text-secondary border border-secondary rounded-pill px-3 py-2">No Roles</span>
                                         }
                                     </div>
                                 </div>
@@ -110,7 +100,7 @@ else
                                 <div class="col-md-5 d-flex gap-2 justify-content-md-end align-items-end flex-wrap mt-3 mt-md-0">
                                     <button class="btn btn-primary px-4" @onclick="() => GoToView(user.UserId)">View</button>
                                     <button class="btn btn-outline-secondary" @onclick="() => GoToEdit(user.UserId)">Edit</button>
-                                    <button type="button" class="btn btn-outline-danger" @onclick="() => ConfirmDelete(user)"><i class="bi bi-trash"></i></button>
+                                    <button type="button" class="btn btn-outline-danger" @onclick="() => ConfirmDelete(user)" title="Delete User"><i class="bi bi-trash"></i></button>
                                 </div>
                             </div>
                         </div>
@@ -131,36 +121,33 @@ else
 
         @if (pagedUsers.Count == 0)
         {
-            <div class="alert alert-info mt-3">No users found matching the selected filters.</div>
+            <EmptyState Icon="bi-people"
+                        Title="No users found"
+                        Message="No users matched your current search or filter criteria."
+                        ActionText="@(!string.IsNullOrWhiteSpace(_searchTerm) || !string.IsNullOrWhiteSpace(_filterRole) || !string.IsNullOrWhiteSpace(_filterVerified) ? "Clear Filters" : null)"
+                        ActionIcon="bi-x-circle"
+                        OnAction="ClearFilters" />
         }
     </div>
 
     <PaginationNav TotalPages="totalPages" CurrentPage="currentPage" OnPageChanged="ChangePage" AriaLabel="User list pagination" />
 }
 
-@if (deleteTarget is not null)
-{
-    <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
-        <div class="modal-dialog">
-            <div class="modal-content bg-dark border-secondary">
-                <div class="modal-header border-secondary">
-                    <h5 class="modal-title text-light">Confirm Delete</h5>
-                </div>
-                <div class="modal-body text-light">
-                    <p>
-                        Are you sure you want to permanently delete
-                        <strong>@deleteTarget.Username</strong>?
-                    </p>
-                    <p class=" small mb-0">This action cannot be undone.</p>
-                </div>
-                <div class="modal-footer border-secondary">
-                    <button class="btn btn-secondary" @onclick="() => deleteTarget = null">Cancel</button>
-                    <button class="btn btn-danger" @onclick="DeleteConfirmedAsync">Delete</button>
-                </div>
-            </div>
-        </div>
-    </div>
-}
+<ConfirmDialog IsOpen="@(deleteTarget is not null)"
+               Title="Confirm Delete User"
+               ConfirmText="Delete"
+               ConfirmButtonClass="btn-danger"
+               IsProcessing="@isDeleting"
+               OnConfirm="DeleteConfirmedAsync"
+               OnCancel="() => deleteTarget = null">
+    <BodyContent>
+        @if (deleteTarget is not null)
+        {
+            <p class="mb-2">Are you sure you want to permanently delete <strong class="text-light">@deleteTarget.Username</strong>?</p>
+            <p class="text-secondary small mb-0">This action cannot be undone and will remove all their access permissions.</p>
+        }
+    </BodyContent>
+</ConfirmDialog>
 
 @code {
     private List<UserViewModel> pagedUsers = new();
@@ -368,19 +355,29 @@ else
         deleteTarget = userModel;
     }
 
+    private bool isDeleting;
+
     private async Task DeleteConfirmedAsync()
     {
         if (deleteTarget is null) return;
 
-        await UserService.DeleteAsync(deleteTarget.UserId);
-        deleteTarget = null;
-
-        // Smart reload: go back one page if we delete the last item on the current page
-        await LoadAsync(_searchTerm);
-        if (pagedUsers.Count == 0 && currentPage > 1)
+        try
         {
-            currentPage--;
+            isDeleting = true;
+            await UserService.DeleteAsync(deleteTarget.UserId);
+            deleteTarget = null;
+
+            // Smart reload: go back one page if we delete the last item on the current page
             await LoadAsync(_searchTerm);
+            if (pagedUsers.Count == 0 && currentPage > 1)
+            {
+                currentPage--;
+                await LoadAsync(_searchTerm);
+            }
+        }
+        finally
+        {
+            isDeleting = false;
         }
     }
 

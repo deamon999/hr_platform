@@ -1,0 +1,28 @@
+@if (Inline)
+{
+    <span class="d-inline-flex align-items-center gap-2 @Class">
+        <span class="spinner-border @(Small ? "spinner-border-sm" : "")" role="status" aria-hidden="true" style="color: var(--accent-primary);"></span>
+        @if (!string.IsNullOrEmpty(Text))
+        {
+            <span class="text-secondary small">@Text</span>
+        }
+    </span>
+}
+else
+{
+    <div class="d-flex align-items-center gap-3 py-4 @(Centered ? "justify-content-center" : "") @Class">
+        <div class="spinner-border @(Small ? "spinner-border-sm" : "")" role="status" aria-hidden="true" style="color: var(--accent-primary); width: @(Small ? "1.25rem" : "2rem"); height: @(Small ? "1.25rem" : "2rem");"></div>
+        @if (!string.IsNullOrEmpty(Text))
+        {
+            <span class="text-secondary fw-medium">@Text</span>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string Text { get; set; } = "Loading...";
+    [Parameter] public bool Centered { get; set; } = true;
+    [Parameter] public bool Small { get; set; } = false;
+    [Parameter] public bool Inline { get; set; } = false;
+    [Parameter] public string? Class { get; set; }
+}

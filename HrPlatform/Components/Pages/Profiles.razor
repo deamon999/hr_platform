@@ -75,13 +75,16 @@
 
 @if (pagedProfiles is null)
 {
-    <p>Loading...</p>
+    <LoadingSpinner Text="Loading driver profiles..." />
 }
 else if (!pagedProfiles.Items.Any())
 {
-    <div class="alert alert-info">
-        @(isAdmin ? "No profiles exist yet." : "No drivers have applied to your company's jobs yet.")
-    </div>
+    <EmptyState Icon="bi-person-vcard"
+                Title="No driver profiles found"
+                Message="@(isAdmin ? "No driver profiles match your search criteria or exist yet." : "No drivers have applied to your company's jobs yet.")"
+                ActionText="@(isAdmin ? "Invite Driver" : null)"
+                ActionIcon="bi-envelope"
+                ActionHref="/users?tab=invitations" />
 }
 else
 {
@@ -90,15 +93,15 @@ else
             @foreach (var p in pagedProfiles.Items)
             {
                 <div class="col-12">
-                    <div class="card shadow-sm border-0 bg-white h-100 app-card">
+                    <div class="card shadow-sm border bg-dark text-light h-100 app-card">
                         <div class="card-body p-4">
                             <div class="row g-3">
                                 <div class="col-md-7">
                                     <div class="d-flex align-items-center mb-2 gap-2">
-                                        <h4 class="fw-bold mb-0 text-dark">@p.LastName, @p.FirstName</h4>
+                                        <h4 class="fw-bold mb-0 text-light">@p.LastName, @p.FirstName</h4>
                                         @if (p.License is not null)
                                         {
-                                            <span class="badge bg-dark rounded-pill">CDL-@p.License.Class</span>
+                                            <span class="badge border border-secondary text-light rounded-pill">CDL-@p.License.Class</span>
                                         }
                                         @{
                                             var availColor = p.AvailabilityStatus switch
@@ -128,9 +131,8 @@ else
                                     </div>
 
                                     <div class="d-flex flex-wrap gap-2 text-secondary small">
-
-                                        <span class="badge bg-light text-dark rounded-pill px-3 py-2 border"><i class="bi bi-briefcase me-1"></i> @p.YearsOfExperience yrs exp</span>
-                                        <span class="badge bg-light text-dark rounded-pill px-3 py-2 border"><i class="bi bi-file-earmark-text me-1"></i> @(p.User?.Applications?.Count ?? 0) Apps</span>
+                                        <span class="badge bg-dark border border-secondary text-light rounded-pill px-3 py-2"><i class="bi bi-briefcase me-1"></i> @p.YearsOfExperience yrs exp</span>
+                                        <span class="badge bg-dark border border-secondary text-light rounded-pill px-3 py-2"><i class="bi bi-file-earmark-text me-1"></i> @(p.User?.Applications?.Count ?? 0) Apps</span>
                                     </div>
                                 </div>
                                 

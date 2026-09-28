@@ -1,0 +1,52 @@
+<div class="card border text-center py-5 px-4 my-3 @Class" style="background-color: var(--bg-card); border-color: var(--border-color) !important; border-radius: 12px;">
+    <div class="card-body d-flex flex-column align-items-center justify-content-center">
+        <div class="rounded-circle d-flex align-items-center justify-content-center mb-3"
+             style="width: 64px; height: 64px; background-color: rgba(230, 168, 56, 0.1); color: var(--accent-primary);">
+            <i class="bi @Icon fs-2"></i>
+        </div>
+        
+        <h5 class="fw-bold mb-1 text-light">@Title</h5>
+        
+        @if (!string.IsNullOrEmpty(Message))
+        {
+            <p class="text-secondary small mb-3" style="max-width: 420px;">@Message</p>
+        }
+
+        @if (!string.IsNullOrEmpty(ActionText))
+        {
+            <div class="mt-2">
+                @if (!string.IsNullOrEmpty(ActionHref))
+                {
+                    <a href="@ActionHref" class="btn btn-primary d-inline-flex align-items-center gap-2 px-3 py-2">
+                        @if (!string.IsNullOrEmpty(ActionIcon))
+                        {
+                            <i class="bi @ActionIcon"></i>
+                        }
+                        <span>@ActionText</span>
+                    </a>
+                }
+                else if (OnAction.HasDelegate)
+                {
+                    <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2 px-3 py-2" @onclick="OnAction">
+                        @if (!string.IsNullOrEmpty(ActionIcon))
+                        {
+                            <i class="bi @ActionIcon"></i>
+                        }
+                        <span>@ActionText</span>
+                    </button>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Icon { get; set; } = "bi-inbox";
+    [Parameter] public string Title { get; set; } = "No items found";
+    [Parameter] public string? Message { get; set; }
+    [Parameter] public string? ActionText { get; set; }
+    [Parameter] public string? ActionIcon { get; set; }
+    [Parameter] public string? ActionHref { get; set; }
+    [Parameter] public EventCallback OnAction { get; set; }
+    [Parameter] public string? Class { get; set; }
+}

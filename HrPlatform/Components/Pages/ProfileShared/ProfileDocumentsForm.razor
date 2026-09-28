@@ -1,7 +1,7 @@
 @using HrPlatform.Data.Entities
 
 <div>
-    <div class="alert alert-info border-0 shadow-sm rounded-3 mb-4 d-flex align-items-center bg-light">
+    <div class="alert alert-info border-0 shadow-sm rounded-3 mb-4 d-flex align-items-center">
         <i class="bi bi-info-circle-fill fs-4 me-3 text-primary"></i>
         <div>
             <strong>Optional Documents:</strong> You may upload any additional certifications, training records, or TWIC cards here.
@@ -10,7 +10,7 @@
 
     @if (!Profile.Documents.Any())
     {
-        <div class="text-center text-muted py-5 border rounded-3 bg-light mb-4">
+        <div class="text-center text-muted py-5 border border-secondary rounded-3 bg-dark mb-4">
             <i class="bi bi-file-earmark-text fs-1 text-secondary mb-3 d-block"></i>
             <p class="fs-5 mb-0">No documents uploaded yet.</p>
         </div>
@@ -21,7 +21,7 @@
             @foreach (var doc in OtherDocs)
             {
                 <div class="col-md-6">
-                    <div class="d-flex align-items-center gap-3 bg-light p-3 rounded-3 shadow-none border">
+                    <div class="d-flex align-items-center gap-3 bg-dark border border-secondary p-3 rounded-3 shadow-none">
                         <i class="bi bi-file-earmark-pdf fs-3 text-danger"></i>
                         <div class="flex-grow-1 text-truncate">
                             <div class="fw-medium text-truncate">@doc.FileName</div>
@@ -49,13 +49,13 @@
 
     @if (!IsReadOnly)
     {
-        <div class="card shadow-none border bg-light mt-4">
+        <div class="card shadow-none border border-secondary bg-dark text-light mt-4">
             <div class="card-body p-4">
                 <h6 class="fw-bold mb-3">Upload New Document</h6>
                 <div class="row g-3">
                     <div class="col-md-4">
                         <label class="form-label fw-semibold text-secondary small text-uppercase">Document Type *</label>
-                        <select class="form-select bg-white border-0 shadow-sm" @bind="newDocType">
+                        <select class="form-select bg-dark text-light border-secondary shadow-sm" @bind="newDocType">
                             <option value="TWIC">TWIC Card</option>
                             <option value="Training">Training Certificate</option>
                             <option value="Other">Other</option>
@@ -72,7 +72,7 @@
                         }
                         else
                         {
-                            <InputFile class="form-control bg-white border-0 shadow-sm" accept=".pdf,.jpg,.jpeg,.png" OnChange="HandleFileSelected"/>
+                            <InputFile class="form-control bg-dark text-light border-secondary shadow-sm" accept=".pdf,.jpg,.jpeg,.png" OnChange="HandleFileSelected"/>
                         }
                         <small class="text-muted mt-2 d-block"><i class="bi bi-paperclip me-1"></i> PDF, JPG, or PNG. Max 15 MB.</small>
                     </div>

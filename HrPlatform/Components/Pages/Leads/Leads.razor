@@ -77,10 +77,7 @@
 
 @if (isLoading)
 {
-    <div class="d-flex align-items-center gap-2 mb-3">
-        <div class="spinner-border spinner-border-sm" role="status"></div>
-        Loading leads…
-    </div>
+    <LoadingSpinner Text="Loading leads..." />
 }
 else
 {
@@ -207,32 +204,31 @@ else
 
     @if (pagedLeads.Count == 0)
     {
-        <div class="alert alert-info mt-3">No leads found matching the selected filters.</div>
+        <EmptyState Icon="bi-funnel"
+                    Title="No leads found"
+                    Message="No leads matched your search or filter criteria."
+                    ActionText="+ Add Lead"
+                    ActionIcon="bi-person-plus"
+                    OnAction="OpenAddLeadModal" />
     }
 
     <PaginationNav TotalPages="totalPages" CurrentPage="currentPage" OnPageChanged="ChangePage" AriaLabel="Lead list pagination" />
 }
 
-@if (deleteTarget != null)
-{
-    <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.5); z-index: 1050;">
-        <div class="modal-dialog">
-            <div class="modal-content bg-dark border-secondary">
-                <div class="modal-header border-secondary">
-                    <h5 class="modal-title text-light">Confirm Delete</h5>
-                </div>
-                <div class="modal-body text-light">
-                    Are you sure you want to delete lead <strong>@deleteTarget.FirstName @deleteTarget.LastName</strong>?
-                    This will also remove all associated notes.
-                </div>
-                <div class="modal-footer border-secondary">
-                    <button class="btn btn-secondary" @onclick="CancelDelete">Cancel</button>
-                    <button class="btn btn-danger" @onclick="DeleteConfirmedAsync">Delete</button>
-                </div>
-            </div>
-        </div>
-    </div>
-}
+<ConfirmDialog IsOpen="@(deleteTarget != null)"
+               Title="Confirm Delete Lead"
+               ConfirmText="Delete"
+               ConfirmButtonClass="btn-danger"
+               IsProcessing="@isDeleting"
+               OnConfirm="DeleteConfirmedAsync"
+               OnCancel="CancelDelete">
+    <BodyContent>
+        @if (deleteTarget != null)
+        {
+            <p class="mb-0">Are you sure you want to delete lead <strong class="text-light">@deleteTarget.FirstName @deleteTarget.LastName</strong>? This will also remove all associated notes.</p>
+        }
+    </BodyContent>
+</ConfirmDialog>
 
 @if (isDrawerOpen)
 {
@@ -427,7 +423,7 @@ else
             LeadStatus.Contacted => "text-info bg-info bg-opacity-10",
             LeadStatus.Invited => "text-primary bg-primary bg-opacity-10",
             LeadStatus.Rejected => "text-danger bg-danger bg-opacity-10 border border-danger",
-            _ => "text-secondary bg-light"
+            _ => "text-secondary bg-secondary bg-opacity-10"
         };
     }
 
@@ -554,13 +550,23 @@ else
         deleteTarget = null;
     }
 
+    private bool isDeleting;
+
     private async Task DeleteConfirmedAsync()
     {
-        if (deleteTarget != null)
+        if (deleteTarget != null && !isDeleting)
         {
-            await LeadService.DeleteAsync(deleteTarget.Id);
-            deleteTarget = null;
-            await LoadAsync(_searchTerm);
+            isDeleting = true;
+            try
+            {
+                await LeadService.DeleteAsync(deleteTarget.Id);
+                deleteTarget = null;
+                await LoadAsync(_searchTerm);
+            }
+            finally
+            {
+                isDeleting = false;
+            }
         }
     }
 

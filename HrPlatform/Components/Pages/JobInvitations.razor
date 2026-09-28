@@ -19,7 +19,7 @@
     </div>
     <div class="d-flex align-items-center gap-2">
         <span class="text-secondary small fw-medium text-nowrap d-none d-md-inline">Items per page:</span>
-        <select class="form-select border-0 bg-white shadow-sm" style="width: 75px;" @bind="PageSize" @bind:after="OnPageSizeChanged">
+        <select class="form-select form-select-sm bg-dark text-light border-secondary shadow-sm" style="width: 75px;" @bind="PageSize" @bind:after="OnPageSizeChanged">
             <option value="10">10</option>
             <option value="50">50</option>
             <option value="100">100</option>
@@ -29,17 +29,16 @@
 
 @if (_loading || _paginationResult is null)
 {
-    <div class="d-flex align-items-center gap-2 text-muted">
-        <div class="spinner-border spinner-border-sm"></div>
-        Loading…
-    </div>
+    <LoadingSpinner Text="Loading job invitations..." />
 }
 else if (!_paginationResult.Items.Any())
 {
-    <div class="text-center text-muted py-5">
-        <p class="fs-5">No job invitations yet.</p>
-        <p class="small">You will receive an email when a manager invites you to a job.</p>
-    </div>
+    <EmptyState Icon="bi-envelope-open"
+                Title="No job invitations yet"
+                Message="You will receive an email and notification when a manager invites you to apply for an open job."
+                ActionText="Browse Open Jobs"
+                ActionIcon="bi-briefcase"
+                ActionHref="/jobs" />
 }
 else
 {
@@ -57,13 +56,13 @@ else
             @foreach (var inv in _paginationResult.Items)
             {
                 <div class="col-12">
-                    <div class="card shadow-sm border-0 bg-white h-100 app-card">
+                    <div class="card shadow-sm border bg-dark text-light h-100 app-card">
                         <div class="card-body p-4">
                             <div class="row g-3">
                                 <div class="col-md-7">
                                     <div class="d-flex align-items-center mb-2 gap-2">
-                                        <h4 class="fw-bold mb-0 text-dark">@inv.Job.Title</h4>
-                                        <span class="badge @(StatusBadgeClass(inv.Status)) rounded-pill px-3 py-1">@inv.Status</span>
+                                        <h4 class="fw-bold mb-0 text-light">@inv.Job.Title</h4>
+                                        <StatusBadge Status="@inv.Status" />
                                     </div>
 
                                     <div class="mb-3 text-secondary small">
@@ -73,10 +72,10 @@ else
                                     </div>
 
                                     <div class="d-flex flex-wrap gap-2 text-secondary small">
-                                        <span class="badge bg-light text-dark rounded-pill px-3 py-2 border"><i class="bi bi-calendar-event me-1"></i> Invited: @TimeZoneService.ToUserTime(inv.CreatedAt).ToString("MMM dd, yyyy")</span>
+                                        <span class="badge bg-secondary bg-opacity-25 text-light border border-secondary rounded-pill px-3 py-2"><i class="bi bi-calendar-event me-1"></i> Invited: @TimeZoneService.ToUserTime(inv.CreatedAt).ToString("MMM dd, yyyy")</span>
                                         @if (inv.ReviewedAt.HasValue)
                                         {
-                                            <span class="badge bg-light text-dark rounded-pill px-3 py-2 border"><i class="bi bi-reply me-1"></i> Responded: @TimeZoneService.ToUserTime(inv.ReviewedAt.Value).ToString("MMM dd, yyyy")</span>
+                                            <span class="badge bg-secondary bg-opacity-25 text-light border border-secondary rounded-pill px-3 py-2"><i class="bi bi-reply me-1"></i> Responded: @TimeZoneService.ToUserTime(inv.ReviewedAt.Value).ToString("MMM dd, yyyy")</span>
                                         }
                                     </div>
                                 </div>

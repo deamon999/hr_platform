@@ -48,17 +48,17 @@
     </div>
     
     <div class="col-12 mt-4">
-        <h5 class="fw-bold text-dark mb-3 border-bottom pb-2">Electronic Signature</h5>
+        <h5 class="fw-bold mb-3 border-bottom border-secondary pb-2">Electronic Signature</h5>
         <p class="small text-muted mb-4">By typing my name below, I certify that this application was completed by me, and that all entries on it and information in it are true and complete to the best of my knowledge.</p>
     </div>
     
     <div class="col-md-8">
         <label class="form-label fw-semibold text-secondary small text-uppercase">Full Legal Name *</label>
-        <InputText disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.ElectronicSignatureName" placeholder="Type your full name"/>
+        <InputText disabled="@IsReadOnly" class="form-control bg-dark text-light border-secondary shadow-sm" @bind-Value="Profile.ElectronicSignatureName" placeholder="Type your full name"/>
     </div>
     <div class="col-md-4">
         <label class="form-label fw-semibold text-secondary small text-uppercase">Date *</label>
-        <InputDate disabled="@IsReadOnly" class="form-control bg-light border-0 shadow-sm" @bind-Value="Profile.SignatureDate"/>
+        <InputDate disabled="@IsReadOnly" class="form-control bg-dark text-light border-secondary shadow-sm" @bind-Value="Profile.SignatureDate"/>
     </div>
 </div>
 

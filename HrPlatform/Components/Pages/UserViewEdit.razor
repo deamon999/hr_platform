@@ -15,7 +15,7 @@
 <PageTitle>User Management</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold mb-0 text-dark">@(IsViewMode ? "View User" : "Edit User")</h2>
+    <h2 class="fw-bold mb-0">@(IsViewMode ? "View User" : "Edit User")</h2>
     @if (IsViewMode)
     {
         <button class="btn btn-primary rounded-pill px-4" @onclick="SwitchToEditMode"><i class="bi bi-pencil me-1"></i> Edit</button>
@@ -24,10 +24,7 @@
 
 @if (isLoading)
 {
-    <div class="d-flex align-items-center gap-2 text-muted">
-        <div class="spinner-border spinner-border-sm"></div>
-        Loading...
-    </div>
+    <LoadingSpinner Text="Loading user profile..." />
 }
 else
 {
@@ -49,19 +46,19 @@ else
                     <div class="row g-4 mb-4">
                         <div class="col-md-6">
                             <label class="form-label fw-semibold text-secondary small text-uppercase">User Name *</label>
-                            <InputText class="form-control bg-light border-0" @bind-Value="model.Username" disabled="@IsViewMode"/>
+                            <InputText class="form-control bg-dark text-light border-secondary" @bind-Value="model.Username" disabled="@IsViewMode"/>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold text-secondary small text-uppercase">Email *</label>
-                            <InputText class="form-control bg-light border-0" @bind-Value="model.Email" disabled="@IsViewMode"/>
+                            <InputText class="form-control bg-dark text-light border-secondary" @bind-Value="model.Email" disabled="@IsViewMode"/>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold text-secondary small text-uppercase">Phone *</label>
-                            <InputText class="form-control bg-light border-0" @bind-Value="model.Phone" disabled="@IsViewMode"/>
+                            <InputText class="form-control bg-dark text-light border-secondary" @bind-Value="model.Phone" disabled="@IsViewMode"/>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold text-secondary small text-uppercase">Role</label>
-                            <InputSelect class="form-select bg-light border-0" @bind-Value="model.Roles" disabled="@IsViewMode">
+                            <InputSelect class="form-select bg-dark text-light border-secondary" @bind-Value="model.Roles" disabled="@IsViewMode">
                                 @foreach (var r in roles)
                                 {
                                     <option value="@r">@r</option>
@@ -73,7 +70,7 @@ else
                         {
                             <div class="col-12">
                                 <label class="form-label fw-semibold text-secondary small text-uppercase">Company</label>
-                                <InputSelect class="form-select bg-light border-0" @bind-Value="model.CompanyId" disabled="@IsViewMode">
+                                <InputSelect class="form-select bg-dark text-light border-secondary" @bind-Value="model.CompanyId" disabled="@IsViewMode">
                                     <option value="">-- none --</option>
                                     @foreach (var c in companies!)
                                     {
@@ -86,7 +83,7 @@ else
                         {
                             <div class="col-12">
                                 <label class="form-label fw-semibold text-secondary small text-uppercase">Company</label>
-                                <div class="p-2 bg-light rounded text-dark">@(myCompany?.Name ?? "(none)")</div>
+                                <div class="p-2 bg-dark rounded text-light border border-secondary">@(myCompany?.Name ?? "(none)")</div>
                             </div>
                         }
                     </div>

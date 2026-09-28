@@ -1,0 +1,86 @@
+@if (IsOpen)
+{
+    <div class="modal show d-block confirm-dialog-backdrop" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title" @onclick="HandleBackdropClick">
+        <div class="modal-dialog modal-dialog-centered" @onclick:stopPropagation="true">
+            <div class="modal-content border shadow-lg" style="background-color: var(--bg-card); border-color: var(--border-color) !important; color: var(--text-primary);">
+                <div class="modal-header border-bottom" style="border-color: var(--border-color) !important;">
+                    <h5 class="modal-title fw-bold" id="confirm-dialog-title">@Title</h5>
+                    <button type="button" class="btn-close" aria-label="Close" disabled="@IsProcessing" @onclick="CancelAsync"></button>
+                </div>
+                <div class="modal-body py-4">
+                    @if (ChildContent is not null)
+                    {
+                        @ChildContent
+                    }
+                    else if (BodyContent is not null)
+                    {
+                        @BodyContent
+                    }
+                    else
+                    {
+                        <p class="mb-0 text-secondary">@Message</p>
+                    }
+                </div>
+                <div class="modal-footer border-top gap-2" style="border-color: var(--border-color) !important;">
+                    <button type="button" class="btn btn-outline-secondary px-3" disabled="@IsProcessing" @onclick="CancelAsync">
+                        @CancelText
+                    </button>
+                    <button type="button" class="btn @ConfirmButtonClass px-4 d-inline-flex align-items-center gap-2" disabled="@IsProcessing" @onclick="ConfirmAsync">
+                        @if (IsProcessing)
+                        {
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        }
+                        <span>@ConfirmText</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .confirm-dialog-backdrop {
+        background: rgba(0, 0, 0, 0.65);
+        backdrop-filter: blur(4px);
+        animation: fadeIn 0.15s ease-out;
+    }
+    @@keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public string Title { get; set; } = "Confirm Action";
+    [Parameter] public string Message { get; set; } = "Are you sure you want to proceed?";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? BodyContent { get; set; }
+    [Parameter] public string ConfirmText { get; set; } = "Confirm";
+    [Parameter] public string CancelText { get; set; } = "Cancel";
+    [Parameter] public string ConfirmButtonClass { get; set; } = "btn-danger";
+    [Parameter] public bool IsProcessing { get; set; }
+    [Parameter] public EventCallback OnConfirm { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private async Task ConfirmAsync()
+    {
+        if (!IsProcessing && OnConfirm.HasDelegate)
+        {
+            await OnConfirm.InvokeAsync();
+        }
+    }
+
+    private async Task CancelAsync()
+    {
+        if (!IsProcessing && OnCancel.HasDelegate)
+        {
+            await OnCancel.InvokeAsync();
+        }
+    }
+
+    private async Task HandleBackdropClick()
+    {
+        await CancelAsync();
+    }
+}
