@@ -43,10 +43,15 @@ public class DailyMaintenanceService(
                 logger.LogError(ex, "Daily maintenance tasks loop encountered an unexpected error");
             }
 
-            // Run once per day at next midnight
-            var now = DateTime.Now;
-            var next = now.Date.AddDays(1);
-            await Task.Delay(next - now, ct);
+            // Run once per day at next midnight UTC
+            var nowUtc = DateTime.UtcNow;
+            var nextUtc = nowUtc.Date.AddDays(1);
+            var delay = nextUtc - nowUtc;
+            if (delay <= TimeSpan.Zero)
+            {
+                delay = TimeSpan.FromHours(24);
+            }
+            await Task.Delay(delay, ct);
         }
     }
 

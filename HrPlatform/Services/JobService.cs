@@ -82,8 +82,7 @@ public class JobService(ApplicationDbContext db) : IJobService
             _ => query.OrderByDescending(j => j.PostedAt)
         };
 
-        var jobs = await query.ToListAsync();
-        return jobs.Paginate(pageNumber, pageSize);
+        return await query.PaginateAsync(pageNumber, pageSize);
     }
 
     public async Task<Job?> GetByIdAsync(int id)

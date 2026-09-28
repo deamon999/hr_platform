@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using HrPlatform.Data;
+using HrPlatform.Data.Entities;
 using HrPlatform.Data.Models;
 using HrPlatform.Models;
 using HrPlatform.Services;
@@ -10,10 +11,10 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
 
-namespace HrPlatform.Tests.Services
+namespace HrPlatform.Tests.Services;
+
+public class AdminUserServiceTests
 {
-    public class AdminUserServiceTests
-    {
         private readonly DbContextOptions<ApplicationDbContext> _options;
 
         public AdminUserServiceTests()
@@ -76,8 +77,8 @@ namespace HrPlatform.Tests.Services
             var user = new ApplicationUser { Id = "user1", Email = "test@example.com" };
             context.Users.Add(user);
             
-            context.Invitations.Add(new Data.Entities.Invitation { Email = "test@example.com" });
-            context.DriverProfiles.Add(new Data.Models.DriverProfile { UserId = "user1", FirstName = "Test", LastName = "User", PhoneNumber = "123", Email = "test@example.com" });
+            context.Invitations.Add(new Invitation { Email = "test@example.com" });
+            context.DriverProfiles.Add(new DriverProfile { UserId = "user1", FirstName = "Test", LastName = "User", PhoneNumber = "123", Email = "test@example.com" });
             await context.SaveChangesAsync();
 
             var mockUserManager = GetMockUserManager();
@@ -100,7 +101,7 @@ namespace HrPlatform.Tests.Services
             var user = new ApplicationUser { Id = "admin1", Email = "admin@example.com", UserName = "admin1" };
             context.Users.Add(user);
             
-            var lead = new Data.Entities.Lead 
+            var lead = new Lead 
             { 
                 FirstName = "Test", 
                 LastName = "Lead", 
@@ -134,7 +135,7 @@ namespace HrPlatform.Tests.Services
             using var context = new ApplicationDbContext(_options);
             var user = new ApplicationUser { Id = "user1" };
             context.Users.Add(user);
-            context.DriverProfiles.Add(new Data.Models.DriverProfile { UserId = "user1", FirstName = "Test", LastName = "User", PhoneNumber = "123", Email = "test@example.com" });
+            context.DriverProfiles.Add(new DriverProfile { UserId = "user1", FirstName = "Test", LastName = "User", PhoneNumber = "123", Email = "test@example.com" });
             await context.SaveChangesAsync();
 
             var mockUserManager = GetMockUserManager();
@@ -148,4 +149,3 @@ namespace HrPlatform.Tests.Services
             Assert.Null(user.CompanyId);
         }
     }
-}

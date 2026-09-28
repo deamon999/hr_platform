@@ -10,10 +10,10 @@ using HrPlatform.Data.Enums;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
-namespace HrPlatform.Tests.Services
+namespace HrPlatform.Tests.Services;
+
+public class LeadNoteServiceTests : IDisposable
 {
-    public class LeadNoteServiceTests : IDisposable
-    {
         private readonly ApplicationDbContext _db;
         private readonly LeadNoteService _service;
 
@@ -120,4 +120,3 @@ namespace HrPlatform.Tests.Services
             Assert.Equal(1, await _db.LeadNotes.CountAsync());
         }
     }
-}

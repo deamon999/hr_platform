@@ -2,6 +2,7 @@
 @page "/invitations"
 @using Microsoft.AspNetCore.WebUtilities
 @rendermode InteractiveServer
+@implements IDisposable
 @attribute [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.Manager}")]
 
 <PageTitle>User Management</PageTitle>

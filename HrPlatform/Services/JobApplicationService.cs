@@ -26,20 +26,17 @@ public class JobApplicationService(
             .Include(a => a.Job)
             .AsQueryable();
 
-        return sortBy switch
-        {
-            "status" => await q.OrderBy(a => a.Status).ThenByDescending(a => a.AppliedAt).ToListAsync(),
-            "driver" => await q.OrderBy(a => a.User.LastName).ThenBy(a => a.User.FirstName)
-                .ToListAsync(),
-            "job" => await q.OrderBy(a => a.Job.Title).ThenByDescending(a => a.AppliedAt).ToListAsync(),
-            _ => await q.OrderByDescending(a => a.AppliedAt).ToListAsync()
-        };
+        return await ApplySort(q, sortBy).ToListAsync();
     }
 
     public async Task<PaginationResult<JobApplication>> GetAllPagedAsync(int pageNumber = 1, int pageSize = 10, string? sortBy = null)
     {
-        var apps = await GetAllAsync(sortBy);
-        return apps.Paginate(pageNumber, pageSize);
+        var q = db.JobApplications
+            .Include(a => a.User)
+            .Include(a => a.Job)
+            .AsQueryable();
+
+        return await ApplySort(q, sortBy).PaginateAsync(pageNumber, pageSize);
     }
 
     public async Task<List<JobApplication>> GetByJobAsync(int jobId)
@@ -76,8 +73,13 @@ public class JobApplicationService(
 
     public async Task ReviewAsync(int id, ApplicationStatus status, string? notes)
     {
-        var app = await db.JobApplications.FindAsync(id)
-                  ?? throw new KeyNotFoundException($"Application {id} not found");
+        var app = await db.JobApplications
+            .Include(a => a.User)
+            .Include(a => a.Job)
+                .ThenInclude(j => j!.Company)
+            .FirstOrDefaultAsync(a => a.Id == id)
+            ?? throw new KeyNotFoundException($"Application {id} not found");
+
         app.Status = status;
         app.ReviewedAt = DateTime.UtcNow;
         app.ReviewerNotes = notes;
@@ -102,43 +104,9 @@ public class JobApplicationService(
         int? companyId,
         string? sortBy = null)
     {
-        var q = db.JobApplications
-            .Include(a => a.User)
-            .ThenInclude(u => u!.DriverProfile)
-            .ThenInclude(p => p!.License)
-            .Include(a => a.User)
-            .ThenInclude(u => u!.DriverProfile)
-            .ThenInclude(p => p!.EmploymentHistory)
-            .Include(a => a.Job)
-            .ThenInclude(j => j!.Company)
-            .AsQueryable();
-
-        // 1. Filter for Manager
-        if (isManager)
-        {
-            if (companyId.HasValue)
-                // Let EF handle the join automatically!
-                q = q.Where(a => a.Job.CompanyId == companyId.Value);
-            else
-                // Safety catch: If manager has no company, return empty list
-                return new List<JobApplication>();
-        }
-        // 2. Filter for Driver
-        else if (isDriver)
-        {
-            if (!string.IsNullOrEmpty(userId)) q = q.Where(a => a.UserId == userId);
-        }
-
-        // Note: If the user is an Admin (neither Driver nor Manager), 
-        // no filters are applied, and they see everything.
-
-        return sortBy switch
-        {
-            "status" => await q.OrderBy(a => a.Status).ThenByDescending(a => a.AppliedAt).ToListAsync(),
-            "driver" => await q.OrderBy(a => a.User.LastName).ThenBy(a => a.User.FirstName).ToListAsync(),
-            "job" => await q.OrderBy(a => a.Job.Title).ThenByDescending(a => a.AppliedAt).ToListAsync(),
-            _ => await q.OrderByDescending(a => a.AppliedAt).ToListAsync()
-        };
+        var query = GetFilteredApplicationsQuery(userId, isManager, isDriver, companyId, sortBy);
+        if (query is null) return new List<JobApplication>();
+        return await query.ToListAsync();
     }
 
     public async Task<PaginationResult<JobApplication>> GetAllFilteredPagedAsync(
@@ -150,9 +118,60 @@ public class JobApplicationService(
         int pageSize = 10,
         string? sortBy = null)
     {
-        var apps = await GetAllFilteredAsync(userId, isManager, isDriver, companyId, sortBy);
-        return apps.Paginate(pageNumber, pageSize);
+        var query = GetFilteredApplicationsQuery(userId, isManager, isDriver, companyId, sortBy);
+        if (query is null)
+        {
+            return new PaginationResult<JobApplication>
+            {
+                Items = new List<JobApplication>(),
+                TotalCount = 0,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+        }
+
+        return await query.PaginateAsync(pageNumber, pageSize);
     }
+
+    private IQueryable<JobApplication>? GetFilteredApplicationsQuery(
+        string? userId,
+        bool isManager,
+        bool isDriver,
+        int? companyId,
+        string? sortBy = null)
+    {
+        var q = db.JobApplications
+            .Include(a => a.User)
+            .ThenInclude(u => u!.DriverProfile)
+            .ThenInclude(p => p!.License)
+            .Include(a => a.User)
+            .ThenInclude(u => u!.DriverProfile)
+            .ThenInclude(p => p!.EmploymentHistory)
+            .Include(a => a.Job)
+            .ThenInclude(j => j!.Company)
+            .AsQueryable();
+
+        if (isManager)
+        {
+            if (!companyId.HasValue) return null;
+            q = q.Where(a => a.Job.CompanyId == companyId.Value);
+        }
+        else if (isDriver && !string.IsNullOrEmpty(userId))
+        {
+            q = q.Where(a => a.UserId == userId);
+        }
+
+        return ApplySort(q, sortBy);
+    }
+
+    private static IOrderedQueryable<JobApplication> ApplySort(IQueryable<JobApplication> q, string? sortBy) =>
+        sortBy switch
+        {
+            "status" => q.OrderBy(a => a.Status).ThenByDescending(a => a.AppliedAt),
+            "driver" => q.OrderBy(a => a.User.LastName).ThenBy(a => a.User.FirstName),
+            "job" => q.OrderBy(a => a.Job.Title).ThenByDescending(a => a.AppliedAt),
+            _ => q.OrderByDescending(a => a.AppliedAt)
+        };
 
     private async Task NotifyDriverAsync(
         JobApplication app, ApplicationStatus status, string? notes)

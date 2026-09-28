@@ -30,8 +30,7 @@ public class CompanyService(ApplicationDbContext db) : ICompanyService
             query = query.OrderBy(c => c.Name);
         }
         
-        var companies = await query.ToListAsync();
-        return companies.Paginate(pageNumber, pageSize);
+        return await query.PaginateAsync(pageNumber, pageSize);
     }
 
     public async Task<Company?> GetByIdAsync(int id)

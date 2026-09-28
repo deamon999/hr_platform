@@ -40,7 +40,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            e.Ignore(u => u.driverProfileId);
 
             // Deletes the user if their associated Company is deleted
             e.HasOne(u => u.Company)

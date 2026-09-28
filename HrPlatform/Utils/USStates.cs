@@ -2,7 +2,7 @@ namespace HrPlatform.Utils;
 
 public static class USStates
 {
-    public static readonly Dictionary<string, string> States = new()
+    public static readonly Dictionary<string, string> States = new(StringComparer.OrdinalIgnoreCase)
     {
         {"AL", "Alabama"}, {"AK", "Alaska"}, {"AZ", "Arizona"}, {"AR", "Arkansas"},
         {"CA", "California"}, {"CO", "Colorado"}, {"CT", "Connecticut"}, {"DE", "Delaware"},
@@ -22,6 +22,7 @@ public static class USStates
     public static string GetStateName(string? abbreviation)
     {
         if (string.IsNullOrWhiteSpace(abbreviation)) return string.Empty;
-        return States.TryGetValue(abbreviation.ToUpper(), out var name) ? name : abbreviation;
+        var trimmed = abbreviation.Trim();
+        return States.TryGetValue(trimmed, out var name) ? name : trimmed;
     }
 }

@@ -1,6 +1,7 @@
 @using HrPlatform.Data.Entities
 @using Microsoft.AspNetCore.WebUtilities
 @rendermode InteractiveServer
+@implements IDisposable
 <TimezoneInitializer/>
 @attribute [Authorize(Roles = $"{RoleConstants.Admin},{RoleConstants.Manager}")]
 @inject NavigationManager Nav
@@ -152,28 +153,7 @@ else
         <div class="alert alert-info mt-3">No invitations found matching the selected filters.</div>
     }
 
-    @if (totalPages > 1)
-    {
-        <nav aria-label="Invitation list pagination" class="mt-4">
-            <ul class="pagination justify-content-center">
-                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                    <button class="page-link" @onclick="() => ChangePage(currentPage - 1)" tabindex="-1">Previous</button>
-                </li>
-
-                @for (var i = 1; i <= totalPages; i++)
-                {
-                    var pageIndex = i;
-                    <li class="page-item @(currentPage == pageIndex ? "active" : "")">
-                        <button class="page-link" @onclick="() => ChangePage(pageIndex)">@pageIndex</button>
-                    </li>
-                }
-
-                <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                    <button class="page-link" @onclick="() => ChangePage(currentPage + 1)">Next</button>
-                </li>
-            </ul>
-        </nav>
-    }
+    <PaginationNav TotalPages="totalPages" CurrentPage="currentPage" OnPageChanged="ChangePage" AriaLabel="Invitation list pagination" />
 }
 
 @code {

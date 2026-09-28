@@ -6,10 +6,10 @@ using Xunit;
 using HrPlatform.Services;
 using System.Collections.Generic;
 
-namespace HrPlatform.Tests.Services
+namespace HrPlatform.Tests.Services;
+
+public class EmailServiceTests
 {
-    public class EmailServiceTests
-    {
         [Fact]
         public async Task SendEmailAsync_ConstructsSuccessfullyAndHandlesException()
         {
@@ -72,4 +72,3 @@ namespace HrPlatform.Tests.Services
             Assert.Throws<ArgumentNullException>(() => new EmailService(configuration));
         }
     }
-}

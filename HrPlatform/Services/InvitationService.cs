@@ -35,11 +35,9 @@ public class InvitationService : IInvitationService
 
     public async Task<PaginationResult<Invitation>> GetRecentInvitationsPagedAsync(int pageNumber = 1, int pageSize = 10)
     {
-        var invitations = await _db.Invitations
+        return await _db.Invitations
             .OrderByDescending(i => i.CreatedAt)
-            .ToListAsync();
-
-        return invitations.Paginate(pageNumber, pageSize);
+            .PaginateAsync(pageNumber, pageSize);
     }
 
     public async Task<Invitation> CreateAsync(Invitation invitation)
@@ -108,7 +106,7 @@ public class InvitationService : IInvitationService
                 .FirstOrDefaultAsync(u => u.PhoneNumber == invitation.Phone);
 
         bool isDriver = existingUser is not null &&
-                        (await _userManager.IsInRoleAsync(existingUser, "Driver"));
+                        (await _userManager.IsInRoleAsync(existingUser, RoleConstants.Driver));
 
         if (existingUser is not null)
         {
@@ -162,7 +160,7 @@ public class InvitationService : IInvitationService
             }
             else
             {
-                await _smsService.SendDriverInviteAsync(invitation.Phone, string.Empty, string.Empty, link.AbsolutePath);
+                await _smsService.SendDriverInviteAsync(invitation.Phone, string.Empty, string.Empty, link.ToString());
             }
 
             return InviteResult.Ok(existing: false);
@@ -175,7 +173,7 @@ public class InvitationService : IInvitationService
         if (original is null)
             return InviteResult.Fail("Invitation not found.");
 
-        // Mark original as used so it won't show as pending
+        // Mark original as used so it won't conflict with pending check in InviteAsync
         original.IsUsed = true;
         await _db.SaveChangesAsync();
 
@@ -191,13 +189,20 @@ public class InvitationService : IInvitationService
             // Token and ExpiresAt are set by the entity defaults
         };
 
-        var link = new Uri(baseUri,
-            $"/invite/{fresh.Token}");
+        var link = new Uri(baseUri, $"/invite/{fresh.Token}");
 
         var result = await InviteAsync(fresh, link);
 
         if (result.Success)
+        {
             await CreateAsync(fresh);
+        }
+        else
+        {
+            // Roll back original status on send failure
+            original.IsUsed = false;
+            await _db.SaveChangesAsync();
+        }
 
         return result;
     }

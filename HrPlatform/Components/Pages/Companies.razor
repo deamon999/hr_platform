@@ -79,30 +79,7 @@ else
         }
     </style>
 
-    @if (paginationResult.TotalPages > 1)
-    {
-        <nav aria-label="Company list pagination" class="mt-4">
-            <ul class="pagination justify-content-center">
-
-                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                    <button class="page-link" @onclick="() => ChangePage(currentPage - 1)" tabindex="-1">Previous</button>
-                </li>
-
-                @for (int i = 1; i <= paginationResult.TotalPages; i++)
-                {
-                    var pageIndex = i; // Local variable capture needed for Blazor loops
-                    <li class="page-item @(currentPage == pageIndex ? "active" : "")">
-                        <button class="page-link" @onclick="() => ChangePage(pageIndex)">@pageIndex</button>
-                    </li>
-                }
-
-                <li class="page-item @(currentPage == paginationResult.TotalPages ? "disabled" : "")">
-                    <button class="page-link" @onclick="() => ChangePage(currentPage + 1)">Next</button>
-                </li>
-
-            </ul>
-        </nav>
-    }
+    <PaginationNav TotalPages="paginationResult.TotalPages" CurrentPage="currentPage" OnPageChanged="ChangePage" AriaLabel="Company list pagination" />
 }
 
 @if (deleteTarget is not null)

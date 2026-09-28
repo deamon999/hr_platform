@@ -39,8 +39,7 @@ public class DashboardService(ApplicationDbContext db) : IDashboardService
                 .CountAsync(l => l.ExpiryDate <= in30
                                  && l.ExpiryDate >= DateOnly.FromDateTime(now)),
             NewLeads: await db.Leads.CountAsync(l => l.Status == LeadStatus.New),
-            ActiveLeads: await db.Leads
-                .CountAsync(l => l.Status != LeadStatus.New && l.Status != LeadStatus.Hired && l.Status != LeadStatus.NotInterested && l.Status != LeadStatus.Rejected && l.Status != LeadStatus.NotQualified),
+            ActiveLeads: await db.Leads.CountAsync(LeadExpressions.IsActionable),
             ApplicationsByStatus: byStatus);
     }
 
@@ -89,7 +88,8 @@ public class DashboardService(ApplicationDbContext db) : IDashboardService
             NewLeads: await db.Leads
                 .CountAsync(l => l.CompanyId == companyId && l.Status == LeadStatus.New),
             ActiveLeads: await db.Leads
-                .CountAsync(l => l.CompanyId == companyId && l.Status != LeadStatus.New && l.Status != LeadStatus.Hired && l.Status != LeadStatus.NotInterested && l.Status != LeadStatus.Rejected && l.Status != LeadStatus.NotQualified),
+                .Where(l => l.CompanyId == companyId)
+                .CountAsync(LeadExpressions.IsActionable),
             ApplicationsByStatus: byStatus);
     }
 }

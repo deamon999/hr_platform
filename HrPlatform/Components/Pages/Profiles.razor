@@ -158,28 +158,7 @@ else
             }
         </style>
 
-        @if (totalPages > 1)
-        {
-            <nav aria-label="Profile list pagination" class="mt-4">
-                <ul class="pagination justify-content-center">
-                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                        <button class="page-link" @onclick="() => ChangePage(currentPage - 1)" tabindex="-1">Previous</button>
-                    </li>
-
-                    @for (int i = 1; i <= totalPages; i++)
-                    {
-                        var pageIndex = i;
-                        <li class="page-item @(currentPage == pageIndex ? "active" : "")">
-                            <button class="page-link" @onclick="() => ChangePage(pageIndex)">@pageIndex</button>
-                        </li>
-                    }
-
-                    <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                        <button class="page-link" @onclick="() => ChangePage(currentPage + 1)">Next</button>
-                    </li>
-                </ul>
-            </nav>
-        }
+        <PaginationNav TotalPages="totalPages" CurrentPage="currentPage" OnPageChanged="ChangePage" AriaLabel="Profile list pagination" />
     </div>
 }
 

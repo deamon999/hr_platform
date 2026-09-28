@@ -1,39 +1,33 @@
+using System.Collections.Concurrent;
 using System.ComponentModel;
-using HrPlatform.Data.Enums;
+using System.Reflection;
 
 namespace HrPlatform.Utils;
 
+/// <summary>
+/// Utility extension methods for enums.
+/// </summary>
 public static class EnumExtensions
 {
+    private static readonly ConcurrentDictionary<(Type, object), string?> DescriptionCache = new();
+
     /// <summary>
-    /// Retrieves the Description value from an enum member using reflection.
+    /// Retrieves the Description value from an enum member using cached reflection.
     /// </summary>
     /// <typeparam name="T">The type of the enum.</typeparam>
     /// <param name="enumValue">The specific enum value to check.</param>
     /// <returns>The string description, or null if no description is found.</returns>
     public static string? GetDescriptionValue<T>(this T enumValue) where T : struct, Enum
     {
-        // 1. Get the Type of the enum (e.g., typeof(EmploymentType))
-        var type = typeof(T);
-
-        // 2. Get the FieldInfo for the specific member value passed in (e.g., EmploymentW2)
-        var field = type.GetField(enumValue.ToString());
-
-        if (field == null)
+        return DescriptionCache.GetOrAdd((typeof(T), enumValue), key =>
         {
-            return null; // Should not happen if input is a valid enum
-        }
+            var (type, val) = key;
+            var name = val.ToString();
+            if (string.IsNullOrEmpty(name)) return null;
 
-        // 3. Get the custom attribute attached to that field
-        var attributes = field.GetCustomAttributes(typeof(DescriptionAttribute), true);
-
-        if (attributes.Length > 0)
-        {
-            // 4. Cast and return the Description property value
-            return ((DescriptionAttribute)attributes[0]).Description;
-        }
-
-        // If no description attribute is found, return null or a default string
-        return null; 
+            var field = type.GetField(name);
+            var attribute = field?.GetCustomAttribute<DescriptionAttribute>(inherit: false);
+            return attribute?.Description;
+        });
     }
 }

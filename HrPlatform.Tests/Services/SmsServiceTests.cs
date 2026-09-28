@@ -5,10 +5,10 @@ using Microsoft.Extensions.Configuration;
 using Xunit;
 using HrPlatform.Services;
 
-namespace HrPlatform.Tests.Services
+namespace HrPlatform.Tests.Services;
+
+public class SmsServiceTests
 {
-    public class SmsServiceTests
-    {
         [Fact]
         public async Task SendDriverInviteAsync_ConstructsSuccessfullyAndHandlesException()
         {
@@ -31,4 +31,3 @@ namespace HrPlatform.Tests.Services
             Assert.True(true);
         }
     }
-}

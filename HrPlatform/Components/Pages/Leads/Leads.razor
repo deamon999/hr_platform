@@ -32,7 +32,7 @@
                 @bind:after="ResetPageAndLoad">
             <option value="">All Statuses</option>
             <option value="Actionable">Needs Action</option>
-            @foreach (var status in Enum.GetValues<LeadStatus>().Where(s => s != LeadStatus.Contacted && s != LeadStatus.Invited && s != LeadStatus.Converted))
+            @foreach (var status in Enum.GetValues<LeadStatus>().Where(s => !s.IsLegacy()))
             {
                 <option value="@status">@(status.GetDescriptionValue() ?? status.ToString())</option>
             }
@@ -210,26 +210,7 @@ else
         <div class="alert alert-info mt-3">No leads found matching the selected filters.</div>
     }
 
-    @if (totalPages > 1)
-    {
-        <nav aria-label="Lead list pagination" class="mt-4">
-            <ul class="pagination justify-content-center">
-                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                    <button class="page-link" @onclick="() => ChangePage(currentPage - 1)">Previous</button>
-                </li>
-                @for (var i = 1; i <= totalPages; i++)
-                {
-                    var pageIndex = i;
-                    <li class="page-item @(currentPage == pageIndex ? "active" : "")">
-                        <button class="page-link" @onclick="() => ChangePage(pageIndex)">@pageIndex</button>
-                    </li>
-                }
-                <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                    <button class="page-link" @onclick="() => ChangePage(currentPage + 1)">Next</button>
-                </li>
-            </ul>
-        </nav>
-    }
+    <PaginationNav TotalPages="totalPages" CurrentPage="currentPage" OnPageChanged="ChangePage" AriaLabel="Lead list pagination" />
 }
 
 @if (deleteTarget != null)

@@ -9,10 +9,10 @@ using HrPlatform.Services;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
-namespace HrPlatform.Tests.Services
+namespace HrPlatform.Tests.Services;
+
+public class DashboardServiceTests
 {
-    public class DashboardServiceTests
-    {
         private readonly DbContextOptions<ApplicationDbContext> _options;
 
         public DashboardServiceTests()
@@ -70,4 +70,3 @@ namespace HrPlatform.Tests.Services
             Assert.Equal(1, stats.PendingApplications);
         }
     }
-}

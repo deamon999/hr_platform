@@ -1,4 +1,4 @@
-﻿using HrPlatform.Data;
+using HrPlatform.Data;
 using HrPlatform.Data.Entities;
 using HrPlatform.Data.Enums;
 using HrPlatform.Data.Models;
@@ -47,7 +47,7 @@ public class JobInvitationService : IJobInvitationService
 
         // Notify driver that their job invitation is ready
         var user = await _userManager.FindByIdAsync(userId);
-        var job = await _db.Jobs.FindAsync(jobId);
+        var job = await _db.Jobs.Include(j => j.Company).FirstOrDefaultAsync(j => j.Id == jobId);
 
         if (user?.Email is not null && job is not null)
         {
@@ -77,36 +77,12 @@ public class JobInvitationService : IJobInvitationService
 
     public async Task<PaginationResult<JobInvitation>> GetForDriverPagedAsync(string userId, int pageNumber = 1, int pageSize = 10)
     {
-        var invitations = await GetForDriverAsync(userId);
-        return invitations.Paginate(pageNumber, pageSize);
+        return await _db.JobInvitations
+            .Include(ji => ji.Job)
+            .Where(ji => ji.UserId == userId)
+            .OrderByDescending(ji => ji.CreatedAt)
+            .PaginateAsync(pageNumber, pageSize);
     }
-
-    //
-    // public async Task<List<JobInvitation>> GetForCompanyAsync(
-    //     string companyId, Guid? jobId = null)
-    // {
-    //     // Step 1: load company job ids
-    //     var jobIds = await _db.Jobs
-    //         .Where(j => j.CompanyId == companyId)
-    //         .Select(j => j.Id)
-    //         .ToListAsync();
-    //
-    //     if (!jobIds.Any())
-    //         return new List<JobInvitation>();
-    //
-    //     // Step 2: filter invitations by those ids (optional single-job filter)
-    //     var query = _db.JobInvitations
-    //         .Include(ji => ji.Job)
-    //         .Include(ji => ji.User)
-    //         .Where(ji => jobIds.Contains(ji.JobId));
-    //
-    //     if (jobId.HasValue)
-    //         query = query.Where(ji => ji.JobId == jobId.Value);
-    //
-    //     return await query
-    //         .OrderByDescending(ji => ji.CreatedAt)
-    //         .ToListAsync();
-    // }
 
     // ──────────────────────────────────────────────────────────
     // Status update (driver accept / decline)

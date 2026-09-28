@@ -22,16 +22,8 @@ public class UserTimeZoneService : IUserTimeZoneService
         }
     }
 
-    public DateTime? ToUserTime(DateTime? utcTime)
-    {
-        if (utcTime == null) return null;
-        
-        var time = utcTime.Value;
-        if (time.Kind == DateTimeKind.Unspecified)
-            time = DateTime.SpecifyKind(time, DateTimeKind.Utc);
-            
-        return TimeZoneInfo.ConvertTimeFromUtc(time, TimeZone);
-    }
+    public DateTime? ToUserTime(DateTime? utcTime) =>
+        utcTime.HasValue ? ToUserTime(utcTime.Value) : null;
     
     public DateTime ToUserTime(DateTime utcTime)
     {

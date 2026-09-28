@@ -56,11 +56,14 @@ else
         {
             stats = await DashSvc.GetAdminStatsAsync();
         }
-        else
+        else if (int.TryParse(user.FindFirst("companyId")?.Value, out var cid))
         {
-            var cid = int.Parse(user.FindFirst("companyId")!.Value);
             companyIdForLeads = cid;
             stats = await DashSvc.GetManagerStatsAsync(cid);
+        }
+        else
+        {
+            stats = new DashboardStats(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, new Dictionary<string, int>());
         }
     }
 

@@ -52,14 +52,12 @@ public class LeadService : ILeadService
 
         if (actionableOnly)
         {
-            query = query.Where(l => l.Status != LeadStatus.New && l.Status != LeadStatus.Hired && l.Status != LeadStatus.NotInterested && l.Status != LeadStatus.Rejected && l.Status != LeadStatus.NotQualified);
+            query = query.Where(LeadExpressions.IsActionable);
         }
 
-        var results = await query
+        return await query
             .OrderByDescending(l => l.CreatedAt)
-            .ToListAsync();
-
-        return results.Paginate(pageNumber, pageSize);
+            .PaginateAsync(pageNumber, pageSize);
     }
 
     public async Task<Lead?> GetByIdAsync(int id)
@@ -103,7 +101,8 @@ public class LeadService : ILeadService
         }
 
         return await query
-            .Where(l => l.ReminderDate != null && l.ReminderDate <= now && l.Status != LeadStatus.Hired && l.Status != LeadStatus.NotInterested && l.Status != LeadStatus.Rejected && l.Status != LeadStatus.NotQualified)
+            .Where(l => l.ReminderDate != null && l.ReminderDate <= now)
+            .Where(LeadExpressions.IsNotTerminal)
             .OrderBy(l => l.ReminderDate)
             .ToListAsync();
     }

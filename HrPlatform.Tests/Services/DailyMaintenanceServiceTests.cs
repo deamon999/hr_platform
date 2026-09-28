@@ -13,10 +13,10 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
-namespace HrPlatform.Tests.Services
+namespace HrPlatform.Tests.Services;
+
+public class DailyMaintenanceServiceTests
 {
-    public class DailyMaintenanceServiceTests
-    {
         private readonly ServiceCollection _services;
         private readonly ApplicationDbContext _db;
         private readonly Mock<IAdminUserService> _adminUserServiceMock;
@@ -178,4 +178,3 @@ namespace HrPlatform.Tests.Services
                 Times.Never);
         }
     }
-}

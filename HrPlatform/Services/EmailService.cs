@@ -1,27 +1,27 @@
 using MailKit.Net.Smtp;
 using MailKit.Security;
+using Microsoft.Extensions.Logging;
 using MimeKit;
-
-#pragma warning disable SYSLIB0014
 
 namespace HrPlatform.Services;
 
 public class EmailService : IEmailService
 {
-
     private readonly string _fromEmail;
     private readonly string _fromName;
     private readonly string _host;
     private readonly string _password;
     private readonly int _port;
     private readonly string _username;
+    private readonly ILogger<EmailService>? _logger;
 
-    public EmailService(IConfiguration configuration)
+    public EmailService(IConfiguration configuration, ILogger<EmailService>? logger = null)
     {
-        _host = configuration["Smtp:Host"] ?? throw new ArgumentNullException("Smtp:Host configuration is missing");
+        _logger = logger;
+        _host = configuration["Smtp:Host"] ?? throw new ArgumentNullException(nameof(configuration), "Smtp:Host configuration is missing");
         _port = int.TryParse(configuration["Smtp:Port"], out var port) ? port : 587;
-        _username = configuration["Smtp:Username"] ?? "";
-        _password = configuration["Smtp:Password"] ?? "";
+        _username = configuration["Smtp:Username"] ?? string.Empty;
+        _password = configuration["Smtp:Password"] ?? string.Empty;
 
         _fromEmail = configuration["Smtp:FromEmail"] ?? "noreply@example.com";
         _fromName = configuration["Smtp:FromName"] ?? "CDL Pool";
@@ -38,7 +38,7 @@ public class EmailService : IEmailService
 
             var mimeMessage = new MimeMessage();
             mimeMessage.From.Add(new MailboxAddress(_fromName, _fromEmail));
-            if (string.IsNullOrEmpty(userName))
+            if (string.IsNullOrWhiteSpace(userName))
                 mimeMessage.To.Add(new MailboxAddress("Guest", email));
             else
                 mimeMessage.To.Add(new MailboxAddress(userName, email));
@@ -46,12 +46,12 @@ public class EmailService : IEmailService
             mimeMessage.Body = new TextPart("html") { Text = htmlContent };
 
             await client.SendAsync(mimeMessage);
-            client.Disconnect(true);
-            Console.WriteLine($"Successfully sent email to {email}");
+            await client.DisconnectAsync(true);
+            _logger?.LogInformation("Successfully sent email to {Email}", email);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error sending email to {email}: {ex.Message}");
+            _logger?.LogError(ex, "Error sending email to {Email}", email);
         }
     }
 }

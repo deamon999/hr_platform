@@ -28,12 +28,28 @@ public class AdminUserService : IAdminUserService
 
     public async Task<PaginationResult<UserViewModel>> GetAllUsersWithRolesPagedAsync(int pageNumber = 1, int pageSize = 10)
     {
-        var users = await _context.Users
+        if (pageNumber < 1) pageNumber = 1;
+        if (pageSize < 1) pageSize = 10;
+
+        var query = _context.Users
             .Include(applicationUser => applicationUser.Company)
+            .OrderBy(u => u.UserName);
+
+        var totalCount = await query.CountAsync();
+        var pagedUsers = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
 
-        var viewModels = await BuildUserViewModelsAsync(users);
-        return viewModels.Paginate(pageNumber, pageSize);
+        var viewModels = await BuildUserViewModelsAsync(pagedUsers);
+
+        return new PaginationResult<UserViewModel>
+        {
+            Items = viewModels,
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
     }
 
     public async Task<List<UserViewModel>> GetUsersByCompanyWithRolesAsync(int companyId)
@@ -48,13 +64,29 @@ public class AdminUserService : IAdminUserService
 
     public async Task<PaginationResult<UserViewModel>> GetUsersByCompanyWithRolesPagedAsync(int companyId, int pageNumber = 1, int pageSize = 10)
     {
-        var users = await _context.Users
+        if (pageNumber < 1) pageNumber = 1;
+        if (pageSize < 1) pageSize = 10;
+
+        var query = _context.Users
             .Include(applicationUser => applicationUser.Company)
             .Where(u => u.CompanyId == companyId)
+            .OrderBy(u => u.UserName);
+
+        var totalCount = await query.CountAsync();
+        var pagedUsers = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
 
-        var viewModels = await BuildUserViewModelsAsync(users);
-        return viewModels.Paginate(pageNumber, pageSize);
+        var viewModels = await BuildUserViewModelsAsync(pagedUsers);
+
+        return new PaginationResult<UserViewModel>
+        {
+            Items = viewModels,
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
     }
 
     public async Task<UserViewModel> GetUserByIdAsync(string id)
@@ -120,19 +152,19 @@ public class AdminUserService : IAdminUserService
         // Get all user roles for the given users in one query using the Transient DbContext
         var userRolesMap = await (from ur in _context.UserRoles
                                   join r in _context.Roles on ur.RoleId equals r.Id
-                                  where userIds.Contains(ur.UserId)
-                                  select new { ur.UserId, RoleName = r.Name })
+                                  where userIds.Contains(ur.UserId) && r.Name != null
+                                  select new { ur.UserId, RoleName = r.Name! })
                                   .ToListAsync();
 
         var rolesByUserId = userRolesMap
             .GroupBy(x => x.UserId)
             .ToDictionary(g => g.Key, g => g.Select(x => x.RoleName).ToList());
 
-        var userList = new List<UserViewModel>();
+        var userList = new List<UserViewModel>(users.Count);
 
         foreach (var user in users)
         {
-            var userRoles = rolesByUserId.TryGetValue(user.Id, out var roles) ? roles : new List<string?>();
+            var userRoles = rolesByUserId.TryGetValue(user.Id, out var roles) ? roles : new List<string>();
 
             userList.Add(new UserViewModel
             {

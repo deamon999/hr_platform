@@ -10,10 +10,10 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
 
-namespace HrPlatform.Tests.Services
+namespace HrPlatform.Tests.Services;
+
+public class InvitationServiceTests
 {
-    public class InvitationServiceTests
-    {
         private readonly DbContextOptions<ApplicationDbContext> _options;
 
         public InvitationServiceTests()
@@ -103,4 +103,3 @@ namespace HrPlatform.Tests.Services
             Assert.Equal(2, await context.Invitations.CountAsync()); // A new one should be created
         }
     }
-}

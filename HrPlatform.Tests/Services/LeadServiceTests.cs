@@ -11,10 +11,10 @@ using HrPlatform.Services;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
-namespace HrPlatform.Tests.Services
+namespace HrPlatform.Tests.Services;
+
+public class LeadServiceTests : IDisposable
 {
-    public class LeadServiceTests : IDisposable
-    {
         private readonly ApplicationDbContext _db;
         private readonly LeadService _service;
 
@@ -264,4 +264,3 @@ namespace HrPlatform.Tests.Services
             Assert.False(await _service.IsDuplicateLeadAsync(1, "test@example.com", null, 1));
         }
     }
-}
