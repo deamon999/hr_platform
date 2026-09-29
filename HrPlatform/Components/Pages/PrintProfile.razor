@@ -7,9 +7,18 @@
 
 <PageTitle>Print Profile - @profile?.FirstName @profile?.LastName</PageTitle>
 
-@if (profile == null)
+@if (isLoading)
 {
     <LoadingSpinner Text="Loading profile for printing..." />
+}
+else if (profile == null)
+{
+    <EmptyState Icon="bi-person-x"
+                Title="Profile Not Found"
+                Message="The requested profile could not be found."
+                ActionText="Back to Profiles"
+                ActionIcon="bi-arrow-left"
+                ActionHref="/profiles" />
 }
 else
 {
@@ -378,16 +387,25 @@ else
     [Parameter] public DriverProfile? Profile { get; set; }
 
     private DriverProfile? profile;
+    private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
-        if (Profile != null)
+        isLoading = true;
+        try
         {
-            profile = Profile;
+            if (Profile != null)
+            {
+                profile = Profile;
+            }
+            else if (Id.HasValue)
+            {
+                profile = await ProfileService.GetByIdAsync(Id.Value);
+            }
         }
-        else if (Id.HasValue)
+        finally
         {
-            profile = await ProfileService.GetByIdAsync(Id.Value);
+            isLoading = false;
         }
     }
 

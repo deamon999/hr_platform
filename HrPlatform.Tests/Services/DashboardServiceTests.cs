@@ -29,6 +29,7 @@ public class DashboardServiceTests
             using var context = new ApplicationDbContext(_options);
             
             context.DriverProfiles.Add(new DriverProfile { Id = 1, UserId = "1", FirstName = "F", LastName = "L", PhoneNumber = "1", Email = "e@e.com" });
+            context.Leads.Add(new Lead { Id = 1, FirstName = "L", LastName = "D", Status = LeadStatus.New });
             context.Jobs.Add(new Job { Id = 1, IsActive = true, CompanyId = 1, Title = "T" });
             context.JobApplications.Add(new JobApplication { Id = 1, Status = ApplicationStatus.Pending, AppliedAt = DateTime.UtcNow, UserId = "1", JobId = 1 });
             
@@ -40,7 +41,7 @@ public class DashboardServiceTests
             var stats = await service.GetAdminStatsAsync();
 
             // Assert
-            Assert.Equal(1, stats.TotalDrivers);
+            Assert.Equal(1, stats.TotalPipeline);
             Assert.Equal(1, stats.TotalJobs);
             Assert.Equal(1, stats.OpenJobs);
             Assert.Equal(1, stats.PendingApplications);

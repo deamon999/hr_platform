@@ -125,7 +125,7 @@ else
                                                 class="bi bi-arrow-clockwise"></i> Resend
                                         </button>
                                     }
-                                    <button type="button" class="btn btn-outline-danger" @onclick="() => DeleteInvitationAsync(inv)" title="Delete Invitation"><i
+                                    <button type="button" class="btn btn-outline-danger" @onclick="() => ConfirmDelete(inv)" title="Delete Invitation"><i
                                             class="bi bi-trash"></i></button>
                                 </div>
                             </div>
@@ -159,6 +159,21 @@ else
 
     <PaginationNav TotalPages="totalPages" CurrentPage="currentPage" OnPageChanged="ChangePage" AriaLabel="Invitation list pagination" />
 }
+
+<ConfirmDialog IsOpen="@(deleteTarget != null)"
+               Title="Confirm Delete Invitation"
+               ConfirmText="Delete"
+               ConfirmButtonClass="btn-danger"
+               IsProcessing="@isDeleting"
+               OnConfirm="DeleteConfirmedAsync"
+               OnCancel="CancelDelete">
+    <BodyContent>
+        @if (deleteTarget != null)
+        {
+            <p class="mb-0">Are you sure you want to delete the invitation for <strong class="text-light">@(deleteTarget.Email ?? deleteTarget.Phone ?? "this recipient")</strong>? This action cannot be undone.</p>
+        }
+    </BodyContent>
+</ConfirmDialog>
 
 @code {
     private List<Invitation> pagedInvitations = new();
@@ -368,22 +383,45 @@ else
         await LoadAsync(_searchTerm);
     }
 
-    private async Task DeleteInvitationAsync(Invitation inv)
+    private Invitation? deleteTarget;
+    private bool isDeleting;
+
+    private void ConfirmDelete(Invitation inv)
     {
-        var success = await InvitationService.DeleteAsync(inv.Id);
-        if (success)
-        {
-            _statusMessage = "Invitation deleted successfully.";
-            _statusClass = "alert-success";
-            await LoadAsync(_searchTerm);
-        }
-        else
-        {
-            _statusMessage = "Failed to delete invitation.";
-            _statusClass = "alert-danger";
-        }
+        deleteTarget = inv;
     }
 
+    private void CancelDelete()
+    {
+        deleteTarget = null;
+    }
+
+    private async Task DeleteConfirmedAsync()
+    {
+        if (deleteTarget == null || isDeleting) return;
+
+        isDeleting = true;
+        try
+        {
+            var success = await InvitationService.DeleteAsync(deleteTarget.Id);
+            if (success)
+            {
+                _statusMessage = "Invitation deleted successfully.";
+                _statusClass = "alert-success";
+                deleteTarget = null;
+                await LoadAsync(_searchTerm);
+            }
+            else
+            {
+                _statusMessage = "Failed to delete invitation.";
+                _statusClass = "alert-danger";
+            }
+        }
+        finally
+        {
+            isDeleting = false;
+        }
+    }
 }
 
 

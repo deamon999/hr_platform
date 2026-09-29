@@ -18,7 +18,7 @@ public static class LeadStatusExtensions
     /// Checks if a lead status is actionable/active (not New and not in a terminal state).
     /// </summary>
     public static bool IsActionable(this LeadStatus status) =>
-        !status.IsTerminal() && status != LeadStatus.New;
+        !status.IsTerminal();
 
     /// <summary>
     /// Checks if a lead status is a legacy status kept for historical database compatibility.
@@ -36,7 +36,6 @@ public static class LeadExpressions
     /// Expression predicate to filter actionable leads (in progress, neither New nor closed/terminal).
     /// </summary>
     public static readonly Expression<Func<Lead, bool>> IsActionable = l =>
-        l.Status != LeadStatus.New &&
         l.Status != LeadStatus.Hired &&
         l.Status != LeadStatus.NotInterested &&
         l.Status != LeadStatus.Rejected &&

@@ -20,11 +20,11 @@
 }
 else
 {
-    <h5 class="fw-bold mb-3 border-bottom pb-2 text-secondary">Candidates & Leads</h5>
+    <h5 class="fw-bold mb-3 border-bottom pb-2 text-secondary">Driver Pipeline Overview</h5>
     <div class="row g-4 mb-4">
-        <KpiCard Label="Driver Profiles" Value="stats.TotalDrivers" Icon="bi-person-badge" Color="info" Href="/profiles" />
-        <KpiCard Label="New Leads" Value="stats.NewLeads" Icon="bi-star" Color="success" Href="/leads?status=New" />
-        <KpiCard Label="Actionable Leads" Value="stats.ActiveLeads" Icon="bi-exclamation-circle" Color="warning" Href="/leads?status=Actionable" />
+        <KpiCard Label="Total Pipeline" Value="stats.TotalPipeline" Icon="bi-funnel" Color="info" Href="/driver-pipeline" />
+        <KpiCard Label="Registered Profiles" Value="stats.RegisteredProfiles" Icon="bi-person-check" Color="success" Href="/driver-pipeline?status=Registered" />
+        <KpiCard Label="Needs Attention" Value="stats.ActionableLeads" Icon="bi-exclamation-circle" Color="warning" Href="/driver-pipeline?status=Actionable" />
     </div>
 
     <h5 class="fw-bold mb-3 border-bottom pb-2 text-secondary mt-4">Recruitment & Jobs</h5>

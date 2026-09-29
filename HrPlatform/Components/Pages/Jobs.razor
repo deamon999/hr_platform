@@ -121,13 +121,13 @@ else
                                     <button type="button" class="btn btn-primary px-4" @onclick="() => GoToDetails(rowJob.Id)">
                                         View
                                     </button>
-                                    @if (!isDriver)
+                                    @if (CanManageJob(rowJob))
                                     {
-                                        <button type="button" class="btn btn-outline-primary" @onclick="() => GoToEdit(rowJob.Id)">
+                                        <button type="button" class="btn btn-outline-primary" @onclick="() => GoToEdit(rowJob)">
                                             Edit
                                         </button>
                                         <button type="button" class="btn @(rowJob.IsActive ? "btn-outline-warning" : "btn-outline-success")"
-                                                @onclick="async () => await ToggleActiveAsync(rowJob.Id, rowJob.IsActive)"
+                                                @onclick="async () => await ToggleActiveAsync(rowJob)"
                                                 disabled="@(togglingJobId == rowJob.Id)">
                                             @(togglingJobId == rowJob.Id ? "..." : rowJob.IsActive ? "Disable" : "Activate")
                                         </button>
@@ -206,15 +206,25 @@ else
     private bool IsPostJobVisible;
     private int? togglingJobId;
     private bool isDriver;
+    private bool isManager;
     private bool isAdmin;
+    private int? userCompanyId;
+
+    private bool CanManageJob(Job job) =>
+        isAdmin || (isManager && userCompanyId.HasValue && job.CompanyId == userCompanyId.Value);
 
     protected override async Task OnInitializedAsync()
     {
         var user = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
         isAdmin = user.IsInRole(RoleConstants.Admin);
+        isManager = user.IsInRole(RoleConstants.Manager);
         var currentUserId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         isDriver = user.IsInRole(RoleConstants.Driver);
-        IsPostJobVisible = (user.IsInRole("Manager") && user.FindFirst("companyId") != null) || user.IsInRole("Admin");
+        if (int.TryParse(user.FindFirst("companyId")?.Value, out var cid))
+        {
+            userCompanyId = cid;
+        }
+        IsPostJobVisible = (isManager && userCompanyId.HasValue) || isAdmin;
 
         if (isDriver && currentUserId != null)
         {
@@ -290,12 +300,13 @@ else
         Nav.NavigateTo(uri);
     }
 
-    private async Task ToggleActiveAsync(int jobId, bool currentActive)
+    private async Task ToggleActiveAsync(Job job)
     {
-        togglingJobId = jobId;
+        if (!CanManageJob(job)) return;
+        togglingJobId = job.Id;
         try
         {
-            await JobSvc.SetActiveAsync(jobId, !currentActive);
+            await JobSvc.SetActiveAsync(job.Id, !job.IsActive);
             await LoadAsync();
         }
         finally
@@ -314,13 +325,15 @@ else
         Nav.NavigateTo($"/jobs/{id}");
     }
 
-    private void GoToEdit(int id)
+    private void GoToEdit(Job job)
     {
-        Nav.NavigateTo($"/jobs/edit/{id}");
+        if (!CanManageJob(job)) return;
+        Nav.NavigateTo($"/jobs/edit/{job.Id}");
     }
 
     private void ConfirmDelete(Job job)
     {
+        if (!CanManageJob(job)) return;
         deleteTarget = job;
     }
 
@@ -328,7 +341,7 @@ else
 
     private async Task DeleteConfirmedAsync()
     {
-        if (deleteTarget is null) return;
+        if (deleteTarget is null || !CanManageJob(deleteTarget)) return;
         try
         {
             isDeleting = true;

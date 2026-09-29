@@ -51,13 +51,23 @@
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
-        ParseTabFromUri();
+        var uri = NavManager.ToAbsoluteUri(e.Location);
+        var path = uri.AbsolutePath.TrimEnd('/');
+        
+        // If navigating completely away to another page (like /users/invite), do not update state to prevent flicker
+        if (!path.Equals("/users", StringComparison.OrdinalIgnoreCase) && 
+            !path.Equals("/invitations", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        ParseTabFromUri(uri);
         StateHasChanged();
     }
 
-    private void ParseTabFromUri()
+    private void ParseTabFromUri(Uri? uri = null)
     {
-        var uri = NavManager.ToAbsoluteUri(NavManager.Uri);
+        uri ??= NavManager.ToAbsoluteUri(NavManager.Uri);
         
         if (uri.AbsolutePath.Equals("/invitations", StringComparison.OrdinalIgnoreCase))
         {

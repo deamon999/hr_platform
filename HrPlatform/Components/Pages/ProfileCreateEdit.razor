@@ -20,7 +20,7 @@
     }
     else if (showWelcomeOverlay)
     {
-        <div class="row g-0 h-100 p-4" style="min-height: calc(100vh - 4.5rem); background-color: var(--bg-color);">
+        <div class="row g-0 h-100 p-4" style="min-height: calc(100vh - 4.5rem); background-color: var(--bg-dark);">
             <div class="col-12 col-xl-10 mx-auto">
                 <HrPlatform.Components.Pages.ProfileShared.ProfileRequirementsWelcome OnContinue="StartWizard"/>
             </div>
@@ -363,7 +363,7 @@
     protected override async Task OnInitializedAsync()
     {
         var auth = await AuthState.GetAuthenticationStateAsync();
-        userId = auth.User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        userId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
 
         var existing = Id > 0
             ? await ProfileService.GetByIdAsync(Id)
@@ -371,7 +371,8 @@
 
         if (existing is null && Id > 0)
         {
-            Nav.NavigateTo("/profiles");
+            var canViewProfilesList = auth.User.IsInRole(RoleConstants.Admin) || auth.User.IsInRole(RoleConstants.Manager);
+            Nav.NavigateTo(canViewProfilesList ? "/profiles" : "/my-profile");
             return;
         }
 

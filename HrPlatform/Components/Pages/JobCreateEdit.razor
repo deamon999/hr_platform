@@ -16,11 +16,23 @@
     </button>
 </div>
 
-@if (job is null)
+@if (isLoading)
 {
     <LoadingSpinner Text="Loading job..." />
 }
-else
+else if (notFound)
+{
+    <EmptyState Icon="bi-search" Title="Job Not Found" Message="The requested job posting could not be found." ActionText="Back to Jobs" ActionIcon="bi-arrow-left" OnAction="Cancel" />
+}
+else if (notAuthorized)
+{
+    <EmptyState Icon="bi-shield-x" Title="Access Denied" Message="You do not have permission to edit this job posting." ActionText="Back to Jobs" ActionIcon="bi-arrow-left" OnAction="Cancel" />
+}
+else if (noCompanyAssigned)
+{
+    <EmptyState Icon="bi-building-exclamation" Title="No Company Assigned" Message="Your manager account is not assigned to a company. Please contact an administrator." ActionText="Back to Jobs" ActionIcon="bi-arrow-left" OnAction="Cancel" />
+}
+else if (job is not null)
 {
     <div class="row justify-content-center">
         <div class="col-lg-10">
@@ -34,9 +46,17 @@ else
                                                                        IsCompanySelectionDisabled="isCompanySelectionDisabled"/>
 
                         <div class="d-flex gap-2 mt-5 pt-4 border-top border-secondary border-opacity-25 justify-content-end">
-                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4 py-2" @onclick="Cancel">Cancel</button>
-                            <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm">
-                                <i class="bi @(Id == 0 ? "bi-check-circle" : "bi-save") me-1"></i> @(Id == 0 ? "Post Job" : "Save Changes")
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4 py-2" @onclick="Cancel" disabled="@isSaving">Cancel</button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm" disabled="@isSaving">
+                                @if (isSaving)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                    <span>Saving...</span>
+                                }
+                                else
+                                {
+                                    <i class="bi @(Id == 0 ? "bi-check-circle" : "bi-save") me-1"></i> @(Id == 0 ? "Post Job" : "Save Changes")
+                                }
                             </button>
                         </div>
                     </EditForm>
@@ -95,35 +115,94 @@ else
     private Job? job;
     private List<Company> companies = new();
     private bool isCompanySelectionDisabled;
+    private bool isLoading = true;
+    private bool notFound;
+    private bool notAuthorized;
+    private bool noCompanyAssigned;
+    private bool isSaving;
+    private bool isAdmin;
+    private int? userCompanyId;
 
     protected override async Task OnInitializedAsync()
     {
-        job = Id == 0 ? new Job() : await JobSvc.GetByIdAsync(Id) ?? new Job();
-        companies = await JobSvc.GetCompaniesAsync();
-        var auth = await AuthState.GetAuthenticationStateAsync();
-        var user = auth.User;
-        var companyClaim = user.FindFirst("companyId");
-        if (companyClaim != null)
+        isLoading = true;
+        try
         {
-            isCompanySelectionDisabled = true;
-            job.CompanyId = Convert.ToInt32(companyClaim.Value);
+            var auth = await AuthState.GetAuthenticationStateAsync();
+            var user = auth.User;
+            isAdmin = user.IsInRole(RoleConstants.Admin);
+            if (int.TryParse(user.FindFirst("companyId")?.Value, out var cid))
+            {
+                userCompanyId = cid;
+            }
+
+            companies = await JobSvc.GetCompaniesAsync();
+
+            if (!isAdmin && !userCompanyId.HasValue)
+            {
+                noCompanyAssigned = true;
+                return;
+            }
+
+            if (Id == 0)
+            {
+                job = new Job();
+                if (!isAdmin && userCompanyId.HasValue)
+                {
+                    job.CompanyId = userCompanyId.Value;
+                    isCompanySelectionDisabled = true;
+                }
+            }
+            else
+            {
+                var existing = await JobSvc.GetByIdAsync(Id);
+                if (existing is null)
+                {
+                    notFound = true;
+                    return;
+                }
+
+                if (!isAdmin && userCompanyId.HasValue && existing.CompanyId != userCompanyId.Value)
+                {
+                    notAuthorized = true;
+                    return;
+                }
+
+                job = existing;
+                if (!isAdmin)
+                {
+                    isCompanySelectionDisabled = true;
+                }
+            }
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
 
     private async Task SaveAsync()
     {
-        if (job is null) return;
+        if (job is null || isSaving) return;
 
-        if (Id == 0)
+        isSaving = true;
+        try
         {
-            await JobSvc.CreateAsync(job);
-        }
-        else
-        {
-            await JobSvc.UpdateAsync(job);
-        }
+            if (Id == 0)
+            {
+                await JobSvc.CreateAsync(job);
+            }
+            else
+            {
+                await JobSvc.UpdateAsync(job);
+            }
 
-        Cancel();
+            Cancel();
+        }
+        finally
+        {
+            isSaving = false;
+        }
     }
 
     private void Cancel()

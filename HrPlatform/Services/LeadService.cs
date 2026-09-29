@@ -16,9 +16,19 @@ public class LeadService : ILeadService
         _db = db;
     }
 
-    public async Task<PaginationResult<Lead>> GetLeadsPagedAsync(int pageNumber, int pageSize, int? companyId = null, string? searchTerm = null, LeadStatus? status = null, string? addedByUserId = null, bool actionableOnly = false, bool globalOnly = false)
+    public async Task<PaginationResult<Lead>> GetLeadsPagedAsync(int pageNumber, int pageSize, int? companyId = null, string? searchTerm = null, LeadStatus? status = null, string? addedByUserId = null, bool actionableOnly = false, bool globalOnly = false, bool registeredOnly = false)
     {
-        var query = _db.Leads.Include(l => l.AddedByUser).Include(l => l.Notes).AsQueryable();
+        var query = _db.Leads
+            .Include(l => l.AddedByUser)
+            .Include(l => l.Notes)
+            .Include(l => l.ConvertedUser)
+                .ThenInclude(u => u!.DriverProfile)
+            .AsQueryable();
+
+        if (registeredOnly)
+        {
+            query = query.Where(l => l.ConvertedUserId != null);
+        }
 
         if (globalOnly)
         {
@@ -77,6 +87,43 @@ public class LeadService : ILeadService
     public async Task UpdateAsync(Lead lead)
     {
         _db.Leads.Update(lead);
+        
+        // Sync to Profile if ConvertedUserId is present
+        if (!string.IsNullOrEmpty(lead.ConvertedUserId))
+        {
+            var profile = await _db.DriverProfiles.FirstOrDefaultAsync(p => p.UserId == lead.ConvertedUserId);
+            if (profile != null)
+            {
+                profile.FirstName = lead.FirstName;
+                profile.LastName = lead.LastName;
+                profile.Email = lead.Email ?? string.Empty;
+                profile.PhoneNumber = lead.Phone ?? string.Empty;
+
+                // Sync ATS Status to Profile Availability
+                if (lead.Status == LeadStatus.Hired || lead.Status == LeadStatus.NotInterested)
+                {
+                    profile.AvailabilityStatus = AvailabilityStatus.NotAvailable;
+                }
+                else if (lead.Status == LeadStatus.ReadyIn2Weeks)
+                {
+                    profile.AvailabilityStatus = AvailabilityStatus.TwoWeekNotice;
+                }
+
+                profile.UpdatedAt = DateTime.UtcNow;
+                _db.DriverProfiles.Update(profile);
+            }
+            
+            // Also sync Identity User basic info
+            var user = await _db.Users.FindAsync(lead.ConvertedUserId);
+            if (user != null)
+            {
+                user.FirstName = lead.FirstName;
+                user.LastName = lead.LastName;
+                user.PhoneNumber = lead.Phone;
+                _db.Users.Update(user);
+            }
+        }
+
         await _db.SaveChangesAsync();
     }
 

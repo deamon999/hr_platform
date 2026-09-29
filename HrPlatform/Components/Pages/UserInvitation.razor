@@ -170,9 +170,9 @@
                 .ToList()!;
             _model.Role = RoleConstants.Driver;
             
-            if (_isManager)
+            if (_isManager && int.TryParse(user.FindFirstValue("companyId"), out var cid))
             {
-                _model.CompanyId = Convert.ToInt32(user.FindFirstValue("companyId"));
+                _model.CompanyId = cid;
             }
         }
         else if (!Id.HasValue && user.IsInRole(RoleConstants.Manager))
@@ -181,7 +181,10 @@
             _roles = _roles
                 .Where(r => !r.Equals(RoleConstants.Admin, StringComparison.OrdinalIgnoreCase))
                 .ToList()!;
-            _model.CompanyId = Convert.ToInt32(user.FindFirstValue("companyId"));
+            if (int.TryParse(user.FindFirstValue("companyId"), out var cid))
+            {
+                _model.CompanyId = cid;
+            }
         }
         else
         {

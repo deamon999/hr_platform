@@ -7,7 +7,7 @@ namespace HrPlatform.Services;
 
 public interface ILeadService
 {
-    Task<PaginationResult<Lead>> GetLeadsPagedAsync(int pageNumber, int pageSize, int? companyId = null, string? searchTerm = null, LeadStatus? status = null, string? addedByUserId = null, bool actionableOnly = false, bool globalOnly = false);
+    Task<PaginationResult<Lead>> GetLeadsPagedAsync(int pageNumber, int pageSize, int? companyId = null, string? searchTerm = null, LeadStatus? status = null, string? addedByUserId = null, bool actionableOnly = false, bool globalOnly = false, bool registeredOnly = false);
     Task<Lead?> GetByIdAsync(int id);
     Task<Lead> CreateAsync(Lead lead);
     Task UpdateAsync(Lead lead);

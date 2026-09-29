@@ -33,9 +33,24 @@
     }
 </div>
 
-@if (company is null)
+@if (isLoading)
 {
     <LoadingSpinner Text="Loading company details..." />
+}
+else if (noCompanyAssigned)
+{
+    <EmptyState Icon="bi-building-slash"
+                Title="No Company Assigned"
+                Message="Your account is not linked to any company profile. Please contact an administrator to link your account." />
+}
+else if (company is null)
+{
+    <EmptyState Icon="bi-search"
+                Title="Company Not Found"
+                Message="The requested company profile could not be found."
+                ActionText="@(user?.IsInRole(RoleConstants.Admin) == true ? "Back to Companies" : null)"
+                ActionIcon="bi-arrow-left"
+                OnAction="GoBack" />
 }
 else
 {
@@ -131,10 +146,18 @@ else
                 @if (!isView)
                 {
                     <div class="d-flex gap-2 pt-3 border-top border-secondary">
-                        <button type="submit" class="btn btn-primary px-5 py-2 fw-bold rounded-pill">
-                            @(isNew ? "Create Company" : "Save Changes")
+                        <button type="submit" class="btn btn-primary px-5 py-2 fw-bold rounded-pill" disabled="@isSaving">
+                            @if (isSaving)
+                            {
+                                <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                <span>Saving...</span>
+                            }
+                            else
+                            {
+                                @(isNew ? "Create Company" : "Save Changes")
+                            }
                         </button>
-                        <button type="button" class="btn btn-outline-secondary px-4 py-2 rounded-pill" @onclick="Cancel">Cancel</button>
+                        <button type="button" class="btn btn-outline-secondary px-4 py-2 rounded-pill" @onclick="Cancel" disabled="@isSaving">Cancel</button>
                     </div>
                 }
             </EditForm>
@@ -191,86 +214,118 @@ else
         await LoadStateAsync();
     }
 
+    private bool isLoading = true;
+    private bool noCompanyAssigned;
+    private bool isSaving;
+
     private async Task LoadStateAsync()
     {
-        companyId = Id;
-        var auth = await AuthState.GetAuthenticationStateAsync();
-        user = auth.User;
-        var uri = Nav.Uri.ToLower();
-
-        // Determine mode based on URL
-        isNew = uri.Contains("/new");
-        isView = !isNew && !uri.Contains("/edit/");
-
-        if (isNew)
+        isLoading = true;
+        noCompanyAssigned = false;
+        try
         {
-            if (!user.IsInRole(RoleConstants.Admin))
-            {
-                Nav.NavigateTo("/");
-                return;
-            }
-            company = new Company();
-        }
-        else
-        {
-            if (companyId == 0)
-            {
-                string? companyClaim = user.FindFirst("companyId")?.Value;
-                if (!string.IsNullOrEmpty(companyClaim))
-                {
-                    companyId = int.Parse(companyClaim);
-                }
-            }
+            companyId = Id;
+            var auth = await AuthState.GetAuthenticationStateAsync();
+            user = auth.User;
+            var uri = Nav.Uri.ToLower();
 
-            // Security check: if trying to edit, ensure permissions
-            if (!isView && !user.IsInRole(RoleConstants.Admin))
+            // Determine mode based on URL
+            isNew = uri.Contains("/new");
+            isView = !isNew && !uri.Contains("/edit/");
+
+            if (isNew)
             {
-                if (user.IsInRole(RoleConstants.Driver))
+                if (!user.IsInRole(RoleConstants.Admin))
                 {
                     Nav.NavigateTo("/");
                     return;
                 }
-
-                string? companyClaim = user.FindFirst("companyId")?.Value;
-                if (companyClaim != null && int.TryParse(companyClaim, out int userCompanyId))
+                company = new Company();
+            }
+            else
+            {
+                if (companyId == 0)
                 {
-                    if (companyId != 0 && companyId != userCompanyId)
+                    string? companyClaim = user.FindFirst("companyId")?.Value;
+                    if (!string.IsNullOrEmpty(companyClaim) && int.TryParse(companyClaim, out int parsedCompanyId))
+                    {
+                        companyId = parsedCompanyId;
+                    }
+                    else
+                    {
+                        if (user.IsInRole(RoleConstants.Admin))
+                        {
+                            Nav.NavigateTo("/companies");
+                        }
+                        else
+                        {
+                            noCompanyAssigned = true;
+                        }
+                        return;
+                    }
+                }
+
+                // Security check: if trying to edit, ensure permissions
+                if (!isView && !user.IsInRole(RoleConstants.Admin))
+                {
+                    if (user.IsInRole(RoleConstants.Driver))
                     {
                         Nav.NavigateTo("/");
                         return;
                     }
-                }
-            }
 
-            company = await CompanySvc.GetByIdAsync(companyId);
-            if (company is null) Nav.NavigateTo("/companies");
+                    string? companyClaim = user.FindFirst("companyId")?.Value;
+                    if (companyClaim != null && int.TryParse(companyClaim, out int userCompanyId))
+                    {
+                        if (companyId != 0 && companyId != userCompanyId)
+                        {
+                            Nav.NavigateTo("/");
+                            return;
+                        }
+                    }
+                }
+
+                company = await CompanySvc.GetByIdAsync(companyId);
+            }
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
 
     private async Task SaveAsync()
     {
-        if (isView) return; // Guard clause
+        if (isView || isSaving || company is null) return; // Guard clause
 
-        if (isNew)
+        isSaving = true;
+        try
         {
-            if (!user.IsInRole(RoleConstants.Admin)) return;
-            await CompanySvc.CreateAsync(company!);
-        }
-        else
-        {
-            if (!user.IsInRole(RoleConstants.Admin))
+            if (isNew)
             {
-                if (user.IsInRole(RoleConstants.Driver)) return;
-                string? companyClaim = user.FindFirst("companyId")?.Value;
-                if (companyClaim != null && int.TryParse(companyClaim, out int userCompanyId))
-                {
-                    if (company!.Id != userCompanyId) return;
-                }
+                if (!user.IsInRole(RoleConstants.Admin)) return;
+                await CompanySvc.CreateAsync(company);
             }
-            await CompanySvc.UpdateAsync(company!);
-        }
+            else
+            {
+                if (!user.IsInRole(RoleConstants.Admin))
+                {
+                    if (user.IsInRole(RoleConstants.Driver)) return;
+                    string? companyClaim = user.FindFirst("companyId")?.Value;
+                    if (companyClaim != null && int.TryParse(companyClaim, out int userCompanyId))
+                    {
+                        if (company.Id != userCompanyId) return;
+                    }
+                }
+                await CompanySvc.UpdateAsync(company);
+            }
 
-        GoBack();
+            GoBack();
+        }
+        finally
+        {
+            isSaving = false;
+        }
     }
 
     private void Cancel()

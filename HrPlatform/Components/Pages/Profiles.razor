@@ -230,13 +230,13 @@ else
         await LoadAsync();
     }
 
-    private void ClearFilters()
+    private async Task ClearFilters()
     {
         searchName = null;
         searchAvailString = null;
         searchCdlString = null;
         searchEndString = null;
-        _ = ResetPageAndLoad();
+        await ResetPageAndLoad();
     }
 
     private async Task LoadAsync()

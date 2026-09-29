@@ -1,4 +1,5 @@
 @page "/profiles/{Id:int}"
+@page "/profiles/user/{UserId}"
 @page "/my-profile"
 @using System.Security.Claims
 @using HrPlatform.Utils
@@ -78,7 +79,12 @@
         {
             @if (isAdminOrManager)
             {
-                <p>This profile is not available</p>
+                <EmptyState Icon="bi-person-x"
+                            Title="Profile Not Available"
+                            Message="The requested driver profile could not be found or has not been created yet."
+                            ActionText="Back to Profiles"
+                            ActionIcon="bi-arrow-left"
+                            ActionHref="/profiles" />
             }
             else
             {
@@ -217,6 +223,7 @@
 
 @code {
     [Parameter] public int Id { get; set; }
+    [Parameter] public string? UserId { get; set; }
 
     private DriverProfile? profile;
     private List<TrailerType> trailerTypes = new();
@@ -233,10 +240,15 @@
     protected override async Task OnInitializedAsync()
     {
         var auth = await AuthState.GetAuthenticationStateAsync();
-        var currentUserId = auth.User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        var currentUserId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
         isAdminOrManager = auth.User.IsInRole(RoleConstants.Admin) || auth.User.IsInRole(RoleConstants.Manager);
 
-        if (Id == 0)
+        if (!string.IsNullOrEmpty(UserId))
+        {
+            profile = await ProfileSvc.GetByUserIdAsync(UserId);
+            backUrl = "/driver-pipeline";
+        }
+        else if (Id == 0)
         {
             profile = await ProfileSvc.GetByUserIdAsync(currentUserId);
             backUrl = "/";
@@ -268,7 +280,7 @@
         {
             profile.AvailabilityStatus = status;
             var auth = await AuthState.GetAuthenticationStateAsync();
-            var currentUserId = auth.User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+            var currentUserId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? profile.UserId;
             await ProfileSvc.UpdateAsync(profile, currentUserId);
         }
     }

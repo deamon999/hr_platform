@@ -23,7 +23,7 @@ public class DashboardService(ApplicationDbContext db) : IDashboardService
             .ToDictionaryAsync(x => x.Key, x => x.Count);
 
         return new DashboardStats(
-            TotalDrivers: await db.DriverProfiles.CountAsync(),
+            TotalPipeline: await db.Leads.CountAsync(),
             TotalJobs: await db.Jobs.CountAsync(),
             OpenJobs: await db.Jobs.CountAsync(j => j.IsActive),
             ApplicationsThisWeek: await db.JobApplications
@@ -38,8 +38,8 @@ public class DashboardService(ApplicationDbContext db) : IDashboardService
             ExpiringLicenses: await db.DriverLicenses
                 .CountAsync(l => l.ExpiryDate <= in30
                                  && l.ExpiryDate >= DateOnly.FromDateTime(now)),
-            NewLeads: await db.Leads.CountAsync(l => l.Status == LeadStatus.New),
-            ActiveLeads: await db.Leads.CountAsync(LeadExpressions.IsActionable),
+            RegisteredProfiles: await db.Leads.CountAsync(l => l.ConvertedUserId != null),
+            ActionableLeads: await db.Leads.CountAsync(LeadExpressions.IsActionable),
             ApplicationsByStatus: byStatus);
     }
 
@@ -72,7 +72,7 @@ public class DashboardService(ApplicationDbContext db) : IDashboardService
             .CountAsync();
 
         return new DashboardStats(
-            TotalDrivers: driverIds.Count,
+            TotalPipeline: await db.Leads.CountAsync(l => l.CompanyId == companyId),
             TotalJobs: await db.Jobs.CountAsync(j => j.CompanyId == companyId),
             OpenJobs: await db.Jobs.CountAsync(j => j.CompanyId == companyId && j.IsActive),
             ApplicationsThisWeek: await companyApps.CountAsync(a => a.AppliedAt >= week),
@@ -85,9 +85,9 @@ public class DashboardService(ApplicationDbContext db) : IDashboardService
                 .CountAsync(i => i.CompanyId == companyId
                                  && !i.IsUsed && i.ExpiresAt > now),
             ExpiringLicenses: expiringInPool,
-            NewLeads: await db.Leads
-                .CountAsync(l => l.CompanyId == companyId && l.Status == LeadStatus.New),
-            ActiveLeads: await db.Leads
+            RegisteredProfiles: await db.Leads
+                .CountAsync(l => l.CompanyId == companyId && l.ConvertedUserId != null),
+            ActionableLeads: await db.Leads
                 .Where(l => l.CompanyId == companyId)
                 .CountAsync(LeadExpressions.IsActionable),
             ApplicationsByStatus: byStatus);

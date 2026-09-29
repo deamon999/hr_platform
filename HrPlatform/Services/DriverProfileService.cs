@@ -1,5 +1,7 @@
 using HrPlatform.Data;
 using HrPlatform.Data.Models;
+using HrPlatform.Data.Entities;
+using HrPlatform.Data.Enums;
 using HrPlatform.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -54,6 +56,33 @@ public class DriverProfileService(ApplicationDbContext db, IDocumentStorageServi
     {
         db.DriverProfiles.Add(profile);
         await db.SaveChangesAsync();
+
+        // Sync with Lead or Auto-create Lead
+        var existingLead = await db.Leads.FirstOrDefaultAsync(l => l.Email == profile.Email || (l.ConvertedUserId != null && l.ConvertedUserId == profile.UserId));
+        if (existingLead != null)
+        {
+            existingLead.ConvertedUserId = profile.UserId;
+            existingLead.Status = LeadStatus.Converted;
+            existingLead.FirstName = profile.FirstName;
+            existingLead.LastName = profile.LastName;
+            existingLead.Phone = profile.PhoneNumber;
+        }
+        else
+        {
+            var newLead = new Lead
+            {
+                FirstName = profile.FirstName,
+                LastName = profile.LastName,
+                Email = profile.Email,
+                Phone = profile.PhoneNumber,
+                Status = LeadStatus.New, // Treat as new organically acquired candidate
+                ConvertedUserId = profile.UserId,
+                CreatedAt = DateTime.UtcNow
+            };
+            db.Leads.Add(newLead);
+        }
+        await db.SaveChangesAsync();
+
         return profile;
     }
 
@@ -136,6 +165,18 @@ public class DriverProfileService(ApplicationDbContext db, IDocumentStorageServi
 
         profile.UpdatedAt = DateTime.UtcNow;
         db.DriverProfiles.Update(profile);
+
+        // Sync to Lead
+        var existingLead = await db.Leads.FirstOrDefaultAsync(l => l.ConvertedUserId == profile.UserId);
+        if (existingLead != null)
+        {
+            existingLead.FirstName = profile.FirstName;
+            existingLead.LastName = profile.LastName;
+            existingLead.Email = profile.Email;
+            existingLead.Phone = profile.PhoneNumber;
+            db.Leads.Update(existingLead);
+        }
+
         await db.SaveChangesAsync();
     }
 

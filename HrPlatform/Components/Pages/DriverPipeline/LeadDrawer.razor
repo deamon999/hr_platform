@@ -118,7 +118,11 @@
 <div class="lead-drawer @(_isClosing ? "closing" : "")">
     <div class="lead-drawer-header">
         <h5 class="fw-bold mb-0">@(Lead?.FirstName) @(Lead?.LastName) - Notes</h5>
-        <button type="button" class="btn-close btn-close-white" @onclick="CloseWithAnimation"></button>
+        @if (!string.IsNullOrEmpty(Lead?.ConvertedUserId))
+        {
+            <a href="/profiles/user/@Lead.ConvertedUserId" class="btn btn-sm btn-outline-light ms-3">View Full Profile</a>
+        }
+        <button type="button" class="btn-close btn-close-white ms-auto" @onclick="CloseWithAnimation"></button>
     </div>
     <div class="lead-drawer-body">
 

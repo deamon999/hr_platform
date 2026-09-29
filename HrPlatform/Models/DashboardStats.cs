@@ -1,7 +1,7 @@
 namespace HrPlatform.Models;
 
 public record DashboardStats(
-    int TotalDrivers,
+    int TotalPipeline,
     int TotalJobs,
     int OpenJobs,
     int ApplicationsThisWeek,
@@ -9,6 +9,6 @@ public record DashboardStats(
     int AcceptedThisMonth,
     int InvitationsPending,
     int ExpiringLicenses,
-    int NewLeads,
-    int ActiveLeads,
+    int RegisteredProfiles,
+    int ActionableLeads,
     Dictionary<string, int> ApplicationsByStatus);

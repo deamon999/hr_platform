@@ -16,7 +16,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="fw-bold mb-0">@(IsViewMode ? "View User" : "Edit User")</h2>
-    @if (IsViewMode)
+    @if (IsViewMode && !isLoading && model != null && !notAuthorized)
     {
         <button class="btn btn-primary rounded-pill px-4" @onclick="SwitchToEditMode"><i class="bi bi-pencil me-1"></i> Edit</button>
     }
@@ -25,6 +25,14 @@
 @if (isLoading)
 {
     <LoadingSpinner Text="Loading user profile..." />
+}
+else if (notAuthorized)
+{
+    <EmptyState Icon="bi-shield-x" Title="Access Denied" Message="You do not have permission to view or edit this user." ActionText="Back to Users" ActionIcon="bi-arrow-left" OnAction="GoToUsers" />
+}
+else if (model == null)
+{
+    <EmptyState Icon="bi-person-x" Title="User Not Found" Message="The requested user profile does not exist or has been removed." ActionText="Back to Users" ActionIcon="bi-arrow-left" OnAction="GoToUsers" />
 }
 else
 {
@@ -91,7 +99,17 @@ else
                     <div class="d-flex gap-2 pt-3 border-top border-secondary">
                         @if (!IsViewMode)
                         {
-                            <button class="btn btn-primary px-4 py-2 fw-bold rounded-pill" type="submit">Save Changes</button>
+                            <button class="btn btn-primary px-4 py-2 fw-bold rounded-pill" type="submit" disabled="@isSaving">
+                                @if (isSaving)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                    <span>Saving...</span>
+                                }
+                                else
+                                {
+                                    <span>Save Changes</span>
+                                }
+                            </button>
                         }
                         <button class="btn btn-outline-secondary px-4 py-2 rounded-pill" type="button" @onclick="GoToUsers">
                             <i class="bi bi-arrow-left me-1"></i> Back to Users
@@ -115,12 +133,14 @@ else
     private bool isLoading = true;
     private bool IsViewMode = false;
     private bool isAdmin = false;
+    private bool notAuthorized = false;
+    private bool isSaving = false;
 
     private Company? myCompany;
     private List<Company>? companies;
     private List<string?> roles = new();
 
-    private UserViewModel model = new();
+    private UserViewModel? model;
     private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
@@ -160,19 +180,34 @@ else
     protected override async Task OnParametersSetAsync()
     {
         isLoading = true;
+        notAuthorized = false;
         
-        // Check if we are in view or edit mode based on the current route
-        var uri = Nav.Uri.ToLower();
-        IsViewMode = !uri.Contains("/edit/");
-
-        model = await UserService.GetUserByIdAsync(Id);
-        
-        if (!isAdmin && myCompany != null)
+        try
         {
-            model.CompanyId = myCompany.Id;
-        }
+            // Check if we are in view or edit mode based on the current route
+            var uri = Nav.Uri.ToLower();
+            IsViewMode = !uri.Contains("/edit/");
 
-        isLoading = false;
+            model = await UserService.GetUserByIdAsync(Id);
+            if (model == null)
+            {
+                return;
+            }
+
+            if (!isAdmin && myCompany != null)
+            {
+                if (model.CompanyId != null && model.CompanyId != myCompany.Id)
+                {
+                    notAuthorized = true;
+                    return;
+                }
+                model.CompanyId = myCompany.Id;
+            }
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
     private async Task GoToUsers()
@@ -187,77 +222,92 @@ else
 
     private async Task UpdateAsync()
     {
-        errorMessage = null;
+        if (model == null || isSaving) return;
 
-        var user = await UserManager.FindByIdAsync(Id);
-        if (user == null)
+        isSaving = true;
+        try
         {
-            errorMessage = "User not found.";
-            return;
-        }
+            errorMessage = null;
 
-        if (!isAdmin && string.Equals(model.Roles, RoleConstants.Admin, StringComparison.OrdinalIgnoreCase))
+            var user = await UserManager.FindByIdAsync(Id);
+            if (user == null)
+            {
+                errorMessage = "User not found.";
+                return;
+            }
+
+            if (!isAdmin && string.Equals(model.Roles, RoleConstants.Admin, StringComparison.OrdinalIgnoreCase))
+            {
+                errorMessage = "You do not have permission to assign the Admin role.";
+                return;
+            }
+
+            if (!isAdmin && myCompany != null && user.CompanyId != null && user.CompanyId != myCompany.Id)
+            {
+                errorMessage = "You do not have permission to modify users of another company.";
+                return;
+            }
+
+            if (string.Equals(model.Roles, RoleConstants.Manager, StringComparison.OrdinalIgnoreCase) && model.CompanyId == null)
+            {
+                errorMessage = "A Company must be selected when assigning the Manager role.";
+                return;
+            }
+
+            // Update user details
+            user.UserName = model.Username;
+            user.Email = model.Email;
+            user.PhoneNumber = model.Phone;
+
+            if (isAdmin)
+            {
+                user.CompanyId = model.CompanyId ?? user.CompanyId; // Keep existing if null in form submission
+            }
+            else
+            {
+                // For non-admins, company ID is usually inherited or managed differently based on context.
+                // We use the value submitted from the form.
+                user.CompanyId = model.CompanyId ?? user.CompanyId;
+            }
+
+            // Swap roles: remove all current, assign new single role
+            var currentRoles = await UserManager.GetRolesAsync(user);
+            var removeResult = await UserManager.RemoveFromRolesAsync(user, currentRoles);
+            if (!removeResult.Succeeded)
+            {
+                errorMessage = "Could not remove current roles: " +
+                               string.Join(", ", removeResult.Errors.Select(e => e.Description));
+                return;
+            }
+
+            var addResult = await UserManager.AddToRoleAsync(user, model.Roles);
+            if (!addResult.Succeeded)
+            {
+                errorMessage = "Could not assign role: " +
+                               string.Join(", ", addResult.Errors.Select(e => e.Description));
+                return;
+            }
+
+            var oldRole = currentRoles.FirstOrDefault();
+            if (oldRole != model.Roles)
+            {
+                await UserService.HandleRoleTransitionCleanupAsync(user, oldRole, model.Roles);
+            }
+
+            var result = await UserManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+            {
+                errorMessage = string.Join("; ", result.Errors.Select(e => e.Description));
+                return;
+            }
+
+            await GoToUsers();
+        }
+        finally
         {
-            errorMessage = "You do not have permission to assign the Admin role.";
-            return;
+            isSaving = false;
         }
-
-        if (string.Equals(model.Roles, RoleConstants.Manager, StringComparison.OrdinalIgnoreCase) && model.CompanyId == null)
-        {
-            errorMessage = "A Company must be selected when assigning the Manager role.";
-            return;
-        }
-
-        // Update user details
-        user.UserName = model.Username;
-        user.Email = model.Email;
-        user.PhoneNumber = model.Phone;
-
-        if (isAdmin)
-        {
-            user.CompanyId = model.CompanyId ?? user.CompanyId; // Keep existing if null in form submission
-        }
-        else
-        {
-            // For non-admins, company ID is usually inherited or managed differently based on context.
-            // We use the value submitted from the form.
-            user.CompanyId = model.CompanyId ?? user.CompanyId;
-        }
-
-        // Swap roles: remove all current, assign new single role
-        var currentRoles = await UserManager.GetRolesAsync(user);
-        var removeResult = await UserManager.RemoveFromRolesAsync(user, currentRoles);
-        if (!removeResult.Succeeded)
-        {
-            errorMessage = "Could not remove current roles: " +
-                           string.Join(", ", removeResult.Errors.Select(e => e.Description));
-            return;
-        }
-
-        var addResult = await UserManager.AddToRoleAsync(user, model.Roles);
-        if (!addResult.Succeeded)
-        {
-            errorMessage = "Could not assign role: " +
-                           string.Join(", ", addResult.Errors.Select(e => e.Description));
-            return;
-        }
-
-        var oldRole = currentRoles.FirstOrDefault();
-        if (oldRole != model.Roles)
-        {
-            await UserService.HandleRoleTransitionCleanupAsync(user, oldRole, model.Roles);
-        }
-
-        var result = await UserManager.UpdateAsync(user);
-
-        if (!result.Succeeded)
-        {
-            errorMessage = string.Join("; ", result.Errors.Select(e => e.Description));
-            return;
-        }
-
-
-        await GoToUsers();
     }
 
 }
