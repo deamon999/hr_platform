@@ -27,7 +27,7 @@ public class LeadStatusExtensionsTests
     }
 
     [Theory]
-    [InlineData(LeadStatus.New, false)]
+    [InlineData(LeadStatus.New, true)]
     [InlineData(LeadStatus.Hired, false)]
     [InlineData(LeadStatus.NotInterested, false)]
     [InlineData(LeadStatus.Rejected, false)]
@@ -78,7 +78,7 @@ public class LeadStatusExtensionsTests
             .Where(LeadExpressions.IsActionable)
             .ToListAsync();
 
-        Assert.Equal(2, actionableLeads.Count);
+        Assert.Equal(3, actionableLeads.Count);
         Assert.All(actionableLeads, l => Assert.True(l.Status.IsActionable()));
     }
 
